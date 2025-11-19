@@ -1,0 +1,112 @@
+# FastAPI
+.env
+.local
+.db.sqlite3
+.db.sqlite3-journal
+.db.sqlite3-wal
+.venv
+.venv/*
+!venv/bin/
+!venv/lib/
+!venv/lib64/__pycache__/
+
+# IDEs and Settings (Optional)
+.idea
+.vscode
+*.iml
+*.ipynb
+*.swp
+*.swo
+*.swn
+*.log
+.tox
+.nox
+.eggs
+.eggs-info
+.eggs-src
+.eggs-commit
+.eggs-status
+.egg-info/
+dist
+build
+local
+nbdist
+nbbuild
+profiling
+.pytest_cache/
+.coverage
+.cache
+nosetests.xml
+coverage.xml
+*.pyc
+*.pyo
+.DS_Store
+.DS_Store/
+.__pycache__/
+
+# Operating System (Optional)
+# For MacOS
+.DS_Store
+.AppleDouble
+.LCFixitd
+.RTC_Project_Group_Picture.pct
+.RTC_Project_Group.rtc
+.RTC_Project_Group_Cache.pct
+.CocoaPodPods/**
+!*/Podfile.lock
+.build/
+DerivedData
+Indexed_store_dir
+WorkspaceSettings.xcsettings
+xcuserdata
+
+# For Linux
+*-
+Thumbs.db
+.fehidevices
+libreoffice
+libgw
+libgoffice
+libneon
+libpython
+libidl
+libmikmod
+libcmis
+libwpd
+libwpg
+libwps
+libvcl
+libetony
+libkolab
+libkde
+libopenscenegraph
+libclucene
+libclucene_contribs
+libxerces
+libicu
+libicu_dev
+libicu_le
+libicu_io
+libicu_test
+libicu_devel
+libicu_doc
+
+# For Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Package Manager (Optional)
+# For pip
+.pip
+build
+local
+
+# For npm
+node_modules/
+npm-debug.log
+.pnpm-debug.log
+.pnpm-store/
+
+# For Maven
+target/
