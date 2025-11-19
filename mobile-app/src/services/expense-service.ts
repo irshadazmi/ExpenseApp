@@ -2,21 +2,30 @@
 import api from '@/config/api';
 import {
   ExpenseCreate,
+  ExpenseResponse,
   ExpenseUpdate,
 } from '@/types/expense'; // create later if not available
 
 const EXPENSE_BASE = '/expenses';
 
 export const expenseService = {
+  getByUser: async (userId: number) => {
+    const res = await api.get<ExpenseResponse[]>(`${EXPENSE_BASE}/`, {
+      params: { user_id: userId },
+    });
+    console.log("getByUser", res.data);
+    return res.data;
+  },
+
   getAll: async (skip = 0, limit = 10) => {
-    const res = await api.get(`${EXPENSE_BASE}/`, {
+    const res = await api.get<ExpenseResponse[]>(`${EXPENSE_BASE}/`, {
       params: { skip, limit },
     });
     return res.data;
   },
 
   getById: async (id: number) => {
-    const res = await api.get(`${EXPENSE_BASE}/${id}`);
+    const res = await api.get<ExpenseResponse>(`${EXPENSE_BASE}/${id}`);
     return res.data;
   },
 

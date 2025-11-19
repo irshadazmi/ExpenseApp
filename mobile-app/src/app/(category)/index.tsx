@@ -5,6 +5,7 @@ import {
   FlatList,
   Pressable,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import styles from "@/styles/styles";
 import { categoryService } from "@/services/category-service";
@@ -21,10 +22,11 @@ const Categories = () => {
   const loadCategories = async () => {
     try {
       setLoading(true);
-      const res = await categoryService.getAll(0, 100);
+      const res = await categoryService.getAll();
       setCategories(res);
     } catch (err) {
       console.log("Failed to load categories", err);
+      Alert.alert("Error", "Failed to load categories. Please try again.");
     } finally {
       setLoading(false);
     }

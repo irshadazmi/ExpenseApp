@@ -65,12 +65,14 @@ const Register = () => {
       <Image
         source={require("@/assets/images/expense-logo.png")}
         style={{
-          width: "30%",
-          height: "20%",
+          width: "40%",
+          height: "25%",
           alignSelf: "center",
+          marginTop: -200,
           marginBottom: 0,
         }}
       />
+      
       <Text style={styles.title}>Register</Text>
 
       <Formik

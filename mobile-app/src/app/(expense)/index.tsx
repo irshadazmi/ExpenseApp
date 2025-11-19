@@ -5,6 +5,7 @@ import {
   FlatList,
   Pressable,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import styles from "@/styles/styles";
 import { expenseService } from "@/services/expense-service";
@@ -12,21 +13,29 @@ import { COLORS } from "@/constants/COLORS";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ExpenseResponse } from "@/types/expense";
 import { RelativePathString, useRouter } from "expo-router";
+import { useAuth } from "@/contexts/auth-context";
 
 const Expenses = () => {
   const [categories, setExpenses] = useState<ExpenseResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { user } = useAuth();
+
+  const isSuperAdmin = user?.role_id === 1;
+	const currentUserId = user?.id;
 
   const loadExpenses = async () => {
-    console.log("Loading expenses");
+    setLoading(true);
     try {
-      setLoading(true);
-      const res = await expenseService.getAll(0, 100);
-      console.log(res);
-      setExpenses(res);
-    } catch (err) {
-      console.log("Failed to load categories", err);
+      const data = isSuperAdmin
+        ? await expenseService.getAll()
+        : await expenseService.getByUser(currentUserId!);
+
+      console.log(data);
+      setExpenses(data);
+    } catch (error) {
+      console.error("Failed to load expenses", error);
+      Alert.alert("Error", "Failed to load expenses. Please try again.");
     } finally {
       setLoading(false);
     }

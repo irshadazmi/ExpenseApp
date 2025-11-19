@@ -4,7 +4,6 @@ import {
 	View,
 	Text,
 	TextInput,
-	StyleSheet,
 	ActivityIndicator,
 	FlatList,
 	Pressable,
@@ -33,14 +32,16 @@ const Feedbacks = () => {
 	// Load feedbacks on mount & when user/role changes
 	useEffect(() => {
 		const fetchFeedbacks = async () => {
+			console.log(user);
 			if (!user) return;
 
 			setLoading(true);
 			try {
 				const data = isSuperAdmin
-					? await feedbackService.getAll(0, 100)
+					? await feedbackService.getAll()
 					: await feedbackService.getByUser(currentUserId!);
 
+				console.log(data);
 				setFeedbacks(data);
 			} catch (error) {
 				console.error("Failed to load feedbacks", error);
@@ -136,15 +137,15 @@ const Feedbacks = () => {
 		<Pressable
 			key={label}
 			style={[
-				localStyles.chip,
-				isSelected && localStyles.chipSelected,
+				styles.chip,
+				isSelected && styles.chipSelected,
 			]}
 			onPress={onPress}
 		>
 			<Text
 				style={[
-					localStyles.chipText,
-					isSelected && localStyles.chipTextSelected,
+					styles.chipText,
+					isSelected && styles.chipTextSelected,
 				]}
 			>
 				{label}
@@ -158,44 +159,44 @@ const Feedbacks = () => {
 		const statusLabel = item.status; // Already a string from STATUS_CODES
 
 		return (
-			<View style={localStyles.card}>
-				<View style={localStyles.cardHeader}>
-					<Text style={localStyles.cardTitle}>{item.subject}</Text>
-					<View style={localStyles.statusBadge}>
-						<Text style={localStyles.statusText}>{statusLabel}</Text>
+			<View style={styles.card}>
+				<View style={styles.cardHeader}>
+					<Text style={styles.cardTitle}>{item.subject}</Text>
+					<View style={styles.statusBadge}>
+						<Text style={styles.statusText}>{statusLabel}</Text>
 					</View>
 				</View>
 
-				<Text style={localStyles.issueType}>{item.issue_type}</Text>
-				<Text style={localStyles.description}>{item.description}</Text>
+				<Text style={styles.issueType}>{item.issue_type}</Text>
+				<Text style={styles.description}>{item.description}</Text>
 
-				<View style={localStyles.metaRow}>
-					<Text style={localStyles.metaText}>Rating: {item.rating} / 5</Text>
-					<Text style={localStyles.metaText}>{createdAt}</Text>
+				<View style={styles.metaRow}>
+					<Text style={styles.metaText}>Rating: {item.rating} / 5</Text>
+					<Text style={styles.metaText}>{createdAt}</Text>
 				</View>
 
 				{item.reply ? (
-					<View style={localStyles.replyBox}>
-						<Text style={localStyles.replyLabel}>Admin Reply:</Text>
-						<Text style={localStyles.replyText}>{item.reply}</Text>
+					<View style={styles.replyBox}>
+						<Text style={styles.replyLabel}>Admin Reply:</Text>
+						<Text style={styles.replyText}>{item.reply}</Text>
 					</View>
 				) : null}
 
-				<View style={localStyles.actionsRow}>
+				<View style={styles.actionsRow}>
 					{/* Owner edit/delete */}
 					{isOwner && (
 						<>
 							<Pressable
-								style={[localStyles.actionButton, localStyles.editButton]}
+								style={[styles.actionButton, styles.editButton]}
 								onPress={() => handleEdit(item.id)}
 							>
-								<Text style={localStyles.actionButtonText}>Edit</Text>
+								<Text style={styles.actionButtonText}>Edit</Text>
 							</Pressable>
 							<Pressable
-								style={[localStyles.actionButton, localStyles.deleteButton]}
+								style={[styles.actionButton, styles.deleteButton]}
 								onPress={() => handleDelete(item.id)}
 							>
-								<Text style={localStyles.actionButtonText}>Delete</Text>
+								<Text style={styles.actionButtonText}>Delete</Text>
 							</Pressable>
 						</>
 					)}
@@ -203,10 +204,10 @@ const Feedbacks = () => {
 					{/* SuperAdmin reply, only if no reply yet */}
 					{isSuperAdmin && !item.reply && (
 						<Pressable
-							style={[localStyles.actionButton, localStyles.replyButton]}
+							style={[styles.actionButton, styles.replyButton]}
 							onPress={() => handleReply(item.id)}
 						>
-							<Text style={localStyles.actionButtonText}>Reply</Text>
+							<Text style={styles.actionButtonText}>Reply</Text>
 						</Pressable>
 					)}
 				</View>
@@ -215,25 +216,30 @@ const Feedbacks = () => {
 	};
 
 	return (
-		<View style={[styles.container, { paddingHorizontal: 12 }]}>
-			<View style={localStyles.headerRow}>
-				<Text style={styles.title}>Feedback</Text>
-				<Pressable style={styles.button} onPress={handleAddFeedback}>
-					<Text style={styles.buttonText}>+ New Feedback</Text>
-				</Pressable>
-			</View>
+		<View style={[styles.container, { paddingHorizontal: 16 }]}>
+      {/* Header row: title + Add button */}
+      <View style={{
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 16,
+      }}>
+        <Text style={[styles.title, { flex: 1 }]}>Feedback</Text>
+        <Pressable style={styles.button} onPress={handleAddFeedback}>
+          <Text style={styles.buttonText}>Add Feedback</Text>
+        </Pressable>
+      </View>
 
 			{/* Search Bar */}
 			<TextInput
-				style={localStyles.searchInput}
+				style={styles.searchInput}
 				placeholder="Search by subject, description, or type..."
 				value={searchTerm}
 				onChangeText={setSearchTerm}
 			/>
 
 			{/* Filter chips for feedback type */}
-			<Text style={localStyles.sectionLabel}>Filter by Type</Text>
-			<View style={localStyles.chipsContainer}>
+			<Text style={styles.sectionLabel}>Filter by Type</Text>
+			<View style={styles.chipsContainer}>
 				{renderChip(
 					"All",
 					selectedType === null,
@@ -249,8 +255,8 @@ const Feedbacks = () => {
 			</View>
 
 			{/* Filter chips for status */}
-			<Text style={localStyles.sectionLabel}>Filter by Status</Text>
-			<View style={localStyles.chipsContainer}>
+			<Text style={styles.sectionLabel}>Filter by Status</Text>
+			<View style={styles.chipsContainer}>
 				{renderChip(
 					"All",
 					selectedStatus === null,
@@ -287,151 +293,5 @@ const Feedbacks = () => {
 		</View>
 	);
 };
-
-const localStyles = StyleSheet.create({
-	headerRow: {
-		flexDirection: "row",
-		justifyContent: "space-between",
-		alignItems: "center",
-		marginBottom: 12,
-	},
-	searchInput: {
-		borderWidth: 1,
-		borderColor: "#ddd",
-		borderRadius: 8,
-		paddingHorizontal: 10,
-		paddingVertical: 8,
-		marginBottom: 12,
-		backgroundColor: "#fff",
-	},
-	sectionLabel: {
-		fontSize: 14,
-		fontWeight: "600",
-		marginBottom: 4,
-		color: COLORS.textSecondary,
-	},
-	chipsContainer: {
-		flexDirection: "row",
-		flexWrap: "wrap",
-		marginBottom: 8,
-	},
-	chip: {
-		borderWidth: 1,
-		borderColor: COLORS.primary,
-		borderRadius: 16,
-		paddingHorizontal: 10,
-		paddingVertical: 4,
-		marginRight: 6,
-		marginBottom: 6,
-		backgroundColor: "#fff",
-	},
-	chipSelected: {
-		backgroundColor: COLORS.primary,
-	},
-	chipText: {
-		fontSize: 12,
-		color: COLORS.primary,
-	},
-	chipTextSelected: {
-		color: COLORS.white,
-	},
-	card: {
-		backgroundColor: COLORS.white,
-		borderRadius: 10,
-		padding: 12,
-		marginBottom: 10,
-		elevation: 2,
-		shadowColor: "#000",
-		shadowOpacity: 0.1,
-		shadowRadius: 4,
-		shadowOffset: { width: 0, height: 2 },
-	},
-	cardHeader: {
-		flexDirection: "row",
-		justifyContent: "space-between",
-		alignItems: "flex-start",
-		marginBottom: 6,
-	},
-	cardTitle: {
-		fontSize: 16,
-		fontWeight: "700",
-		flex: 1,
-		marginRight: 8,
-		color: COLORS.text,
-	},
-	statusBadge: {
-		paddingHorizontal: 8,
-		paddingVertical: 4,
-		borderRadius: 12,
-		backgroundColor: COLORS.secondary,
-	},
-	statusText: {
-		fontSize: 10,
-		fontWeight: "700",
-		color: COLORS.textSecondary,
-	},
-	issueType: {
-		fontSize: 13,
-		fontWeight: "600",
-		marginBottom: 4,
-		color: COLORS.textSecondary,
-	},
-	description: {
-		fontSize: 13,
-		marginBottom: 8,
-		color: COLORS.text,
-	},
-	metaRow: {
-		flexDirection: "row",
-		justifyContent: "space-between",
-		marginBottom: 8,
-	},
-	metaText: {
-		fontSize: 11,
-		color: "#666",
-	},
-	replyBox: {
-		backgroundColor: "#F5F0FF",
-		borderRadius: 8,
-		padding: 8,
-		marginBottom: 8,
-	},
-	replyLabel: {
-		fontSize: 12,
-		fontWeight: "600",
-		marginBottom: 2,
-		color: COLORS.textSecondary,
-	},
-	replyText: {
-		fontSize: 12,
-		color: COLORS.text,
-	},
-	actionsRow: {
-		flexDirection: "row",
-		justifyContent: "flex-end",
-		flexWrap: "wrap",
-		gap: 8,
-	} as any,
-	actionButton: {
-		paddingHorizontal: 10,
-		paddingVertical: 6,
-		borderRadius: 6,
-		marginLeft: 8,
-	},
-	actionButtonText: {
-		fontSize: 12,
-		color: COLORS.white,
-		fontWeight: "600",
-	},
-	editButton: {
-		backgroundColor: "#3498db",
-	},
-	deleteButton: {
-		backgroundColor: "#e74c3c",
-	},
-	replyButton: {
-		backgroundColor: "#27ae60",
-	},
-});
 
 export default Feedbacks;

@@ -1,20 +1,29 @@
-// Color palette
+// src/constants/COLORS.ts
 const COLORS = {
-	primary: '#7F00FF',         // Strong accent purple
-	secondary: '#E1C3fd',       // Light purple for backgrounds/cards
-	lightPurple: '#efc3f8ff',
-	white: '#FFFFFF',
-	disabled: '#A9C3F5',        // Muted purple for disabled elements
-	text: '#292140',            // Near-black with purple tint for headlines
-	textSecondary: '#5A3D8C',   // Muted purple for secondary text
-	cardShadow: '#B095D4',      // Subtle purple shadow
-	danger: '#EA4C68',
-	tabActive: '#7F00FF',
-  tabInactive: '#5A3D8C',
-  tabBg: '#E1C3fd',
+  primary: '#7F00FF',
+  secondary: '#E1C3fd',
+  lightPurple: '#efc3f8ff',
+  white: '#FFFFFF',
+  disabled: '#A9C3F5',
+  text: '#292140',
+  textSecondary: '#5A3D8C',
+  cardShadow: '#B095D4',
+  danger: '#EA4C68',
+
+  // Tab bar colors aligned with logo
+  tabBg: '#6c5ce7',        // closest known color to deep violet, a dark blue-violet color
+  tabBorderTop: '#120420', // slightly darker for subtle border
+  tabActive: '#44E4FF',    // neon cyan from the ring/icons
+  tabActiveAlt: '#FF3FBF', // optional neon pink if you want later
+  tabInactive: '#E0E0F5',  // very light gray-violet for inactive
+
+	// Badges
+  badgeBg: '#FF4D8D',
+  badgeText: '#FFFFFF',
 };
 
 export { COLORS };
+
 
 // const COLORS = {
 // 	primary: '#4EC9A2',         // Strong accent purple-blue

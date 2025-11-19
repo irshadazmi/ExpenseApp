@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 from sqlalchemy import select
 from app.schemas.budget_schema import BudgetResponseSchema
 from app.models.budget_model import BudgetModel
@@ -13,11 +14,19 @@ class BudgetRepository:
     def __init__(self, db):
         self.db = db
 
-    async def get_all_budgets(self, skip: int = 0, limit: int = 10):
-        result = await self.db.execute(select(BudgetModel).offset(skip).limit(limit))
-        if not result:
-            raise RecordNotFoundException("No budget records found")
-        return result.scalars().all()
+    async def get_all_budgets(self, user_id: Optional[int] = None):
+        stmt = select(BudgetModel)
+
+        if user_id is not None:
+            stmt = stmt.where(BudgetModel.user_id == user_id)
+
+        result = await self.db.execute(stmt)
+        rows = result.scalars().all()
+
+        if not rows:
+            return []
+
+        return rows
 
     async def get_budget_by_id(self, budget_id: int):
         result = await self.db.execute(

@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 from sqlalchemy import select
 from app.schemas.account_schema import AccountResponseSchema
 from app.models.account_model import AccountModel
@@ -13,11 +14,19 @@ class AccountRepository:
     def __init__(self, db):
         self.db = db
 
-    async def get_all_accounts(self, skip: int = 0, limit: int = 10):
-        result = await self.db.execute(select(AccountModel).offset(skip).limit(limit))
-        if not result:
-            raise RecordNotFoundException("No account records found")
-        return result.scalars().all()
+    async def get_all_accounts(self, user_id: Optional[int] = None):
+        stmt = select(AccountModel)
+
+        if user_id is not None:
+            stmt = stmt.where(AccountModel.user_id == user_id)
+
+        result = await self.db.execute(stmt)
+        rows = result.scalars().all()
+
+        if not rows:
+            return []
+
+        return rows
 
     async def get_account_by_id(self, account_id: int):
         result = await self.db.execute(

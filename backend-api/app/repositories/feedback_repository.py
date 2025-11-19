@@ -18,27 +18,18 @@ class FeedbackRepository:
     def __init__(self, db):
         self.db = db
 
-    async def get_all_feedbacks(
-        self,
-        skip: int = 0,
-        limit: int = 10,
-        user_id: Optional[int] = None,   # 🔹 NEW
-    ):
+    async def get_all_feedbacks(self, user_id: Optional[int] = None):
         stmt = select(FeedbackModel)
 
-        # 🔹 If user_id is provided, filter by it
         if user_id is not None:
             stmt = stmt.where(FeedbackModel.user_id == user_id)
-
-        stmt = stmt.offset(skip).limit(limit)
 
         result = await self.db.execute(stmt)
         rows = result.scalars().all()
 
-        # You can either return [] or raise exception.
-        if not rows:
-            # raise RecordNotFoundException("No feedback records found")
+        if not result:
             return []
+            # raise RecordNotFoundException("No feedback records found")
 
         return rows
 

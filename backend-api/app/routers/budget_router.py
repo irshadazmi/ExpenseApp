@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
@@ -9,16 +10,13 @@ from app.utils.exceptions import InternalServerErrorException, RecordNotFoundExc
 budget_router = APIRouter()
 
 @budget_router.get("/", response_model=list[BudgetResponseSchema])
-async def get_all_budgets(skip: int = 0, limit: int = 10, session: AsyncSession = Depends(get_db)):
+async def get_all_accounts(
+    user_id: Optional[int] = None, 
+    session: AsyncSession = Depends(get_db),
+):
     budget_repo = BudgetRepository(session)
     budget_service = BudgetService(budget_repo)
-    
-    try:
-        return await budget_service.get_all_budgets(skip, limit)
-    except RecordNotFoundException as e:
-        raise e
-    except Exception as e:
-        raise InternalServerErrorException("Failed to get budgets "+str(e))
+    return await budget_service.get_all_budgets(user_id)
     
 @budget_router.get("/{budget_id}", response_model=BudgetResponseSchema)
 async def get_budget_by_id(budget_id: int, session: AsyncSession = Depends(get_db)):
@@ -36,22 +34,16 @@ async def get_budget_by_id(budget_id: int, session: AsyncSession = Depends(get_d
 async def create_budget(budget: BudgetResponseSchema, session: AsyncSession = Depends(get_db)):
     budget_repo = BudgetRepository(session)
     budget_service = BudgetService(budget_repo)
+    return await budget_service.create_budget(budget)
     
-    try:
-        return await budget_service.create_budget(budget)
-    except RecordNotFoundException as e:
-        raise e
-    except Exception as e:
-        raise InternalServerErrorException("Failed to create budget "+str(e))
+@budget_router.put("/{budget_id}", response_model=BudgetResponseSchema)
+async def update_budget(budget_id: int, budget: BudgetResponseSchema, session: AsyncSession = Depends(get_db)):
+    budget_repo = BudgetRepository(session)
+    budget_service = BudgetService(budget_repo)
+    return await budget_service.update_budget(budget_id, budget)
     
 @budget_router.delete("/{budget_id}")
 async def delete_budget(budget_id: int, session: AsyncSession = Depends(get_db)):
     budget_repo = BudgetRepository(session)
     budget_service = BudgetService(budget_repo)
-    
-    try:
-        return await budget_service.delete_budget(budget_id)
-    except RecordNotFoundException as e:
-        raise e
-    except Exception as e:
-        raise InternalServerErrorException("Failed to delete budget "+str(e))
+    return await budget_service.delete_budget(budget_id)

@@ -13,18 +13,15 @@ feedback_router = APIRouter()
 
 @feedback_router.get("/", response_model=list[FeedbackResponseSchema])
 async def get_all_feedbacks(
-    skip: int = 0,
-    limit: int = 10,
-    user_id: Optional[int] = None,     # 🔹 NEW
+    user_id: Optional[int] = None, 
     session: AsyncSession = Depends(get_db),
 ):
     feedback_repo = FeedbackRepository(session)
     feedback_service = FeedbackService(feedback_repo)
 
     try:
-        return await feedback_service.get_all_feedbacks(skip, limit, user_id)
+        return await feedback_service.get_all_feedbacks(user_id)
     except RecordNotFoundException as e:
-        # Either re-raise or return []
         raise e
     except Exception as e:
         raise InternalServerErrorException("Failed to get feedbacks " + str(e))

@@ -1,3 +1,4 @@
+from typing import Optional
 from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
 from app.models.category_model import CategoryModel
@@ -57,11 +58,19 @@ class ExpenseRepository:
         result = await self.db.execute(stmt)
         return result.all()
 
-    async def get_all_expenses(self, skip: int = 0, limit: int = 10):
-        result = await self.db.execute(select(ExpenseModel).offset(skip).limit(limit))
-        if not result:
-            raise RecordNotFoundException("No expense records found")
-        return result.scalars().all()
+    async def get_all_expenses(self, user_id: Optional[int] = None):
+        stmt = select(ExpenseModel)
+
+        if user_id is not None:
+            stmt = stmt.where(ExpenseModel.user_id == user_id)
+
+        result = await self.db.execute(stmt)
+        rows = result.scalars().all()
+
+        if not rows:
+            return []
+
+        return rows
 
     async def get_expense_by_id(self, expense_id: int):
         result = await self.db.execute(

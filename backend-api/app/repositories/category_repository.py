@@ -13,10 +13,11 @@ class CategoryRepository:
     def __init__(self, db):
         self.db = db
 
-    async def get_all_categories(self, skip: int = 0, limit: int = 10):
-        result = await self.db.execute(select(CategoryModel).offset(skip).limit(limit))
+    async def get_all_categories(self):
+        result = await self.db.execute(select(CategoryModel))
         if not result:
-            raise RecordNotFoundException("No category records found")
+            return []
+            # raise RecordNotFoundException("No category records found")
         return result.scalars().all()
 
     async def get_category_by_id(self, category_id: int):

@@ -13,10 +13,8 @@ export const feedbackService = {
     return res.data;
   },
 
-  getAll: async (skip = 0, limit = 10) => {
-    const res = await api.get<FeedbackResponse[]>(`${FEEDBACK_BASE}/`, {
-      params: { skip, limit },
-    });
+  getAll: async () => {
+    const res = await api.get<FeedbackResponse[]>(`${FEEDBACK_BASE}/`);
     console.log("getAll", res.data);
     return res.data;
   },

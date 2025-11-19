@@ -14,8 +14,8 @@ from app.utils.exceptions import (
 user_router = APIRouter()
 
 @user_router.get("/searchByEmail", response_model=UserResponseSchema)
-async def get_user_by_email(email: str, db: AsyncSession = Depends(get_db)):
-    user_repo = UserRepository(db)
+async def get_user_by_email(email: str, session: AsyncSession = Depends(get_db)):
+    user_repo = UserRepository(session)
     user_service = UserService(user_repo)
     try:
         return await user_service.get_user_by_email(email)
@@ -25,8 +25,8 @@ async def get_user_by_email(email: str, db: AsyncSession = Depends(get_db)):
         raise InternalServerErrorException("Failed to get user "+str(e))
 
 @user_router.get("/searchByPhone", response_model=UserResponseSchema)
-async def get_user_by_phone(phone: str, db: AsyncSession = Depends(get_db)):
-    user_repo = UserRepository(db)
+async def get_user_by_phone(phone: str, session: AsyncSession = Depends(get_db)):
+    user_repo = UserRepository(session)
     user_service = UserService(user_repo)
     try:
         return await user_service.find_user_by_phone(phone)
@@ -36,8 +36,8 @@ async def get_user_by_phone(phone: str, db: AsyncSession = Depends(get_db)):
         raise InternalServerErrorException("Failed to get user "+str(e))
 
 @user_router.post("/", response_model=UserResponseSchema)
-async def create_user(user: UserCreateSchema, db: AsyncSession = Depends(get_db)):
-    user_repo = UserRepository(db)
+async def create_user(user: UserCreateSchema, session: AsyncSession = Depends(get_db)):
+    user_repo = UserRepository(session)
     user_service = UserService(user_repo)
     try:
         return await user_service.create_user(user)
@@ -47,8 +47,8 @@ async def create_user(user: UserCreateSchema, db: AsyncSession = Depends(get_db)
         raise InternalServerErrorException("Failed to create user "+str(e))
 
 @user_router.get("/{user_id}", response_model=UserResponseSchema)
-async def get_user_by_id(user_id: int, db: AsyncSession = Depends(get_db)):
-    user_repo = UserRepository(db)
+async def get_user_by_id(user_id: int, session: AsyncSession = Depends(get_db)):
+    user_repo = UserRepository(session)
     user_service = UserService(user_repo)
     try:
         return await user_service.get_user_by_id(user_id)
@@ -58,8 +58,8 @@ async def get_user_by_id(user_id: int, db: AsyncSession = Depends(get_db)):
         raise InternalServerErrorException("Failed to get user "+str(e))
     
 @user_router.get("/", response_model=list[UserResponseSchema])
-async def get_all_users(skip: int = 0, limit: int = 10, db: AsyncSession = Depends(get_db)):
-    user_repo = UserRepository(db)
+async def get_all_users(skip: int = 0, limit: int = 10, session: AsyncSession = Depends(get_db)):
+    user_repo = UserRepository(session)
     user_service = UserService(user_repo)
     try:
         return await user_service.get_all_users(skip, limit)
@@ -69,8 +69,8 @@ async def get_all_users(skip: int = 0, limit: int = 10, db: AsyncSession = Depen
         raise InternalServerErrorException("Failed to get users "+str(e))
 
 @user_router.put("/{user_id}", response_model=UserResponseSchema)
-async def update_user(user_id: int, user: UserUpdateSchema, db: AsyncSession = Depends(get_db)):
-    user_repo = UserRepository(db)
+async def update_user(user_id: int, user: UserUpdateSchema, session: AsyncSession = Depends(get_db)):
+    user_repo = UserRepository(session)
     user_service = UserService(user_repo)
     try:
         return await user_service.update_user(user_id, user.dict())
@@ -80,8 +80,8 @@ async def update_user(user_id: int, user: UserUpdateSchema, db: AsyncSession = D
         raise InternalServerErrorException("Failed to update user "+str(e))
 
 @user_router.delete("/{user_id}")
-async def delete_user(user_id: int, db: AsyncSession = Depends(get_db)):
-    user_repo = UserRepository(db)
+async def delete_user(user_id: int, session: AsyncSession = Depends(get_db)):
+    user_repo = UserRepository(session)
     user_service = UserService(user_repo)
     try:
         return await user_service.delete_user(user_id)

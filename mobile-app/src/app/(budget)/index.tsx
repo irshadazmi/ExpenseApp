@@ -5,6 +5,7 @@ import {
   FlatList,
   Pressable,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import styles from "@/styles/styles";
 import { budgetService } from "@/services/budget-service";
@@ -12,20 +13,29 @@ import { COLORS } from "@/constants/COLORS";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { BudgetResponse } from "@/types/budget";
 import { RelativePathString, useRouter } from "expo-router";
+import { useAuth } from "@/contexts/auth-context";
 
 const Budgets = () => {
   const [budgets, setBudgets] = useState<BudgetResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { user } = useAuth();
+
+  const isSuperAdmin = user?.role_id === 1;
+	const currentUserId = user?.id;
 
   const loadBudgets = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const res = await budgetService.getAll(0, 100);
-      console.log(res);
-      setBudgets(res);
-    } catch (err) {
-      console.log("Failed to load budgets", err);
+      const data = isSuperAdmin
+        ? await budgetService.getAll()
+        : await budgetService.getByUser(currentUserId!);
+
+      console.log(data);
+      setBudgets(data);
+    } catch (error) {
+      console.error("Failed to load budgets", error);
+      Alert.alert("Error", "Failed to load budgets. Please try again.");
     } finally {
       setLoading(false);
     }

@@ -55,6 +55,7 @@ const Login = () => {
           width: "40%",
           height: "25%",
           alignSelf: "center",
+          marginTop: -200,
           marginBottom: 0,
         }}
       />

@@ -5,6 +5,7 @@ import {
   FlatList,
   Pressable,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import styles from "@/styles/styles";
 import { accountService } from "@/services/account-service";
@@ -12,20 +13,29 @@ import { COLORS } from "@/constants/COLORS";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { AccountResponse } from "@/types/account";
 import { RelativePathString, useRouter } from "expo-router";
+import { useAuth } from "@/contexts/auth-context";
 
 const Accounts = () => {
   const [accounts, setAccounts] = useState<AccountResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { user } = useAuth();
+
+  const isSuperAdmin = user?.role_id === 1;
+  const currentUserId = user?.id;
 
   const loadAccounts = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const res = await accountService.getAll(0, 100);
-      console.log(res);
-      setAccounts(res);
-    } catch (err) {
-      console.log("Failed to load accounts", err);
+      const data = isSuperAdmin
+        ? await accountService.getAll()
+        : await accountService.getByUser(currentUserId!);
+
+      console.log(data);
+      setAccounts(data);
+    } catch (error) {
+      console.error("Failed to load accounts", error);
+      Alert.alert("Error", "Failed to load accounts. Please try again.");
     } finally {
       setLoading(false);
     }
