@@ -1,3 +1,4 @@
+// src/components/tab-bar.tsx
 import { View, Pressable, Text } from 'react-native';
 import { useRouter, usePathname, Route } from 'expo-router';
 import { TAB_ITEMS } from '@/constants/TAB_ITEMS';

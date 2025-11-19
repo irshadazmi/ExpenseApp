@@ -11,13 +11,12 @@ import { categoryService } from "@/services/category-service";
 import { COLORS } from "@/constants/COLORS";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { CategoryResponse } from "@/types/category";
-import { RelativePathString, useNavigation, useRouter } from "expo-router";
+import { RelativePathString, useRouter } from "expo-router";
 
 const Categories = () => {
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const navigation = useNavigation();
 
   const loadCategories = async () => {
     try {
@@ -32,22 +31,18 @@ const Categories = () => {
   };
 
   useEffect(() => {
-    navigation.setOptions({
-      title: 'Categories',
-    });
-
     loadCategories();
-  }, [navigation]);
+  }, []);
 
   // Go to Add Category page (correct route path without parentheses)
   const handleAddCategory = () => {
-    router.push('/(categories)/add' as RelativePathString);
+    router.push('/(category)/add' as RelativePathString);
   };
 
   // Go to Edit/View Category page (correct route path without parentheses)
   const handleEdit = (cat: CategoryResponse) => {
     if (cat.id !== undefined) {
-      router.push(`/(categories)/${cat.id}` as RelativePathString);
+      router.push(`/(category)/${cat.id}` as RelativePathString);
     } else {
       console.error("Category ID is undefined");
     }

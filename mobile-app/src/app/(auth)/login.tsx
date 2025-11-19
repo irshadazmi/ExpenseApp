@@ -38,7 +38,7 @@ const Login = () => {
     setStatus(null);
     try {
       await authLogin({ email: values.email, password: values.password });
-      router.replace("/(drawer)/(tabs)");
+      router.replace("/dashboard");
     } catch (error) {
       console.error(error);
       setStatus("Invalid credentials or network error.");

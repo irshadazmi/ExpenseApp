@@ -11,13 +11,12 @@ import { accountService } from "@/services/account-service";
 import { COLORS } from "@/constants/COLORS";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { AccountResponse } from "@/types/account";
-import { RelativePathString, useNavigation, useRouter } from "expo-router";
+import { RelativePathString, useRouter } from "expo-router";
 
 const Accounts = () => {
   const [accounts, setAccounts] = useState<AccountResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const navigation = useNavigation();
 
   const loadAccounts = async () => {
     try {
@@ -34,7 +33,7 @@ const Accounts = () => {
 
   useEffect(() => {
     loadAccounts();
-  }, [navigation]);
+  }, []);
 
   // Go to Add Account page (correct route path without parentheses)
   const handleAddAccount = () => {

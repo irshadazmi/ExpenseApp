@@ -1,3 +1,4 @@
+// src/components/custom-drawer.tsx
 import { View, Text, Pressable, Modal } from 'react-native';
 import { DRAWER_ITEMS } from '@/constants/DRAWER_ITEMS';
 import { Route, useRouter } from 'expo-router';

@@ -1,7 +1,5 @@
 import { View, Text } from "react-native";
 import styles from "@/styles/styles";
-import { useNavigation } from "expo-router";
-import { useEffect } from "react";
 import AccountForm from "@/components/account-form";
 
 const AddAccount = () => {

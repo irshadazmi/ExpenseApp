@@ -11,13 +11,12 @@ import { budgetService } from "@/services/budget-service";
 import { COLORS } from "@/constants/COLORS";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { BudgetResponse } from "@/types/budget";
-import { RelativePathString, useNavigation, useRouter } from "expo-router";
+import { RelativePathString, useRouter } from "expo-router";
 
 const Budgets = () => {
   const [budgets, setBudgets] = useState<BudgetResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const navigation = useNavigation();
 
   const loadBudgets = async () => {
     try {
@@ -33,22 +32,18 @@ const Budgets = () => {
   };
 
   useEffect(() => {
-    navigation.setOptions({
-      title: 'Budgets',
-    });
-
     loadBudgets();
-  }, [navigation]);
+  }, []);
 
   // Go to Add Budget page (correct route path without parentheses)
   const handleAddBudget = () => {
-    router.push('/(budgets)/add' as RelativePathString);
+    router.push('/(budget)/add' as RelativePathString);
   };
 
   // Go to Edit/View Budget page (correct route path without parentheses)
   const handleEdit = (acc: BudgetResponse) => {
     if (acc.id !== undefined) {
-      router.push(`/(budgets)/${acc.id}` as RelativePathString);
+      router.push(`/(budget)/${acc.id}` as RelativePathString);
     } else {
       console.error("Budget ID is undefined");
     }

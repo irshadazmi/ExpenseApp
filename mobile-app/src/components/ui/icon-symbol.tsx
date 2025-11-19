@@ -15,36 +15,89 @@ type IconSymbolName = keyof typeof MAPPING;
  * - see SF Symbols in the [SF Symbols](https://developer.apple.com/sf-symbols/) app.
  */
 const MAPPING = {
+  // ✅ Navigation / UI
   'house.fill': 'home',
+  'chevron.right': 'chevron-right',
+  'chevron.left.forwardslash.chevron.right': 'code',
+  'ellipsis.circle.fill': 'more-horiz',
+  'arrow.uturn.left': 'undo',
+  'arrow.uturn.right': 'redo',
+
+  // ✅ Communication / Support
   'paperplane.fill': 'send',
+  'envelope.badge.fill': 'feedback',
+  'bubble.left.fill': 'chat',
+  'phone.fill': 'phone',
+  'questionmark.circle.fill': 'help',
+
+  // ✅ Search / Discovery
   'magnifyingglass': 'search',
-  'chart.bar.fill': 'bar-chart',
-  'wallet.pass.fill': 'account-balance-wallet',
-  'gearshape.fill': 'settings',
-  'person.crop.circle': 'account-circle',
-  'plus.circle.fill': 'add-circle',
-  'tray.full.fill': 'inbox',
-  'bell.fill': 'notifications',
-  'bookmark.fill': 'bookmark',
-  'heart.fill': 'favorite',
-  'star.fill': 'star',
-  'folder.fill': 'folder',
-  'tag.fill': 'label',
-  'cart.fill': 'shopping-cart',
-  'creditcard.fill': 'credit-card',
+
+  // ✅ Time / Scheduling
   'calendar': 'calendar-today',
   'clock.fill': 'access-time',
+
+  // ✅ Finance / Transactions
+  'wallet.pass.fill': 'account-balance-wallet',
+  'banknote.fill': 'account-balance',
+  'dollarsign.circle.fill': 'attach-money',
+  'creditcard.fill': 'credit-card',
+  'chart.bar.fill': 'bar-chart',
+  'chart.pie.fill': 'pie-chart',
+
+  // ✅ Files / Content
+  'folder.fill': 'folder',
+  'tag.fill': 'label',
+  'bookmark.fill': 'bookmark',
+  'tray.full.fill': 'inbox',
   'paperclip': 'attach-file',
   'link': 'link',
-  'location.fill': 'location-on',
+
+  // ✅ Media / Devices
   'camera.fill': 'photo-camera',
   'mic.fill': 'mic',
   'speaker.wave.2.fill': 'volume-up',
   'wifi': 'wifi',
   'battery.100': 'battery-full',
-  'chevron.left.forwardslash.chevron.right': 'code',
-  'chevron.right': 'chevron-right',
-  'envelope.badge.fill': 'feedback',
+
+  // ✅ Shopping / Commerce
+  'cart.fill': 'shopping-cart',
+
+  // ✅ Favorites / Ratings
+  'heart.fill': 'favorite',
+  'star.fill': 'star',
+
+  // ✅ About / Info
+  'info.circle': 'info', // About or app information
+
+  // ✅ Notifications
+  'bell.fill': 'notifications',
+
+  // ✅ Actions / Utilities
+  'plus.circle.fill': 'add-circle',
+  'slider.horizontal.3': 'tune',
+  'wrench.fill': 'build',
+
+  // ✅ Location
+  'location.fill': 'location-on',
+
+  // ✅ Account / Profile
+  'person.crop.circle': 'account-circle',
+  'person.crop.circle.fill': 'account-circle',
+  'person.fill': 'person',
+  'person.2.fill': 'group',
+
+  // ✅ Security / Access
+  'lock.fill': 'lock',
+  'lock.open.fill': 'lock-open',
+  'key.fill': 'vpn-key',
+
+  // ✅ Settings / System
+  'gearshape.fill': 'settings',
+
+  // ✅ Logout / Exit
+  'arrow.right.square.fill': 'logout',
+  'rectangle.portrait.and.arrow.right': 'exit-to-app',
 } as IconMapping;
 
 /**
@@ -66,4 +119,5 @@ export function IconSymbol({
 }) {
   return <MaterialIcons color={color} size={size} name={MAPPING[name]} style={style} />;
 }
+
 

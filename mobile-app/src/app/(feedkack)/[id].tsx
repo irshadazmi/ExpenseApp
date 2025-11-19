@@ -1,17 +1,10 @@
 import { View, Text } from "react-native";
 import styles from "@/styles/styles";
-import { useEffect } from "react";
-import { useLocalSearchParams, useNavigation } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import FeedbackForm from "@/components/feedback-form";
 
 const EditFeedback = () => {
-	const navigation = useNavigation();
 	const { id } = useLocalSearchParams();
-
-	useEffect(() => {
-		navigation.setOptions({ title: "Edit Feedback" });
-	}, [navigation]);
-
 	// ExpenseForm expects a number for id
 	const feedbackId = id ? Number(id) : undefined;
 

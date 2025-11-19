@@ -1,51 +1,121 @@
-import { useState } from 'react';
-import { Slot } from 'expo-router';
-import { View, Pressable, Text } from 'react-native';
-import TabBar from '@/components/tab_bar';
-import CustomDrawer from '@/components/custom_drawer';
+import { useEffect, useState } from 'react';
+import { router, Slot, Stack, usePathname } from 'expo-router';
+import { View, Pressable, Text, useColorScheme, StatusBar } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import TabBar from '@/components/tab-bar';
+import CustomDrawer from '@/components/custom-drawer';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { COLORS } from '@/constants/COLORS';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { AuthProvider, useAuth } from '@/contexts/auth-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Loading from './(auth)/loading';
+import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { DRAWER_ITEMS } from '@/constants/DRAWER_ITEMS';
 
-export default function Layout() {
+export default function RootLayout() {
+  return (
+    <AuthProvider>
+      <RootLayoutContent />
+    </AuthProvider>
+  );
+}
+
+function RootLayoutContent() {
+  const colorScheme = useColorScheme();
+  const { user, loading } = useAuth();
+  const pathname = usePathname();
+
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [title, setTitle] = useState('DASHBOARD');
 
+  const [introChecked, setIntroChecked] = useState(false);
+  const [hasSeenIntro, setHasSeenIntro] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const flag = await AsyncStorage.getItem('hasSeenIntro');
+      setHasSeenIntro(flag === 'true');
+      setIntroChecked(true);
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (!introChecked) return;
+    if (hasSeenIntro === false) {
+      router.replace('/intro/first_screen');
+    }
+  }, [introChecked, hasSeenIntro]);
+
+  useEffect(() => {
+    const folder = pathname.split('/')[1] || '(dashboard)';
+    const matched = DRAWER_ITEMS.find((item) => item.name === folder);
+    if (matched) setTitle(matched.title.toUpperCase());
+  }, [pathname]);
+
+  if (loading || !introChecked) {
+    return <Loading />;
+  }
+
+  if (!user) {
+    return (
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(auth)" />
+        </Stack>
+        <StatusBar
+          barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'}
+          backgroundColor={colorScheme === 'dark' ? '#151718' : '#FFFFFF'}
+        />
+      </ThemeProvider>
+    );
+  }
+
   return (
-    <View style={{ flex: 1 }}>
-      {/* Header */}
-      <View
-        style={{
-          height: 56,
-          backgroundColor: COLORS.primary,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingHorizontal: 16,
-        }}
-      >
-        <Pressable onPress={() => setDrawerVisible(true)}>
-          <MaterialIcons name="menu" size={24} color={COLORS.white} />
-        </Pressable>
-        <Text style={{ color: COLORS.white, fontSize: 18, fontWeight: '700' }}>
-          {title}
-        </Text>
-        <View style={{ width: 24 }} />
-      </View>
+    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.white }}>
+        {/* Header */}
+        <View
+          style={{
+            height: 72,
+            backgroundColor: COLORS.primary,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingHorizontal: 16,
+          }}
+        >
+          <Pressable onPress={() => setDrawerVisible(true)} style={{ padding: 8 }}>
+            <MaterialIcons name="menu" size={28} color={COLORS.white} />
+          </Pressable>
+          <Text style={{ color: COLORS.white, fontSize: 18, fontWeight: '700' }}>
+            {title}
+          </Text>
+          <Pressable onPress={() => router.replace('/logout')} style={{ padding: 8 }}>
+            <IconSymbol name="arrow.right.square.fill" color={COLORS.white} size={28} />
+          </Pressable>
+        </View>
 
-      {/* Page Content */}
-      <View style={{ flex: 1 }}>
-        <Slot />
-      </View>
+        {/* Page Content */}
+        <View style={{ flex: 1 }}>
+          <Slot />
+        </View>
 
-      {/* Persistent Tab Bar */}
-      <TabBar />
+        {/* Tab Bar */}
+        <TabBar />
 
-      {/* Drawer Overlay */}
-      <CustomDrawer
-        visible={drawerVisible}
-        onClose={() => setDrawerVisible(false)}
-        setTitle={setTitle}
+        {/* Drawer */}
+        <CustomDrawer
+          visible={drawerVisible}
+          onClose={() => setDrawerVisible(false)}
+          setTitle={setTitle}
+        />
+      </SafeAreaView>
+
+      <StatusBar
+        barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'}
+        backgroundColor={colorScheme === 'dark' ? '#151718' : '#FFFFFF'}
       />
-    </View>
+    </ThemeProvider>
   );
 }

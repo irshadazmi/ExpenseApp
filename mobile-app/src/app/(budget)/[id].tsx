@@ -1,17 +1,10 @@
 import { View, Text } from "react-native";
 import styles from "@/styles/styles";
 import BudgetForm from "@/components/budget-form";
-import { useLocalSearchParams, useNavigation } from "expo-router";
-import { useEffect } from "react";
+import { useLocalSearchParams } from "expo-router";
 
 const EditBudget = () => {
-	const navigation = useNavigation();
   const { id } = useLocalSearchParams();
-
-  useEffect(() => {
-    navigation.setOptions({ title: "Edit Budget" });
-  }, [navigation]);
-
   // BudgetForm expects a number for id
   const categoryId = id ? Number(id) : undefined;
 

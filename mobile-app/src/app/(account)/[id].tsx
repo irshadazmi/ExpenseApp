@@ -1,8 +1,7 @@
 import { View, Text } from "react-native";
 import styles from "@/styles/styles";
 import AccountForm from "@/components/account-form";
-import { useLocalSearchParams, useNavigation } from "expo-router";
-import { useEffect } from "react";
+import { useLocalSearchParams } from "expo-router";
 
 const EditAccount = () => {
   const { id } = useLocalSearchParams();

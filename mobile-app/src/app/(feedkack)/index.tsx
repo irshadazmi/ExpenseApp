@@ -10,7 +10,7 @@ import {
 	Pressable,
 	Alert,
 } from "react-native";
-import { RelativePathString, useNavigation, useRouter } from "expo-router";
+import { RelativePathString, useRouter } from "expo-router";
 import { useAuth } from "@/contexts/auth-context";
 import styles from "@/styles/styles";
 import { COLORS } from "@/constants/COLORS";
@@ -20,7 +20,6 @@ import { FEEDBACK_TYPES, STATUS_CODES } from "@/constants/CONSTANTS";
 
 const Feedbacks = () => {
 	const router = useRouter();
-	const navigation = useNavigation();
 	const { user } = useAuth();
 	const [loading, setLoading] = useState(false);
 	const [feedbacks, setFeedbacks] = useState<FeedbackResponse[]>([]);
@@ -33,10 +32,6 @@ const Feedbacks = () => {
 
 	// Load feedbacks on mount & when user/role changes
 	useEffect(() => {
-		navigation.setOptions({
-			title: 'Feedback',
-		});
-
 		const fetchFeedbacks = async () => {
 			if (!user) return;
 
@@ -79,7 +74,7 @@ const Feedbacks = () => {
 
 	const handleEdit = (id: number) => {
 		if (id !== undefined) {
-			router.push(`/(feedbacks)/${id}` as RelativePathString);
+			router.push(`/(feedback)/${id}` as RelativePathString);
 		} else {
 			console.error("Feedback ID is undefined");
 		}
@@ -89,7 +84,7 @@ const Feedbacks = () => {
 		// Use the same detail page for reply; it can show reply UI for SuperAdmin
 		if (id !== undefined) {
 			router.push({
-			pathname: `/(feedbacks)/${id}` as RelativePathString,
+			pathname: `/(feedback)/${id}` as RelativePathString,
 			params: { id: String(id), mode: "reply" },
 		});
 		} else {

@@ -11,13 +11,12 @@ import { expenseService } from "@/services/expense-service";
 import { COLORS } from "@/constants/COLORS";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ExpenseResponse } from "@/types/expense";
-import { RelativePathString, useNavigation, useRouter } from "expo-router";
+import { RelativePathString, useRouter } from "expo-router";
 
 const Expenses = () => {
   const [categories, setExpenses] = useState<ExpenseResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const navigation = useNavigation();
 
   const loadExpenses = async () => {
     console.log("Loading expenses");
@@ -34,22 +33,18 @@ const Expenses = () => {
   };
 
   useEffect(() => {
-    navigation.setOptions({
-      title: 'Expenses',
-    });
-
     loadExpenses();
-  }, [navigation]);
+  }, []);
 
   // Go to Add Expense page (correct route path without parentheses)
   const handleAddExpense = () => {
-    router.push('/(expenses)/add' as RelativePathString);
+    router.push('/(expense)/add' as RelativePathString);
   };
 
   // Go to Edit/View Expense page (correct route path without parentheses)
   const handleEdit = (exp: ExpenseResponse) => {
     if (exp.id !== undefined) {
-      router.push(`/(expenses)/${exp.id}` as RelativePathString);
+      router.push(`/(expense)/${exp.id}` as RelativePathString);
     } else {
       console.error("Expense ID is undefined");
     }
