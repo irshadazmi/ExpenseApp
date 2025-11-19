@@ -1,0 +1,69 @@
+// components/ui/icon-symbol.tsx
+// Fallback for using MaterialIcons on Android and web.
+
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { SymbolWeight, SymbolViewProps } from 'expo-symbols';
+import { ComponentProps } from 'react';
+import { OpaqueColorValue, type StyleProp, type TextStyle } from 'react-native';
+
+type IconMapping = Record<SymbolViewProps['name'], ComponentProps<typeof MaterialIcons>['name']>;
+type IconSymbolName = keyof typeof MAPPING;
+
+/**
+ * Add your SF Symbols to Material Icons mappings here.
+ * - see Material Icons in the [Icons Directory](https://icons.expo.fyi).
+ * - see SF Symbols in the [SF Symbols](https://developer.apple.com/sf-symbols/) app.
+ */
+const MAPPING = {
+  'house.fill': 'home',
+  'paperplane.fill': 'send',
+  'magnifyingglass': 'search',
+  'chart.bar.fill': 'bar-chart',
+  'wallet.pass.fill': 'account-balance-wallet',
+  'gearshape.fill': 'settings',
+  'person.crop.circle': 'account-circle',
+  'plus.circle.fill': 'add-circle',
+  'tray.full.fill': 'inbox',
+  'bell.fill': 'notifications',
+  'bookmark.fill': 'bookmark',
+  'heart.fill': 'favorite',
+  'star.fill': 'star',
+  'folder.fill': 'folder',
+  'tag.fill': 'label',
+  'cart.fill': 'shopping-cart',
+  'creditcard.fill': 'credit-card',
+  'calendar': 'calendar-today',
+  'clock.fill': 'access-time',
+  'paperclip': 'attach-file',
+  'link': 'link',
+  'location.fill': 'location-on',
+  'camera.fill': 'photo-camera',
+  'mic.fill': 'mic',
+  'speaker.wave.2.fill': 'volume-up',
+  'wifi': 'wifi',
+  'battery.100': 'battery-full',
+  'chevron.left.forwardslash.chevron.right': 'code',
+  'chevron.right': 'chevron-right',
+  'envelope.badge.fill': 'feedback',
+} as IconMapping;
+
+/**
+ * An icon component that uses native SF Symbols on iOS, and Material Icons on Android and web.
+ * This ensures a consistent look across platforms, and optimal resource usage.
+ * Icon `name`s are based on SF Symbols and require manual mapping to Material Icons.
+ */
+export function IconSymbol({
+  name,
+  size = 24,
+  color,
+  style,
+}: {
+  name: IconSymbolName;
+  size?: number;
+  color: string | OpaqueColorValue;
+  style?: StyleProp<TextStyle>;
+  weight?: SymbolWeight;
+}) {
+  return <MaterialIcons color={color} size={size} name={MAPPING[name]} style={style} />;
+}
+

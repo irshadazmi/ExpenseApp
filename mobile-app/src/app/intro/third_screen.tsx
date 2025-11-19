@@ -1,0 +1,15 @@
+import IntroTemplate from "./intro-template";
+
+const ThirdScreen = () => {
+  return (
+    <IntroTemplate
+      image={require('@/assets/images/intro3.png')}
+      title="Forecast Future Expenses"
+      description="Plan ahead with predictions based on your spending history."
+      next="/intro/fourth_screen"
+    />
+  );
+};
+
+export default ThirdScreen;
+

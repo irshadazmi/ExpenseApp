@@ -1,0 +1,14 @@
+import IntroTemplate from "./intro-template";
+
+const SecondScreen = () => {
+  return (
+    <IntroTemplate
+      image={require('@/assets/images/intro2.png')}
+      title="Analyze Spending Patterns"
+      description="Visualize your expenses with detailed charts and reports."
+      next="/intro/third_screen"
+    />
+  );
+};
+
+export default SecondScreen;
