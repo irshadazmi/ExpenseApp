@@ -3,7 +3,14 @@ from jose import jwt, JWTError
 from app.repositories.auth_repository import AuthRepository
 from app.core.security import get_password_hash, verify_password
 from app.core.jwt import create_access_token
-from app.schemas.auth_schema import AuthResponseSchema, AuthRegisterSchema, AuthLoginSchema, AuthResponseSchema, AuthResultSchema, Token
+from app.schemas.auth_schema import (
+    AuthResponseSchema,
+    AuthRegisterSchema,
+    AuthLoginSchema,
+    AuthResponseSchema,
+    AuthResultSchema,
+    Token,
+)
 from app.utils.exceptions import (
     AuthenticationFailedException,
     EmailOrPhoneAlreadyExistsException,
@@ -13,14 +20,17 @@ from app.utils.exceptions import (
 )
 from app.core.config import settings
 
+
 class AuthService:
     def __init__(self, auth_repository: AuthRepository):
         self.auth_repository = auth_repository
 
     async def get_current_user_from_token(self, token: str) -> AuthResultSchema:
         try:
-            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-            email = payload.get('sub')
+            payload = jwt.decode(
+                token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+            )
+            email = payload.get("sub")
             if not email:
                 return None
         except JWTError:
@@ -64,6 +74,7 @@ class AuthService:
         # Build user and token schemas explicitly
         user_schema = AuthResponseSchema(
             id=new_user.id,
+            full_name=new_user.full_name,
             email=new_user.email,
             phone=new_user.phone,
             role_id=new_user.role_id,
@@ -81,7 +92,9 @@ class AuthService:
 
     async def login_user(self, credentials: AuthLoginSchema) -> AuthResultSchema:
         existing_user = await self.auth_repository.get_user_by_email(credentials.email)
-        if not existing_user or not verify_password(credentials.password, existing_user.password):
+        if not existing_user or not verify_password(
+            credentials.password, existing_user.password
+        ):
             raise AuthenticationFailedException("Invalid email or password")
 
         token = create_access_token({"sub": existing_user.email})
@@ -89,6 +102,7 @@ class AuthService:
         # Build objects with only the expected fields
         user_schema = AuthResponseSchema(
             id=existing_user.id,
+            full_name=existing_user.full_name,
             email=existing_user.email,
             phone=existing_user.phone,
             role_id=existing_user.role_id,

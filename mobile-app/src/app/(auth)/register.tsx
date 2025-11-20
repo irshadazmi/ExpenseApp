@@ -1,5 +1,4 @@
 // src/app/(auth)/register.tsx
-import React from "react";
 import {
   View,
   Text,
@@ -34,6 +33,7 @@ const Register = () => {
   const router = useRouter();
 
   const initialValues: AuthRegisterSchema = {
+    full_name: "",
     email: "",
     password: "",
     confirm_password: "",
@@ -68,7 +68,7 @@ const Register = () => {
           width: "40%",
           height: "25%",
           alignSelf: "center",
-          marginTop: -200,
+          marginTop: -300,
           marginBottom: 0,
         }}
       />
@@ -94,7 +94,6 @@ const Register = () => {
             {status && (
               <Text style={[styles.errorText, { marginBottom: 8 }]}>{status}</Text>
             )}
-
             {/* Email */}
             <TextInput
               style={styles.textInput}
@@ -106,6 +105,18 @@ const Register = () => {
             />
             {touched.email && errors.email && (
               <Text style={styles.errorText}>{errors.email}</Text>
+            )}
+
+            {/* Full Name */}
+            <TextInput
+              style={styles.textInput}
+              placeholder="Full Name"
+              value={values.email}
+              onChangeText={handleChange("full_name")}
+              autoCapitalize="none"
+            />
+            {touched.full_name && errors.full_name && (
+              <Text style={styles.errorText}>{errors.full_name}</Text>
             )}
 
             {/* Password */}

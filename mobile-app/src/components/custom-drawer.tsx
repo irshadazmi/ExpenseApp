@@ -19,7 +19,7 @@ export default function CustomDrawer({ visible, onClose, setTitle }: Props) {
 
   const segments = useSegments(); // array of path segments
   // Derive a "currentDrawerKey"
-  let currentDrawerKey: string = segments[0] || "(dashboard)"; // default to "dashboard";
+  let currentDrawerKey: string = segments[0] || "dashboard"; // default to "dashboard";
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
@@ -28,6 +28,9 @@ export default function CustomDrawer({ visible, onClose, setTitle }: Props) {
           {DRAWER_ITEMS.map((item) => {
             const routePath = `/${item.name}`;
             const isActive = currentDrawerKey === item.name;
+
+            // console.log("currentDrawerKey", currentDrawerKey);
+            // console.log("item.name", item.name);
 
             return (
               <Pressable

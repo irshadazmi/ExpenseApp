@@ -30,6 +30,12 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     textAlign: "center",
   },
+    description: {
+    fontSize: 13,
+    marginBottom: 8,
+    color: COLORS.text,
+    textAlign: "center",
+  },
   text: {
     fontSize: 16,
     color: COLORS.textSecondary,
@@ -437,11 +443,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginBottom: 4,
     color: COLORS.textSecondary,
-  },
-  description: {
-    fontSize: 13,
-    marginBottom: 8,
-    color: COLORS.text,
   },
   metaRow: {
     flexDirection: "row",

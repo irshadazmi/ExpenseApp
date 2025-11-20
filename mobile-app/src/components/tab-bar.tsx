@@ -25,7 +25,7 @@ export default function TabBar() {
   //   currentTabKey = 'dashboard';
   // }
 
-  let currentTabKey: string = segments[0] || "(dashboard)"; // default to "dashboard";
+  let currentTabKey: string = segments[0] || "dashboard"; // default to "dashboard";
 
   return (
     <LinearGradient
@@ -38,6 +38,9 @@ export default function TabBar() {
           const routePath = `/${item.name}`;
           const isActive = currentTabKey === item.name;
           const badgeCount = item.badgeCount ?? 0;
+
+          // console.log("currentDrawerKey", currentTabKey);
+          // console.log("item.name", item.name);
 
           return (
             <Pressable

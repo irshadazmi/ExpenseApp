@@ -1,3 +1,4 @@
+// src/app/_layout.tsx (or wherever RootLayout is)
 import { useEffect, useState } from 'react';
 import { router, Slot, Stack, usePathname } from 'expo-router';
 import { View, Pressable, Text, useColorScheme, StatusBar } from 'react-native';
@@ -12,6 +13,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Loading from './(auth)/loading';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { DRAWER_ITEMS } from '@/constants/DRAWER_ITEMS';
+import { PROTECTED_ROUTES } from '@/constants/PROTECTED_ROUTES';
 
 export default function RootLayout() {
   return (
@@ -32,6 +34,7 @@ function RootLayoutContent() {
   const [introChecked, setIntroChecked] = useState(false);
   const [hasSeenIntro, setHasSeenIntro] = useState(false);
 
+  // Intro flag
   useEffect(() => {
     (async () => {
       const flag = await AsyncStorage.getItem('hasSeenIntro');
@@ -47,8 +50,22 @@ function RootLayoutContent() {
     }
   }, [introChecked, hasSeenIntro]);
 
+  // 🔒 Route guard
   useEffect(() => {
-    const folder = pathname.split('/')[1] || '(dashboard)';
+    if (loading) return;
+
+    // If not logged in and on a protected route → send to login
+    if (!user) {
+      if (PROTECTED_ROUTES.some((prefix) => pathname.startsWith(prefix))) {
+        router.replace('/(auth)/login');
+      }
+      return;
+    }
+  }, [pathname, user, loading]);
+
+  // Header title
+  useEffect(() => {
+    const folder = pathname.split('/')[1] || 'dashboard';
     const matched = DRAWER_ITEMS.find((item) => item.name === folder);
     if (matched) setTitle(matched.title.toUpperCase());
   }, [pathname]);
@@ -57,6 +74,7 @@ function RootLayoutContent() {
     return <Loading />;
   }
 
+  // Public (auth) stack
   if (!user) {
     return (
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
@@ -71,6 +89,7 @@ function RootLayoutContent() {
     );
   }
 
+  // Private (logged in) area
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.white }}>

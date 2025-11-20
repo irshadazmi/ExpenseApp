@@ -4,6 +4,7 @@ from app.utils.exceptions import PasswordMismatchException
 from datetime import datetime 
 
 class AuthBaseSchema(BaseModel):
+    full_name: str
     email: EmailStr
     phone: str
     role_id: int = 3
@@ -25,6 +26,7 @@ class AuthRegisterSchema(AuthBaseSchema):
         "from_attributes": True,
         "json_schema_extra": {
             "example": {
+                "full_name": "John Doe",
                 "email": "jdoe@example.com",   
                 "password": "password123",
                 "confirm_password": "password123",
@@ -50,6 +52,7 @@ class AuthUpdateSchema(AuthBaseSchema):
         "from_attributes": True,
         "json_schema_extra": {
             "example": {
+                "full_name": "John Doe",
                 "email": "jdoe@example.com",   
                 "password": "password123",
                 "confirm_password": "password123",
@@ -66,6 +69,7 @@ class AuthLoginSchema(BaseModel):
 
 class AuthResponseSchema(BaseModel):
     id: int
+    full_name: str
     email: str
     phone: str
     role_id: int

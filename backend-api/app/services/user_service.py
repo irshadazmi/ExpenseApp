@@ -1,6 +1,6 @@
 from app.repositories.user_repository import UserRepository
 from app.core.security import get_password_hash
-from app.schemas.user_schema import UserCreateSchema
+from app.schemas.user_schema import UserCreateSchema, UserUpdateSchema
 
 class UserService:
     def __init__(self, user_repository: UserRepository):
@@ -23,7 +23,7 @@ class UserService:
         user_dict["password"] = get_password_hash(user_dict["password"])
         return await self.user_repository.create_user(user_dict)
 
-    async def update_user(self, user_id: int, user_data: dict):
+    async def update_user(self, user_id: int, user_data: UserUpdateSchema):
         # user_data = user_data(exclude={'confirm_password'})
         user_data["password"] = get_password_hash(user_data["password"])
         return await self.user_repository.update_user(user_id, user_data)

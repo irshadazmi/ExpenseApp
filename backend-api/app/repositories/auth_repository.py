@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy import select, and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.auth_model import AuthModel
-from app.schemas.auth_schema import AuthRegisterSchema, AuthUpdateSchema
+from app.schemas.auth_schema import AuthRegisterSchema
 from app.utils.exceptions import (
     EmailOrPhoneAlreadyExistsException,
     FailedToCreateException,
@@ -53,6 +53,13 @@ class AuthRepository:
         result = await self.db.execute(query)
         return result.scalars().first()
 
+    async def get_user_by_id(self, user_id: int):
+        result = await self.db.execute(select(AuthModel).where(AuthModel.id == user_id))
+        user = result.scalars().first()
+        if not user:
+            raise RecordNotFoundException("User not found")
+        return user
+
     async def register_user(self, user_data: AuthRegisterSchema) -> AuthModel:
         if hasattr(user_data, "dict"):
             db_user = AuthModel(**user_data.dict(exclude_unset=True))
@@ -78,11 +85,11 @@ class AuthRepository:
             await self.db.rollback()
             raise FailedToCreateException(detail=str(e))
 
-    async def update_auth(self, user_id: int, user_data: AuthUpdateSchema):
+    async def update_user(self, user_id: int, user_data: dict):
         result = await self.db.execute(select(AuthModel).where(AuthModel.id == user_id))
-        user = result.scalars().first()
+        existing_user = result.scalars().first()
 
-        if not user:
+        if not existing_user:
             raise RecordNotFoundException("User not found")
 
         # Check for duplicate email or phone
@@ -96,15 +103,15 @@ class AuthRepository:
                 "Email or phone already exists. Please use a different email or phone"
             )
 
-        update_data = user_data.dict(exclude_unset=True)
-        for key, value in update_data.items():
-            setattr(user, key, value)
+        # update_data = user_data.dict(exclude_unset=True)
+        for key, value in user_data.items():
+            setattr(existing_user, key, value)
 
         try:
-            user.updated_at = datetime.utcnow()
+            existing_user.updated_at = datetime.utcnow()
             await self.db.commit()
-            await self.db.refresh(user)
-            return user
+            await self.db.refresh(existing_user)
+            return existing_user
         except Exception as e:
             await self.db.rollback()
             raise FailedToUpdateException(detail=str(e))

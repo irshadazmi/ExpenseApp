@@ -21,7 +21,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
     """
     async def dispatch(self, request: Request, call_next):
         path = request.scope["path"]
-        print(path)
+        # print(path)
         
         # Allow public paths without authentication
         if path in public_paths:
