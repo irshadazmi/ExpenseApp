@@ -107,6 +107,22 @@ const Login = () => {
               <Text style={styles.errorText}>{errors.password}</Text>
             )}
 
+            {/* Forgot password */}
+            <Pressable
+              onPress={() => router.push("/(auth)/forgot-password")}
+              style={{ alignSelf: "flex-end", marginTop: 4, marginBottom: 12 }}
+            >
+              <Text
+                style={{
+                  fontSize: 13,
+                  color: COLORS.primary,
+                  textDecorationLine: "underline",
+                }}
+              >
+                Forgot password?
+              </Text>
+            </Pressable>
+
             {/* Button / loader */}
             {loading || isSubmitting ? (
               <ActivityIndicator size="small" color={COLORS.primary} />

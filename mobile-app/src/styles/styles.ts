@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F7F3FF",
   },
   listRowAlt: {
-    backgroundColor: COLORS.lightPurple,
+    backgroundColor: COLORS.lightGray,
   },
 
   // ========= Radio Buttons =========

@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 from sqlalchemy import select
-from app.schemas.account_schema import AccountResponseSchema
+from app.schemas.account_schema import AccountCreateSchema, AccountUpdateSchema
 from app.models.account_model import AccountModel
 from app.utils.exceptions import (
     FailedToCreateException,
@@ -37,7 +37,7 @@ class AccountRepository:
             raise RecordNotFoundException("Account not found")
         return account
 
-    async def create_account(self, account: AccountResponseSchema) -> AccountModel:
+    async def create_account(self, account: AccountCreateSchema) -> AccountModel:
         db_account = AccountModel(**account.dict(exclude_unset=True))
 
         try:
@@ -50,7 +50,7 @@ class AccountRepository:
             raise FailedToCreateException(detail=str(e))
 
     async def update_account(
-        self, account_id: int, account_data: AccountResponseSchema
+        self, account_id: int, account_data: AccountUpdateSchema
     ) -> AccountModel:
         result = await self.db.execute(
             select(AccountModel).where(AccountModel.id == account_id)

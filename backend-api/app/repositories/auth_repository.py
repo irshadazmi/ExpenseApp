@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy import select, and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.auth_model import AuthModel
-from app.schemas.auth_schema import AuthRegisterSchema
+from app.schemas.auth_schema import AuthRegisterSchema, AuthUpdateSchema
 from app.utils.exceptions import (
     EmailOrPhoneAlreadyExistsException,
     FailedToCreateException,
@@ -78,7 +78,7 @@ class AuthRepository:
             await self.db.rollback()
             raise FailedToCreateException(detail=str(e))
 
-    async def update_auth(self, user_id: int, user_data: dict):
+    async def update_auth(self, user_id: int, user_data: AuthUpdateSchema):
         result = await self.db.execute(select(AuthModel).where(AuthModel.id == user_id))
         user = result.scalars().first()
 

@@ -1,7 +1,7 @@
 from datetime import datetime
 from sqlalchemy import select, and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.schemas.user_schema import UserCreateSchema
+from app.schemas.user_schema import UserCreateSchema, UserUpdateSchema
 from app.models.user_model import UserModel
 from app.utils.exceptions import (
     FailedToCreateException,
@@ -65,7 +65,7 @@ class UserRepository:
             raise RecordNotFoundException("User not found")
         return user
 
-    async def create_user(self, user_data: dict):
+    async def create_user(self, user_data: UserCreateSchema):
         db_user = UserModel(**user_data.dict(exclude_unset=True))
 
         try:
@@ -77,7 +77,7 @@ class UserRepository:
             await self.db.rollback()
             raise FailedToCreateException(detail=str(e))
 
-    async def update_user(self, user_id: int, user_data: UserCreateSchema) -> UserModel:
+    async def update_user(self, user_id: int, user_data: UserUpdateSchema) -> UserModel:
         result = await self.db.execute(select(UserModel).where(UserModel.id == user_id))
         user = result.scalars().first()
 

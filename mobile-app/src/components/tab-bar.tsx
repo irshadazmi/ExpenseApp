@@ -17,18 +17,15 @@ export default function TabBar() {
   //  - on /(budget): ['(budget)']  or sometimes still []
   //  - on /(expense): ['(expense)']
 
-  // Derive a "currentTabKey"
-  let currentTabKey: string = 'dashboard';
+  // let currentTabKey: string = 'dashboard';
+  // if (segments.length > 0) {
+  //   const first = segments[0];
+  //   currentTabKey = first;
+  // } else {
+  //   currentTabKey = 'dashboard';
+  // }
 
-  if (segments.length > 0) {
-    // first segment like '(budget)' or '(expense)'
-    const first = segments[0];
-    // normalize route groups, e.g. '(budget)' -> '(budget)'
-    currentTabKey = first;
-  } else {
-    // root "/" -> dashboard
-    currentTabKey = 'dashboard';
-  }
+  let currentTabKey: string = segments[0] || "(dashboard)"; // default to "dashboard";
 
   return (
     <LinearGradient
@@ -38,20 +35,16 @@ export default function TabBar() {
     >
       <View style={styles.tabBarContainer}>
         {TAB_ITEMS.map((item) => {
+          const routePath = `/${item.name}`;
           const isActive = currentTabKey === item.name;
           const badgeCount = item.badgeCount ?? 0;
 
           return (
             <Pressable
               key={item.name}
-              onPress={() => router.replace(`/${item.name}` as Route)}
+              onPress={() => router.replace(routePath as Route)}
               style={styles.tabItem}
             >
-              {/* <IconSymbol
-              name={item.icon as SFSymbol}
-              size={22}
-              color={isActive ? COLORS.tabActive : COLORS.tabInactive}
-            /> */}
               <View style={styles.tabIconWrapper}>
                 <IconSymbol
                   name={item.icon as SFSymbol}

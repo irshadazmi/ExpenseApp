@@ -1,6 +1,6 @@
 export const DRAWER_ITEMS = [
-  // { name: '(dashboard)', title: 'Dashboard', icon: 'house.fill' }, 
-  { name: 'dashboard', title: 'Dashboard', icon: 'house.fill' },
+  { name: '(dashboard)', title: 'Dashboard', icon: 'house.fill' }, 
+  // { name: 'dashboard', title: 'Dashboard', icon: 'house.fill' },
   { name: '(category)', title: 'Category', icon: 'tag.fill' },
 	{ name: '(account)', title: 'Account', icon: 'person.crop.circle' },
   { name: '(budget)', title: 'Budget', icon: 'wallet.pass.fill' }, 

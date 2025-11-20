@@ -4,7 +4,7 @@ from typing import Optional
 
 from sqlalchemy import select
 
-from app.schemas.feedback_schema import FeedbackResponseSchema
+from app.schemas.feedback_schema import FeedbackCreateSchema, FeedbackUpdateSchema
 from app.models.feedback_model import FeedbackModel
 from app.utils.exceptions import (
     FailedToCreateException,
@@ -42,7 +42,7 @@ class FeedbackRepository:
             raise RecordNotFoundException("Feedback not found")
         return feedback
 
-    async def create_feedback(self, feedback: FeedbackResponseSchema) -> FeedbackModel:
+    async def create_feedback(self, feedback: FeedbackCreateSchema) -> FeedbackModel:
         db_feedback = FeedbackModel(**feedback.dict(exclude_unset=True))
 
         try:
@@ -55,7 +55,7 @@ class FeedbackRepository:
             raise FailedToCreateException(detail=str(e))
 
     async def update_feedback(
-        self, feedback_id: int, feedback_data: FeedbackResponseSchema
+        self, feedback_id: int, feedback_data: FeedbackUpdateSchema
     ) -> FeedbackModel:
         result = await self.db.execute(
             select(FeedbackModel).where(FeedbackModel.id == feedback_id)

@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 from sqlalchemy import select
-from app.schemas.budget_schema import BudgetResponseSchema
+from app.schemas.budget_schema import BudgetCreateSchema, BudgetUpdateSchema
 from app.models.budget_model import BudgetModel
 from app.utils.exceptions import (
     FailedToCreateException,
@@ -37,7 +37,7 @@ class BudgetRepository:
             raise RecordNotFoundException("Budget not found")
         return budget
 
-    async def create_budget(self, budget: BudgetResponseSchema) -> BudgetModel:
+    async def create_budget(self, budget: BudgetCreateSchema) -> BudgetModel:
         db_budget = BudgetModel(**budget.dict(exclude_unset=True))
 
         try:
@@ -50,7 +50,7 @@ class BudgetRepository:
             raise FailedToCreateException(detail=str(e))
 
     async def update_budget(
-        self, budget_id: int, budget_data: BudgetResponseSchema
+        self, budget_id: int, budget_data: BudgetUpdateSchema
     ) -> BudgetModel:
         result = await self.db.execute(
             select(BudgetModel).where(BudgetModel.id == budget_id)

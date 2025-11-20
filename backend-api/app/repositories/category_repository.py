@@ -1,6 +1,6 @@
 from datetime import datetime
 from sqlalchemy import select
-from app.schemas.category_schema import CategoryResponseSchema
+from app.schemas.category_schema import CategoryCreateSchema, CategoryUpdateSchema
 from app.models.category_model import CategoryModel
 from app.utils.exceptions import (
     FailedToCreateException,
@@ -29,7 +29,7 @@ class CategoryRepository:
             raise RecordNotFoundException("Category not found")
         return category
 
-    async def create_category(self, category: CategoryResponseSchema) -> CategoryModel:
+    async def create_category(self, category: CategoryCreateSchema) -> CategoryModel:
         db_category = CategoryModel(**category.dict(exclude_unset=True))
 
         try:
@@ -42,7 +42,7 @@ class CategoryRepository:
             raise FailedToCreateException(detail=str(e))
 
     async def update_category(
-        self, category_id: int, category_data: CategoryResponseSchema
+        self, category_id: int, category_data: CategoryUpdateSchema
     ) -> CategoryModel:
         result = await self.db.execute(
             select(CategoryModel).where(CategoryModel.id == category_id)

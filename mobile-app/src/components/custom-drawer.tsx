@@ -1,7 +1,7 @@
 // src/components/custom-drawer.tsx
 import { View, Text, Pressable, Modal } from "react-native";
 import { DRAWER_ITEMS } from "@/constants/DRAWER_ITEMS";
-import { Route, useRouter, usePathname } from "expo-router";
+import { Route, useRouter, usePathname, useSegments } from "expo-router";
 import { COLORS } from "@/constants/COLORS";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import type { SFSymbol } from "expo-symbols";
@@ -17,13 +17,17 @@ export default function CustomDrawer({ visible, onClose, setTitle }: Props) {
   const router = useRouter();
   const pathname = usePathname();
 
+  const segments = useSegments(); // array of path segments
+  // Derive a "currentDrawerKey"
+  let currentDrawerKey: string = segments[0] || "(dashboard)"; // default to "dashboard";
+
   return (
     <Modal visible={visible} animationType="slide" transparent>
       <View style={styles.backdrop}>
         <View style={styles.drawerContainer}>
           {DRAWER_ITEMS.map((item) => {
             const routePath = `/${item.name}`;
-            const isActive = pathname === routePath;
+            const isActive = currentDrawerKey === item.name;
 
             return (
               <Pressable

@@ -3,6 +3,7 @@ const COLORS = {
   primary: '#7F00FF',
   secondary: '#E1C3fd',
   lightPurple: '#efc3f8ff',
+  lightGray: '#F7F7F7',
   white: '#FFFFFF',
   disabled: '#A9C3F5',
   text: '#292140',
