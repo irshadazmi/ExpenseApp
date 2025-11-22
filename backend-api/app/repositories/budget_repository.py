@@ -49,26 +49,22 @@ class BudgetRepository:
             await self.db.rollback()
             raise FailedToCreateException(detail=str(e))
 
-    async def update_budget(
-        self, budget_id: int, budget_data: BudgetUpdateSchema
-    ) -> BudgetModel:
-        result = await self.db.execute(
-            select(BudgetModel).where(BudgetModel.id == budget_id)
-        )
-        budget = result.scalars().first()
+    async def update_budget(self, budget_id: int, budget_data: dict):
+        result = await self.db.execute(select(BudgetModel).where(BudgetModel.id == budget_id))
+        existing_budget = result.scalars().first()
 
-        if not budget:
+        if not existing_budget:
             raise RecordNotFoundException("Budget not found")
 
-        update_data = budget_data.dict(exclude_unset=True)
-        for key, value in update_data.items():
-            setattr(budget, key, value)
+        # update_data = budget_data.dict(exclude_unset=True)
+        for key, value in budget_data.items():
+            setattr(existing_budget, key, value)
 
         try:
-            budget.updated_at = datetime.utcnow()
+            existing_budget.updated_at = datetime.utcnow()
             await self.db.commit()
-            await self.db.refresh(budget)
-            return budget
+            await self.db.refresh(existing_budget)
+            return existing_budget
         except Exception as e:
             await self.db.rollback()
             raise FailedToUpdateException(detail=str(e))

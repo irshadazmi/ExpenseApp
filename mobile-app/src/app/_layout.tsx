@@ -13,7 +13,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Loading from './(auth)/loading';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { DRAWER_ITEMS } from '@/constants/DRAWER_ITEMS';
-import { PROTECTED_ROUTES } from '@/constants/PROTECTED_ROUTES';
+import { PUBLIC_ROUTES } from '@/constants/PUBLIC_ROUTES';
 
 export default function RootLayout() {
   return (
@@ -54,12 +54,13 @@ function RootLayoutContent() {
   useEffect(() => {
     if (loading) return;
 
-    // If not logged in and on a protected route → send to login
-    if (!user) {
-      if (PROTECTED_ROUTES.some((prefix) => pathname.startsWith(prefix))) {
-        router.replace('/(auth)/login');
-      }
-      return;
+    const isPublic = PUBLIC_ROUTES.some(route =>
+      pathname === route || pathname.startsWith(route + '/')
+    );
+
+    // If not logged in and NOT on a public route → send to login
+    if (!user && !isPublic) {
+      router.replace('/(auth)/login');
     }
   }, [pathname, user, loading]);
 

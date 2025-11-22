@@ -16,15 +16,15 @@ class AccountService:
         if account_data.balance < 0:
             raise FailedToUpdateException(detail="Balance cannot be negative")
         
-        account_dict = account_data.dict()
+        account_dict = account_data.model_dump()
         return await self.account_repository.create_account(account_dict)
     
     async def update_account(self, account_id: int, account_data: AccountUpdateSchema):
         if account_data.balance < 0:
             raise FailedToUpdateException(detail="Balance cannot be negative")
-        
-        account_dict = account_data.dict(exclude_unset=True)
-        return self.account_repository.update_account(account_id, account_dict)
+
+        account_dict = account_data.model_dump(exclude_unset=True)
+        return await self.account_repository.update_account(account_id, account_dict)
     
     async def delete_account(self, account_id: int):
         return await self.account_repository.delete_account(account_id)

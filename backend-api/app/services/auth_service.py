@@ -7,7 +7,6 @@ from app.schemas.auth_schema import (
     AuthResponseSchema,
     AuthRegisterSchema,
     AuthLoginSchema,
-    AuthResponseSchema,
     AuthResultSchema,
     Token,
 )
@@ -42,6 +41,7 @@ class AuthService:
 
         user_schema = AuthResponseSchema(
             id=user.id,
+            full_name=user.full_name,
             email=user.email,
             phone=user.phone,
             role_id=user.role_id,

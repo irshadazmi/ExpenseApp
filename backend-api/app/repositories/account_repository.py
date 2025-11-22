@@ -49,26 +49,22 @@ class AccountRepository:
             await self.db.rollback()
             raise FailedToCreateException(detail=str(e))
 
-    async def update_account(
-        self, account_id: int, account_data: AccountUpdateSchema
-    ) -> AccountModel:
-        result = await self.db.execute(
-            select(AccountModel).where(AccountModel.id == account_id)
-        )
-        account = result.scalars().first()
+    async def update_account(self, account_id: int, account_data: dict):
+        result = await self.db.execute(select(AccountModel).where(AccountModel.id == account_id))
+        existing_account = result.scalars().first()
 
-        if not account:
+        if not existing_account:
             raise RecordNotFoundException("Account not found")
 
-        update_data = account_data.dict(exclude_unset=True)
-        for key, value in update_data.items():
-            setattr(account, key, value)
+        # update_data = account_data.dict(exclude_unset=True)
+        for key, value in account_data.items():
+            setattr(existing_account, key, value)
 
         try:
-            account.updated_at = datetime.utcnow()
+            existing_account.updated_at = datetime.utcnow()
             await self.db.commit()
-            await self.db.refresh(account)
-            return account
+            await self.db.refresh(existing_account)
+            return existing_account
         except Exception as e:
             await self.db.rollback()
             raise FailedToUpdateException(detail=str(e))

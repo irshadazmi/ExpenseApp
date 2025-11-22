@@ -1,9 +1,6 @@
-# app/repositories/feedback_repository.py
 from datetime import datetime
 from typing import Optional
-
 from sqlalchemy import select
-
 from app.schemas.feedback_schema import FeedbackCreateSchema, FeedbackUpdateSchema
 from app.models.feedback_model import FeedbackModel
 from app.utils.exceptions import (
@@ -12,7 +9,6 @@ from app.utils.exceptions import (
     FailedToUpdateException,
     RecordNotFoundException,
 )
-
 
 class FeedbackRepository:
     def __init__(self, db):
@@ -27,9 +23,8 @@ class FeedbackRepository:
         result = await self.db.execute(stmt)
         rows = result.scalars().all()
 
-        if not result:
+        if not rows:
             return []
-            # raise RecordNotFoundException("No feedback records found")
 
         return rows
 
@@ -54,26 +49,22 @@ class FeedbackRepository:
             await self.db.rollback()
             raise FailedToCreateException(detail=str(e))
 
-    async def update_feedback(
-        self, feedback_id: int, feedback_data: FeedbackUpdateSchema
-    ) -> FeedbackModel:
-        result = await self.db.execute(
-            select(FeedbackModel).where(FeedbackModel.id == feedback_id)
-        )
-        feedback = result.scalars().first()
+    async def update_feedback(self, feedback_id: int, feedback_data: dict):
+        result = await self.db.execute(select(FeedbackModel).where(FeedbackModel.id == feedback_id))
+        existing_feedback = result.scalars().first()
 
-        if not feedback:
+        if not existing_feedback:
             raise RecordNotFoundException("Feedback not found")
 
-        update_data = feedback_data.dict(exclude_unset=True)
-        for key, value in update_data.items():
-            setattr(feedback, key, value)
+        # update_data = feedback_data.dict(exclude_unset=True)
+        for key, value in feedback_data.items():
+            setattr(existing_feedback, key, value)
 
         try:
-            feedback.updated_at = datetime.utcnow()
+            existing_feedback.updated_at = datetime.utcnow()
             await self.db.commit()
-            await self.db.refresh(feedback)
-            return feedback
+            await self.db.refresh(existing_feedback)
+            return existing_feedback
         except Exception as e:
             await self.db.rollback()
             raise FailedToUpdateException(detail=str(e))
@@ -87,7 +78,6 @@ class FeedbackRepository:
             raise RecordNotFoundException("Feedback not found")
 
         try:
-            # 🔹 soft delete (assuming these fields exist)
             feedback.is_active = False
             feedback.updated_at = datetime.utcnow()
             await self.db.commit()

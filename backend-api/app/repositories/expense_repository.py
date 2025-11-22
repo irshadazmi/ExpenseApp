@@ -1,9 +1,8 @@
+from datetime import datetime
 from typing import Optional
-from sqlalchemy import func, select
-from sqlalchemy.orm import selectinload
-from app.models.category_model import CategoryModel
-from app.models.expense_model import ExpenseModel
+from sqlalchemy import select
 from app.schemas.expense_schema import ExpenseCreateSchema, ExpenseUpdateSchema
+from app.models.expense_model import ExpenseModel
 from app.utils.exceptions import (
     FailedToCreateException,
     FailedToDeleteException,
@@ -11,52 +10,9 @@ from app.utils.exceptions import (
     RecordNotFoundException,
 )
 
-
 class ExpenseRepository:
     def __init__(self, db):
         self.db = db
-
-    async def get_expenses_grouped_by_category(self):
-        stmt = (
-            select(
-                ExpenseModel.id,
-                ExpenseModel.description,
-                ExpenseModel.amount,
-                ExpenseModel.expense_date,
-                CategoryModel.name.label("category_name")
-            )
-            .join(CategoryModel, CategoryModel.id == ExpenseModel.category_id)
-            .order_by(CategoryModel.name, ExpenseModel.expense_date)
-        )
-        result = await self.db.execute(stmt)
-        rows = result.all()
-
-        grouped = {}
-        for row in rows:
-            category = row.category_name
-            if category not in grouped:
-                grouped[category] = []
-            grouped[category].append({
-                "id": row.id,
-                "description": row.description,
-                "amount": float(row.amount),
-                "date": row.expense_date.strftime("%Y-%m-%d")
-            })
-
-        return [{"title": category, "data": expenses} for category, expenses in grouped.items()]
-
-    async def get_category_wise_totals(self):
-        stmt = (
-            select(
-                ExpenseModel.category_id,
-                CategoryModel.name.label("category_name"),
-                func.sum(ExpenseModel.amount).label("total_amount")
-            )
-            .join(CategoryModel, CategoryModel.id == ExpenseModel.category_id)
-            .group_by(ExpenseModel.category_id, CategoryModel.name)
-        )
-        result = await self.db.execute(stmt)
-        return result.all()
 
     async def get_all_expenses(self, user_id: Optional[int] = None):
         stmt = select(ExpenseModel)
@@ -93,28 +49,25 @@ class ExpenseRepository:
             await self.db.rollback()
             raise FailedToCreateException(detail=str(e))
 
-    async def update_expense(self, expense_id: int, expense_data: ExpenseUpdateSchema) -> ExpenseModel:
-        result = await self.db.execute(
-            select(ExpenseModel).where(ExpenseModel.id == expense_id)
-        )
-        expense = result.scalars().first()
+    async def update_expense(self, expense_id: int, expense_data: dict):
+        result = await self.db.execute(select(ExpenseModel).where(ExpenseModel.id == expense_id))
+        existing_expense = result.scalars().first()
 
-        if not expense:
+        if not existing_expense:
             raise RecordNotFoundException("Expense not found")
 
-        update_data = expense_data.dict(exclude_unset=True)
-        for key, value in update_data.items():
-            setattr(expense, key, value)
+        # update_data = expense_data.dict(exclude_unset=True)
+        for key, value in expense_data.items():
+            setattr(existing_expense, key, value)
 
         try:
-            self.db.add(expense)
+            existing_expense.updated_at = datetime.utcnow()
             await self.db.commit()
-            await self.db.refresh(expense)
-            return expense
+            await self.db.refresh(existing_expense)
+            return existing_expense
         except Exception as e:
             await self.db.rollback()
             raise FailedToUpdateException(detail=str(e))
-
 
     async def delete_expense(self, expense_id: int):
         result = await self.db.execute(
@@ -125,8 +78,11 @@ class ExpenseRepository:
             raise RecordNotFoundException("Expense not found")
 
         try:
-            await self.db.delete(expense)
+            expense.is_active = False
+            expense.updated_at = datetime.utcnow()
             await self.db.commit()
+            await self.db.refresh(expense)
+            return expense
         except Exception as e:
             await self.db.rollback()
             raise FailedToDeleteException(detail=str(e))
