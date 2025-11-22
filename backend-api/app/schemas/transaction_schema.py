@@ -6,6 +6,7 @@ class TransactionBaseSchema(BaseModel):
     description: str
     amount: float
     category_id: int
+    account_id: int
     type: str
     currency: str
     user_id: int
@@ -22,6 +23,7 @@ class TransactionCreateSchema(TransactionBaseSchema):
                 "description": "Weekly groceries from local store",
                 "amount": 100,
                 "category_id": 1,
+                "account_id": 1,
                 "type": "Expense",
                 "currency": "INR",
                 "user_id": 1,
@@ -42,6 +44,7 @@ class TransactionUpdateSchema(TransactionBaseSchema):
                 "description": "Weekly groceries from local store",
                 "amount": 100,
                 "category_id": 1,
+                "account_id": 1,
                 "type": "Expense",
                 "currency": "INR",
                 "user_id": 1,

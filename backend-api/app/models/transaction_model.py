@@ -13,6 +13,7 @@ class TransactionModel(Base):
     type: Mapped[str] = mapped_column(String(255), nullable=False)
     currency: Mapped[str] = mapped_column(String(10), nullable=False)
     category_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    account_id: Mapped[int] = mapped_column(Integer, nullable=False)
     user_id: Mapped[int] = mapped_column(Integer, nullable=False)
     transaction_date: Mapped[DateTime] = mapped_column(DateTime(timezone=True), nullable=False)
     created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
