@@ -1,11 +1,11 @@
-# app/models/expense_model.py
+# app/models/transaction_model.py
 from sqlalchemy import Integer, Numeric, String, DateTime, func
 from sqlalchemy.orm import declarative_base, Mapped, mapped_column, relationship
 from app.models.category_model import CategoryModel
 
 Base = declarative_base()
-class ExpenseModel(Base):
-    __tablename__ = "expenses"
+class TransactionModel(Base):
+    __tablename__ = "transactions"
     
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     description: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -14,6 +14,6 @@ class ExpenseModel(Base):
     currency: Mapped[str] = mapped_column(String(10), nullable=False)
     category_id: Mapped[int] = mapped_column(Integer, nullable=False)
     user_id: Mapped[int] = mapped_column(Integer, nullable=False)
-    expense_date: Mapped[DateTime] = mapped_column(DateTime(timezone=True), nullable=False)
+    transaction_date: Mapped[DateTime] = mapped_column(DateTime(timezone=True), nullable=False)
     created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), onupdate=func.now())

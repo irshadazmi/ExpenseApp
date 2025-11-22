@@ -1,25 +1,25 @@
-// src/types/expense.ts
-export interface ExpenseCreate {
+// src/types/transaction.ts
+export interface TransactionCreate {
   description: string;
   amount: number;        
   category_id: number;
   type: string;          // "Expense" | "Income" | "Transfer" (by convention)
   currency: string;      // "INR" | "USD" | "GBP" | "EUR"
   user_id: number;
-  expense_date: string;  // ISO string, e.g. "2025-11-15T17:03:20.441Z"
+  transaction_date: string;  // ISO string, e.g. "2025-11-15T17:03:20.441Z"
 }
 
-export interface ExpenseUpdate {
+export interface TransactionUpdate {
   description?: string;
   amount?: number;
   category_id?: number;
   type?: string;
   currency?: string;
   user_id?: number;
-  expense_date?: string;
+  transaction_date?: string;
 }
 
-export interface ExpenseResponse {
+export interface TransactionResponse {
   id: number;
   description: string;
   amount: number;
@@ -27,7 +27,7 @@ export interface ExpenseResponse {
   type: string;
   currency: string;
   user_id: number;
-  expense_date: string;   
+  transaction_date: string;   
   created_at: string;
   updated_at?: string | null;
 }

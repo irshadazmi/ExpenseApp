@@ -13,7 +13,7 @@ class BudgetService:
         return await self.budget_repository.get_budget_by_id(budget_id)
     
     async def create_budget(self, budget_data: BudgetCreateSchema):
-        if budget_data.balance < 0:
+        if budget_data.amount < 0:
             raise FailedToUpdateException(detail="Amount cannot be negative")
         
         budget_dict = budget_data.model_dump()

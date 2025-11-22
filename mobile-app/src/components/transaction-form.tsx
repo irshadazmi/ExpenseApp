@@ -1,4 +1,4 @@
-// src/components/expense-form.tsx
+// src/components/transaction-form.tsx
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
 import {
@@ -13,17 +13,17 @@ import {
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import styles from "@/styles/styles";
-import { ExpenseCreate } from "@/types/expense";
+import { TransactionCreate } from "@/types/transaction";
 import { categoryService } from "@/services/category-service";
 import { COLORS } from "@/constants/COLORS";
-import { expenseService } from "@/services/expense-service";
+import { transactionService } from "@/services/transaction-service";
 import { useAuth } from "@/contexts/auth-context";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import { CURRENCIES } from "@/constants/CONSTANTS";
 import { EXPENSE_TYPES } from "@/constants/CONSTANTS";
 
-const ExpenseSchema = Yup.object().shape({
+const TransactionSchema = Yup.object().shape({
   description: Yup.string()
     .trim()
     .required("Description is required"),
@@ -34,8 +34,8 @@ const ExpenseSchema = Yup.object().shape({
   category_id: Yup.number()
     .moreThan(0, "Category is required")
     .required("Category is required"),
-  expense_date: Yup.date()
-    .required("Expense date is required"),
+  transaction_date: Yup.date()
+    .required("Transaction date is required"),
   type: Yup.string()
     .oneOf(EXPENSE_TYPES as unknown as string[])
     .required("Type is required"),
@@ -44,17 +44,17 @@ const ExpenseSchema = Yup.object().shape({
     .required("Currency is required"),
 });
 
-interface ExpenseFormProps {
-  id?: number; // optional expense ID for edit
+interface TransactionFormProps {
+  id?: number; // optional transaction ID for edit
   onSubmitSuccess?: () => void;
 }
 
-const ExpenseForm: React.FC<ExpenseFormProps> = ({ id, onSubmitSuccess }) => {
+const TransactionForm: React.FC<TransactionFormProps> = ({ id, onSubmitSuccess }) => {
   const { user } = useAuth();
   const [categories, setCategories] = useState<any[]>([]);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [initialValues, setInitialValues] = useState<ExpenseCreate | null>(null);
+  const [initialValues, setInitialValues] = useState<TransactionCreate | null>(null);
   const isEditing = typeof id === "number";
 
   // Load categories once
@@ -69,28 +69,28 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ id, onSubmitSuccess }) => {
     })();
   }, []);
 
-  // Load existing expense for edit mode
+  // Load existing transaction for edit mode
   useEffect(() => {
     if (!user) return;
     if (isEditing) {
       setLoading(true);
-      expenseService.getById(id!)
-        .then(expense => {
-          if (expense) {
+      transactionService.getById(id!)
+        .then(transaction => {
+          if (transaction) {
             setInitialValues({
-              description: expense.description ?? "",
-              amount: Number(expense.amount) ?? 0,
-              category_id: Number(expense.category_id) ?? 0,
-              type: expense.type ?? "Expense",
-              currency: expense.currency ?? "INR",
-              expense_date: expense.expense_date ?? new Date().toISOString(),
+              description: transaction.description ?? "",
+              amount: Number(transaction.amount) ?? 0,
+              category_id: Number(transaction.category_id) ?? 0,
+              type: transaction.type ?? "Expense",
+              currency: transaction.currency ?? "INR",
+              transaction_date: transaction.transaction_date ?? new Date().toISOString(),
               user_id: user.id,
             });
           }
         })
         .catch(error => {
-          console.error("Failed to load expense", error);
-          Alert.alert("Error", "Failed to load expense data.");
+          console.error("Failed to load transaction", error);
+          Alert.alert("Error", "Failed to load transaction data.");
         })
         .finally(() => setLoading(false));
     } else {
@@ -100,7 +100,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ id, onSubmitSuccess }) => {
         category_id: 0,
         type: "Expense",
         currency: "INR",
-        expense_date: new Date().toISOString(),
+        transaction_date: new Date().toISOString(),
         user_id: user.id,
       });
     }
@@ -120,28 +120,28 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ id, onSubmitSuccess }) => {
     return (
       <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
         <ActivityIndicator size="large" color={COLORS.primary} />
-        <Text style={{ marginTop: 12 }}>Loading expense data...</Text>
+        <Text style={{ marginTop: 12 }}>Loading transaction data...</Text>
       </View>
     );
   }
 
   const handleSubmit = async (
-    values: ExpenseCreate,
+    values: TransactionCreate,
     { resetForm, setSubmitting }: any
   ) => {
     try {
       if (isEditing) {
-        await expenseService.update(id!, values);
-        Alert.alert("Success", "Expense updated successfully.");
+        await transactionService.update(id!, values);
+        Alert.alert("Success", "Transaction updated successfully.");
       } else {
-        await expenseService.create(values);
-        Alert.alert("Success", "Expense created successfully.");
+        await transactionService.create(values);
+        Alert.alert("Success", "Transaction created successfully.");
         resetForm();
       }
       if (onSubmitSuccess) onSubmitSuccess();
     } catch (error) {
-      console.log("Error saving expense:", error);
-      Alert.alert("Error", "Failed to save expense. Please try again.");
+      console.log("Error saving transaction:", error);
+      Alert.alert("Error", "Failed to save transaction. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -152,7 +152,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ id, onSubmitSuccess }) => {
       <Formik
         initialValues={initialValues}
         enableReinitialize
-        validationSchema={ExpenseSchema}
+        validationSchema={TransactionSchema}
         onSubmit={handleSubmit}
       >
         {({
@@ -289,14 +289,14 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ id, onSubmitSuccess }) => {
             )}
 
             {/* Date Picker */}
-            <Text>Expense Date</Text>
+            <Text>Transaction Date</Text>
             <Pressable
               onPress={() => setShowDatePicker(true)}
               style={[styles.textInput, styles.dateInput]}
             >
               <Text>
-                {values.expense_date
-                  ? new Date(values.expense_date).toISOString().split("T")[0]
+                {values.transaction_date
+                  ? new Date(values.transaction_date).toISOString().split("T")[0]
                   : "Select Date"}
               </Text>
             </Pressable>
@@ -304,8 +304,8 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ id, onSubmitSuccess }) => {
             {showDatePicker && (
               <DateTimePicker
                 value={
-                  values.expense_date
-                    ? new Date(values.expense_date)
+                  values.transaction_date
+                    ? new Date(values.transaction_date)
                     : new Date()
                 }
                 mode="date"
@@ -313,13 +313,13 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ id, onSubmitSuccess }) => {
                 onChange={(event, selectedDate) => {
                   setShowDatePicker(false);
                   if (selectedDate) {
-                    setFieldValue("expense_date", selectedDate.toISOString());
+                    setFieldValue("transaction_date", selectedDate.toISOString());
                   }
                 }}
               />
             )}
-            {touched.expense_date && errors.expense_date && (
-              <Text style={styles.errorText}>{errors.expense_date as string}</Text>
+            {touched.transaction_date && errors.transaction_date && (
+              <Text style={styles.errorText}>{errors.transaction_date as string}</Text>
             )}
 
             {/* Submit Button */}
@@ -342,8 +342,8 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ id, onSubmitSuccess }) => {
                 {isSubmitting
                   ? "Saving..."
                   : isEditing
-                  ? "Update Expense"
-                  : "Save Expense"}
+                  ? "Update Transaction"
+                  : "Save Transaction"}
               </Text>
             </Pressable>
           </View>
@@ -353,4 +353,4 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ id, onSubmitSuccess }) => {
   );
 };
 
-export default ExpenseForm;
+export default TransactionForm;

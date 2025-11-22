@@ -4,7 +4,7 @@ export const DRAWER_ITEMS = [
   { name: '(category)', title: 'Category', icon: 'tag.fill' },
 	{ name: '(account)', title: 'Account', icon: 'person.crop.circle' },
   { name: '(budget)', title: 'Budget', icon: 'wallet.pass.fill' }, 
-  { name: '(expense)', title: 'Expense', icon: 'creditcard.fill' },
+  { name: '(transaction)', title: 'Transaction', icon: 'creditcard.fill' },
   { name: '(analytics)', title: 'Analytics', icon: 'chart.bar.fill' },
   { name: '(reports)', title: 'Reports', icon: 'folder.fill' },
   { name: '(help)', title: 'Help', icon: 'questionmark.circle.fill' },

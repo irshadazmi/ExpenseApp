@@ -137,8 +137,8 @@ INSERT INTO categories (name) VALUES
 -- 🧩 Other
 ('Miscellaneous');
 
---- This table stores information about expenses, such as their description, amount, category, and user.
-CREATE TABLE expenses (
+--- This table stores information about transactions, such as their description, amount, category, and user.
+CREATE TABLE transactions (
     id SERIAL PRIMARY KEY,
     description VARCHAR(255) NOT NULL,
     amount INTEGER NOT NULL,
@@ -151,9 +151,9 @@ CREATE TABLE expenses (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- TRUNCATE TABLE expenses RESTART IDENTITY;
+-- TRUNCATE TABLE transactions RESTART IDENTITY;
 
-INSERT INTO expenses (description, amount, type, currency, category_id, user_id, expense_date)
+INSERT INTO transactions (description, amount, type, currency, category_id, user_id, expense_date)
 VALUES
 ('Weekly groceries from local store', 2200, 'Expense', 'INR', 1, 1, CURRENT_DATE - INTERVAL '1 day'),
 ('Monthly supermarket bulk buy', 4500, 'Expense', 'INR', 2, 1, CURRENT_DATE - INTERVAL '3 days'),
@@ -252,8 +252,8 @@ VALUES
 ('Fixed deposit 2', 'Savings', 50000, 'INR', 2),
 ('Recurring deposit 2', 'Savings', 20000, 'USD', 3);
 
---- This table stores information about recurring expenses, such as their description, amount, category, recurrence pattern, and associated user.
-CREATE TABLE recurring_expenses (
+--- This table stores information about recurring transactions, such as their description, amount, category, recurrence pattern, and associated user.
+CREATE TABLE recurring_transactions (
     id SERIAL PRIMARY KEY,
     description VARCHAR(255) NOT NULL,
     amount INTEGER NOT NULL,

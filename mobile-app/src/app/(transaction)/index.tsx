@@ -8,15 +8,15 @@ import {
   Alert,
 } from "react-native";
 import styles from "@/styles/styles";
-import { expenseService } from "@/services/expense-service";
+import { transactionService } from "@/services/transaction-service";
 import { COLORS } from "@/constants/COLORS";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { ExpenseResponse } from "@/types/expense";
+import { TransactionResponse } from "@/types/transaction";
 import { RelativePathString, useRouter } from "expo-router";
 import { useAuth } from "@/contexts/auth-context";
 
-const Expenses = () => {
-  const [categories, setExpenses] = useState<ExpenseResponse[]>([]);
+const Transactions = () => {
+  const [categories, setTransactions] = useState<TransactionResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { user } = useAuth();
@@ -24,54 +24,54 @@ const Expenses = () => {
   const isSuperAdmin = user?.role_id === 1;
 	const currentUserId = user?.id;
 
-  const loadExpenses = async () => {
+  const loadTransactions = async () => {
     setLoading(true);
     try {
       const data = isSuperAdmin
-        ? await expenseService.getAll()
-        : await expenseService.getByUser(currentUserId!);
+        ? await transactionService.getAll()
+        : await transactionService.getByUser(currentUserId!);
 
       console.log(data);
-      setExpenses(data);
+      setTransactions(data);
     } catch (error) {
-      console.error("Failed to load expenses", error);
-      Alert.alert("Error", "Failed to load expenses. Please try again.");
+      console.error("Failed to load transactions", error);
+      Alert.alert("Error", "Failed to load transactions. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadExpenses();
+    loadTransactions();
   }, []);
 
-  // Go to Add Expense page (correct route path without parentheses)
-  const handleAddExpense = () => {
-    router.push('/(expense)/add' as RelativePathString);
+  // Go to Add Transaction page (correct route path without parentheses)
+  const handleAddTransaction = () => {
+    router.push('/(transaction)/add' as RelativePathString);
   };
 
-  // Go to Edit/View Expense page (correct route path without parentheses)
-  const handleEdit = (exp: ExpenseResponse) => {
+  // Go to Edit/View Transaction page (correct route path without parentheses)
+  const handleEdit = (exp: TransactionResponse) => {
     if (exp.id !== undefined) {
-      router.push(`/(expense)/${exp.id}` as RelativePathString);
+      router.push(`/(transaction)/${exp.id}` as RelativePathString);
     } else {
-      console.error("Expense ID is undefined");
+      console.error("Transaction ID is undefined");
     }
   };
 
-  // Delete expense
-  const handleDelete = async (exp: ExpenseResponse) => {
+  // Delete transaction
+  const handleDelete = async (exp: TransactionResponse) => {
     if (exp.id !== undefined) {
       try {
-        await expenseService.delete(exp.id);
-        await loadExpenses();
+        await transactionService.delete(exp.id);
+        await loadTransactions();
       } catch (err) {
-        console.log("Failed to delete expense", err);
+        console.log("Failed to delete transaction", err);
       }
     }
   };
 
-  const renderItem = ({ item, index }: { item: ExpenseResponse; index: number }) => (
+  const renderItem = ({ item, index }: { item: TransactionResponse; index: number }) => (
     <View style={[
       styles.listRow,
       index % 2 === 1 && styles.listRowAlt, // alternate rows
@@ -113,9 +113,9 @@ const Expenses = () => {
         alignItems: "center",
         marginBottom: 16,
       }}>
-        <Text style={[styles.title, { flex: 1 }]}>Expenses</Text>
-        <Pressable style={styles.button} onPress={handleAddExpense}>
-          <Text style={styles.buttonText}>Add Expense</Text>
+        <Text style={[styles.title, { flex: 1 }]}>Transactions</Text>
+        <Pressable style={styles.button} onPress={handleAddTransaction}>
+          <Text style={styles.buttonText}>Add Transaction</Text>
         </Pressable>
       </View>
 
@@ -145,4 +145,4 @@ const Expenses = () => {
   );
 };
 
-export default Expenses;
+export default Transactions;

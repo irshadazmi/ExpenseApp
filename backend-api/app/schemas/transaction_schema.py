@@ -2,16 +2,16 @@ from typing import Optional
 from pydantic import BaseModel, Field
 from datetime import datetime
 
-class ExpenseBaseSchema(BaseModel):
+class TransactionBaseSchema(BaseModel):
     description: str
     amount: float
     category_id: int
     type: str
     currency: str
     user_id: int
-    expense_date: datetime
+    transaction_date: datetime
 
-class ExpenseCreateSchema(ExpenseBaseSchema):
+class TransactionCreateSchema(TransactionBaseSchema):
     created_at: Optional[datetime] = Field(default_factory=datetime.now)
     updated_at: Optional[datetime] = Field(default_factory=datetime.now)
 
@@ -25,14 +25,14 @@ class ExpenseCreateSchema(ExpenseBaseSchema):
                 "type": "Expense",
                 "currency": "INR",
                 "user_id": 1,
-                "expense_date": "2025-09-01",
+                "transaction_date": "2025-09-01",
                 "created_at": "2025-09-01",
                 "updated_at": "2025-09-01"
             }
         }
     }
 
-class ExpenseUpdateSchema(ExpenseBaseSchema):
+class TransactionUpdateSchema(TransactionBaseSchema):
     updated_at: Optional[datetime] = Field(default_factory=datetime.now)
 
     model_config = {
@@ -45,18 +45,18 @@ class ExpenseUpdateSchema(ExpenseBaseSchema):
                 "type": "Expense",
                 "currency": "INR",
                 "user_id": 1,
-                "expense_date": "2025-09-01",
+                "transaction_date": "2025-09-01",
                 "updated_at": "2025-09-01"
             }
         }
     }
 
-class ExpenseResponseSchema(ExpenseBaseSchema):
+class TransactionResponseSchema(TransactionBaseSchema):
     id: int
     created_at: datetime
     updated_at: Optional[datetime]
 
-class CategoryExpenseSummary(BaseModel):
+class CategoryTransactionSummary(BaseModel):
     category_id: int
     category_name: str
     total_amount: int
