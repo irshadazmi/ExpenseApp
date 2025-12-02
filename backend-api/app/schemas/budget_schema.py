@@ -7,10 +7,11 @@ class BudgetBaseSchema(BaseModel):
     amount: float
     currency: str
     period: str
-    start_date: datetime
-    end_date: datetime
-    category_id: int
+    effective_from: datetime
+    effective_to: Optional[datetime] = None 
+    category_id: Optional[int] = None
     user_id: int
+    version: int
     is_active: bool
 
 class BudgetCreateSchema(BudgetBaseSchema):
@@ -29,6 +30,8 @@ class BudgetCreateSchema(BudgetBaseSchema):
                 "end_date": "2023-01-31",
                 "category_id": 1,
                 "user_id": 1,
+                "version": 1,
+                "is_active": True,
                 "created_at": "2023-01-01",
                 "updated_at": "2023-01-01"
             }
@@ -50,6 +53,8 @@ class BudgetUpdateSchema(BudgetBaseSchema):
                 "end_date": "2023-01-31",
                 "category_id": 1,
                 "user_id": 1,
+                "version": 1,
+                "is_active": True,
                 "updated_at": "2023-01-01"
             }
         }

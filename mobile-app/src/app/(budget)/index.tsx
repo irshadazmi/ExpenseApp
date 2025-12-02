@@ -31,7 +31,7 @@ const Budgets = () => {
         ? await budgetService.getAll()
         : await budgetService.getByUser(currentUserId!);
 
-      console.log(data);
+      // console.log(data);
       setBudgets(data);
     } catch (error) {
       console.error("Failed to load budgets", error);

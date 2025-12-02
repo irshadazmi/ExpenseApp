@@ -8,12 +8,14 @@ from app.routers.account_router import account_router
 from app.routers.budget_router import budget_router
 from app.routers.transaction_router import transaction_router
 from app.routers.feedback_router import feedback_router
+from app.routers.dashboard_router import dashboard_router
+from app.routers.seed_router import seed_router
 
 
 app = FastAPI()
 
 # Add authentication middleware
-app.add_middleware(auth_middleware.AuthMiddleware)
+# app.add_middleware(auth_middleware.AuthMiddleware)
 
 # Add CORS middleware
 add_cors_middleware(app)
@@ -26,3 +28,5 @@ app.include_router(account_router, prefix="/api/accounts", tags=["Account"])
 app.include_router(budget_router, prefix="/api/budgets", tags=["Budget"])
 app.include_router(transaction_router, prefix="/api/transactions", tags=["Transaction"])
 app.include_router(feedback_router, prefix="/api/feedbacks", tags=["Feedback"])
+app.include_router(dashboard_router, prefix="/api/dashboard", tags=["Dashboard"])
+app.include_router(seed_router, prefix="/api/seed", tags=["Seed"])

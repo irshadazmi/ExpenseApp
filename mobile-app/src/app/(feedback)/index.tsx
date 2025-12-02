@@ -32,7 +32,7 @@ const Feedbacks = () => {
 	// Load feedbacks on mount & when user/role changes
 	useEffect(() => {
 		const fetchFeedbacks = async () => {
-			console.log(user);
+			// console.log(user);
 			if (!user) return;
 
 			setLoading(true);
@@ -41,7 +41,7 @@ const Feedbacks = () => {
 					? await feedbackService.getAll()
 					: await feedbackService.getByUser(currentUserId!);
 
-				console.log(data);
+				// console.log(data);
 				setFeedbacks(data);
 			} catch (error) {
 				console.error("Failed to load feedbacks", error);

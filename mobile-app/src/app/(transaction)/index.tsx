@@ -31,7 +31,7 @@ const Transactions = () => {
         ? await transactionService.getAll()
         : await transactionService.getByUser(currentUserId!);
 
-      console.log(data);
+      // console.log(data);
       setTransactions(data);
     } catch (error) {
       console.error("Failed to load transactions", error);

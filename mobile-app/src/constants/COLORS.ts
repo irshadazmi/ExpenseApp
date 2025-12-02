@@ -10,6 +10,8 @@ const COLORS = {
   textSecondary: '#5A3D8C',
   cardShadow: '#B095D4',
   danger: '#EA4C68',
+  success: '#8BC34A',
+  warning: '#FFC107',
 
   // Tab bar colors aligned with logo
   tabBg: '#6c5ce7',        // closest known color to deep violet, a dark blue-violet color

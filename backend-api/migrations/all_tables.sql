@@ -76,151 +76,226 @@ VALUES
 CREATE TABLE categories (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) UNIQUE NOT NULL,
+    description VARCHAR(255),   
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-INSERT INTO categories (name) VALUES
--- 🛒 Essentials
-('Groceries'),
-('Supermarket'),
-('Fresh Market'),
+-- TRUNCATE TABLE categories RESTART IDENTITY;
 
--- 🍽️ Food & Dining
-('Dining Out'),
-('Takeaway / Delivery'),
-('Coffee & Snacks'),
+INSERT INTO categories (name, description) VALUES
+('Food & Dining', 'Meals, groceries, cafes, restaurants, and takeout orders'),
+('Transportation', 'Fuel, public transit, ride-hailing, parking, and vehicle expenses'),
+('Housing', 'Rent, mortgage payments, property maintenance, and household utilities'),
+('Healthcare', 'Doctor visits, pharmacy purchases, medical insurance, and hospital bills'),
+('Entertainment', 'Movies, streaming subscriptions, concerts, gaming, and leisure activities'),
+('Travel', 'Flights, hotels, vacation packages, and related travel costs'),
+('Shopping', 'Clothing, electronics, household goods, and personal purchases'),
+('Education', 'Tuition fees, online courses, books, and professional training'),
+('Bills & Utilities', 'Recurring service bills like internet, phone, cable, and electricity'),
+('Miscellaneous', 'Catch-all for irregular or uncategorized expenses');
 
--- 🚗 Transportation
-('Fuel / Gas'),
-('Public Transport'),
-('Taxi & Ride Share'),
-('Car Maintenance'),
-('Parking & Tolls'),
-
--- 🏠 Housing & Utilities
-('Rent / Mortgage'),
-('Electricity'),
-('Water'),
-('Gas'),
-('Internet'),
-('Mobile Phone'),
-
--- 🎓 Education & Kids
-('School Fees'),
-('Kids Activities'),
-
--- 🏥 Health & Wellness
-('Medical / Doctor'),
-('Pharmacy / Medicine'),
-('Haircuts & Salon'),
-('Fitness & Wellness'),
-
--- 👗 Personal & Home
-('Clothing & Shoes'),
-('Home Maintenance'),
-('Cleaning Supplies'),
-('Furniture & Decor'),
-
--- 📺 Entertainment
-('Cable / Streaming'),
-('Movies & Entertainment'),
-('Family Outings'),
-('Books & Magazines'),
-
--- 🎁 Giving & Fees
-('Gifts'),
-('Donations'),
-('Bank Fees'),
-
--- 🧩 Other
-('Miscellaneous');
-
---- This table stores information about transactions, such as their description, amount, category, and user.
-CREATE TABLE transactions (
+--- This table stores information about budgets, such as their name, amount, duration, and associated user.
+CREATE TABLE budgets (
     id SERIAL PRIMARY KEY,
-    description VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL,
     amount INTEGER NOT NULL,
-    type VARCHAR(50) DEFAULT 'expense', -- 'expense' or 'income' or 'transfer'
     currency VARCHAR(10) DEFAULT 'INR', --'INR' or 'USD' or 'EUR' or 'GBP' etc.
-    category_id INTEGER NOT NULL REFERENCES categories(id),
+    period VARCHAR(50) NOT NULL, -- e.g., 'Monthly'- for now let us consider only monthly
+    effective_from TIMESTAMP NOT NULL, -- Current date when the first budget is created
+    effective_to TIMESTAMP NULL,       -- Current date of the a new budget, when it is created
+    version INTEGER DEFAULT 1,
     user_id INTEGER NOT NULL REFERENCES users(id),
-    expense_date TIMESTAMP NOT NULL,
+    category_id INTEGER NULL REFERENCES categories(id),
+    is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- TRUNCATE TABLE transactions RESTART IDENTITY;
+-- TRUNCATE TABLE budgets RESTART IDENTITY;
 
-INSERT INTO transactions (description, amount, type, currency, category_id, user_id, expense_date)
+INSERT INTO budgets (name, amount, currency, period, start_date, end_date, user_id, category_id)
+SELECT 'Monthly Total Budget', SUM(b.amount), 'INR', 'Monthly', CURRENT_DATE, date_trunc('month', CURRENT_DATE) + INTERVAL '1 month - 1 day', b.user_id, 0
+FROM budgets b
+GROUP BY b.user_id;
+INSERT INTO budgets (name, amount, currency, period, effective_from, effective_to, version, user_id, category_id, is_active)
 VALUES
-('Weekly groceries from local store', 2200, 'Expense', 'INR', 1, 1, CURRENT_DATE - INTERVAL '1 day'),
-('Monthly supermarket bulk buy', 4500, 'Expense', 'INR', 2, 1, CURRENT_DATE - INTERVAL '3 days'),
-('Fresh produce from market', 800, 'Expense', 'INR', 3, 1, CURRENT_DATE - INTERVAL '5 days'),
-('Dinner at Italian restaurant', 1200, 'Expense', 'INR', 4, 1, CURRENT_DATE - INTERVAL '7 days'),
-('Pizza delivery night', 950, 'Expense', 'INR', 5, 1, CURRENT_DATE - INTERVAL '9 days'),
-('Morning coffee and croissant', 250, 'Income', 'INR', 6, 1, CURRENT_DATE - INTERVAL '11 days'),
-('Fuel refill for car', 3200, 'Expense', 'INR', 7, 1, CURRENT_DATE - INTERVAL '13 days'),
-('Metro card recharge', 600, 'Expense', 'INR', 8, 1, CURRENT_DATE - INTERVAL '15 days'),
-('Uber to airport', 850, 'Expense', 'INR', 9, 1, CURRENT_DATE - INTERVAL '17 days'),
-('Car oil change and service', 2800, 'Expense', 'INR', 10, 1, CURRENT_DATE - INTERVAL '19 days'),
-('Highway toll charges', 300, 'Expense', 'INR', 11, 1, CURRENT_DATE - INTERVAL '21 days'),
-('Monthly rent payment', 18000, 'Expense', 'INR', 12, 1, CURRENT_DATE - INTERVAL '23 days'),
-('Electricity bill', 2200, 'Expense', 'INR', 13, 1, CURRENT_DATE - INTERVAL '25 days'),
-('Water bill', 600, 'Expense', 'INR', 14, 1, CURRENT_DATE - INTERVAL '27 days'),
-('Gas cylinder refill', 950, 'Expense', 'INR', 15, 1, CURRENT_DATE - INTERVAL '29 days'),
-('Wi-Fi subscription', 1200, 'Expense', 'INR', 16, 1, CURRENT_DATE - INTERVAL '31 days'),
-('Mobile recharge', 499, 'Income', 'INR', 17, 1, CURRENT_DATE - INTERVAL '33 days'),
-('Quarterly school fees', 15000, 'Expense', 'INR', 18, 1, CURRENT_DATE - INTERVAL '35 days'),
-('Dance class for kids', 1800, 'Expense', 'INR', 19, 1, CURRENT_DATE - INTERVAL '37 days'),
-('Doctor consultation', 700, 'Expense', 'INR', 20, 1, CURRENT_DATE - INTERVAL '39 days'),
-('Pharmacy purchase', 350, 'Expense', 'INR', 21, 1, CURRENT_DATE - INTERVAL '41 days'),
-('Salon haircut', 600, 'Expense', 'INR', 22, 1, CURRENT_DATE - INTERVAL '43 days'),
-('Gym membership renewal', 2500, 'Expense', 'INR', 23, 1, CURRENT_DATE - INTERVAL '45 days'),
-('New shoes for work', 1800, 'Expense', 'INR', 24, 1, CURRENT_DATE - INTERVAL '47 days'),
-('Plumbing repair', 2200, 'Expense', 'INR', 25, 1, CURRENT_DATE - INTERVAL '49 days'),
-('Cleaning supplies restock', 450, 'Expense', 'INR', 26, 1, CURRENT_DATE - INTERVAL '51 days'),
-('New sofa purchase', 12000, 'Expense', 'INR', 27, 1, CURRENT_DATE - INTERVAL '53 days'),
-('Netflix subscription', 649, 'Expense', 'INR', 28, 1, CURRENT_DATE - INTERVAL '55 days'),
-('Movie night with family', 1200, 'Expense', 'INR', 29, 1, CURRENT_DATE - INTERVAL '57 days'),
-('Zoo visit with kids', 1800, 'Expense', 'INR', 30, 1, CURRENT_DATE - INTERVAL '59 days'),
-('Bookstore haul', 950, 'Expense', 'INR', 31, 1, CURRENT_DATE - INTERVAL '61 days'),
-('Birthday gift for friend', 1500, 'Expense', 'INR', 32, 1, CURRENT_DATE - INTERVAL '63 days'),
-('Charity donation', 2000, 'Expense', 'INR', 33, 1, CURRENT_DATE - INTERVAL '65 days'),
-('ATM withdrawal fee', 25, 'Expense', 'INR', 34, 1, CURRENT_DATE - INTERVAL '67 days'),
-('Uncategorized expense', 500, 'Expense', 'INR', 35, 1, CURRENT_DATE - INTERVAL '69 days'),
--- Repeat with varied descriptions and dates
-('Weekly groceries', 2100, 'Expense', 'INR', 1, 1, CURRENT_DATE - INTERVAL '71 days'),
-('Supermarket snacks', 750, 'Expense', 'INR', 2, 1, CURRENT_DATE - INTERVAL '73 days'),
-('Fresh fruit basket', 650, 'Expense', 'INR', 3, 1, CURRENT_DATE - INTERVAL '75 days'),
-('Lunch with colleagues', 900, 'Expense', 'INR', 4, 1, CURRENT_DATE - INTERVAL '77 days'),
-('Burger delivery', 550, 'Expense', 'INR', 5, 1, CURRENT_DATE - INTERVAL '79 days'),
-('Evening tea and samosa', 180, 'Income', 'INR', 6, 1, CURRENT_DATE - INTERVAL '81 days'),
-('Fuel top-up', 3000, 'Expense', 'INR', 7, 1, CURRENT_DATE - INTERVAL '83 days'),
-('Bus fare', 100, 'Expense', 'INR', 8, 1, CURRENT_DATE - INTERVAL '85 days'),
-('Cab to mall', 400, 'Expense', 'INR', 9, 1, CURRENT_DATE - INTERVAL '87 days'),
-('Brake pad replacement', 3500, 'Expense', 'INR', 10, 1, CURRENT_DATE - INTERVAL '89 days'),
-('Parking at event', 150, 'Expense', 'INR', 11, 1, CURRENT_DATE - INTERVAL '91 days'),
-('Rent paid', 18000, 'Expense', 'INR', 12, 1, CURRENT_DATE - INTERVAL '93 days'),
-('Electricity charges', 2100, 'Expense', 'INR', 13, 1, CURRENT_DATE - INTERVAL '95 days'),
-('Water usage bill', 550, 'Expense', 'INR', 14, 1, CURRENT_DATE - INTERVAL '97 days'),
-('Gas refill', 900, 'Expense', 'INR', 15, 1, CURRENT_DATE - INTERVAL '99 days'),
-('Internet bill', 1100, 'Expense', 'INR', 16, 1, CURRENT_DATE - INTERVAL '101 days'),
-('Mobile top-up', 399, 'Income', 'INR', 17, 1, CURRENT_DATE - INTERVAL '103 days'),
-('School books', 2500, 'Expense', 'INR', 18, 1, CURRENT_DATE - INTERVAL '105 days'),
-('Kids swimming class', 1200, 'Expense', 'INR', 19, 1, CURRENT_DATE - INTERVAL '107 days'),
-('Dental checkup', 850, 'Expense', 'INR', 20, 1, CURRENT_DATE - INTERVAL '109 days'),
-('Cough syrup', 300, 'Expense', 'INR', 21, 1, CURRENT_DATE - INTERVAL '111 days'),
-('Hair spa', 1200, 'Expense', 'INR', 22, 1, CURRENT_DATE - INTERVAL '113 days'),
-('Yoga subscription', 1800, 'Expense', 'INR', 23, 1, CURRENT_DATE - INTERVAL '115 days'),
-('Winter jacket', 2200, 'Expense', 'INR', 24, 1, CURRENT_DATE - INTERVAL '117 days')
+('Monthly Total Budget', 10500, 'INR', 'Monthly', '2025-08-01', NULL, 1, 1, 0, TRUE),
+('Grocery Budget', 8000, 'INR', 'Monthly', '2025-08-01', NULL, 1, 1, 1, TRUE),
+('Rent Budget', 12000, 'INR', 'Monthly', '2025-08-01', NULL, 1, 1, 3, TRUE),
+('Transport Budget', 3000, 'INR', 'Monthly', '2025-08-01', NULL, 1, 1, 8, TRUE),
+('Monthly Total Budget', 11000, 'INR', 'Monthly', '2025-08-01', NULL, 1, 2, 0, TRUE),
+('Food Budget', 9000, 'INR', 'Monthly', '2025-08-01', NULL, 1, 2, 2, TRUE),
+('Health Budget', 6000, 'INR', 'Monthly', '2025-08-01', NULL, 1, 2, 7, TRUE),
+('Misc Budget', 2500, 'INR', 'Monthly', '2025-08-01', NULL, 1, 2, 10, TRUE),
+('Monthly Total Budget', 11500, 'INR', 'Monthly', '2025-08-01', NULL, 1, 3, 0, TRUE),
+('Salary Budget', 50000, 'INR', 'Monthly', '2025-08-01', NULL, 1, 3, 11, TRUE),
+('Grocery Budget', 6000, 'INR', 'Monthly', '2025-08-01', NULL, 1, 3, 1, TRUE),
+('Entertainment Budget', 4000, 'INR', 'Monthly', '2025-08-01', NULL, 1, 3, 4, TRUE),
+('Monthly Total Budget', 12000, 'INR', 'Monthly', '2025-08-01', NULL, 1, 4, 0, TRUE),
+('Monthly Total Budget', 12500, 'INR', 'Monthly', '2025-08-01', NULL, 1, 5, 0, TRUE),
+('Monthly Total Budget', 13000, 'INR', 'Monthly', '2025-08-01', NULL, 1, 6, 0, TRUE),
+('Monthly Total Budget', 13500, 'INR', 'Monthly', '2025-08-01', NULL, 1, 7, 0, TRUE),
+('Monthly Total Budget', 14000, 'INR', 'Monthly', '2025-08-01', NULL, 1, 8, 0, TRUE),
+('Monthly Total Budget', 14500, 'INR', 'Monthly', '2025-08-01', NULL, 1, 9, 0, TRUE),
+('Monthly Total Budget', 15000, 'INR', 'Monthly', '2025-08-01', NULL, 1, 10, 0, TRUE),
+('Monthly Total Budget', 15500, 'INR', 'Monthly', '2025-08-01', NULL, 1, 11, 0, TRUE),
+('Monthly Total Budget', 16000, 'INR', 'Monthly', '2025-08-01', NULL, 1, 12, 0, TRUE),
+('Monthly Total Budget', 16500, 'INR', 'Monthly', '2025-08-01', NULL, 1, 13, 0, TRUE),
+('Monthly Total Budget', 17000, 'INR', 'Monthly', '2025-08-01', NULL, 1, 14, 0, TRUE),
+('Monthly Total Budget', 17500, 'INR', 'Monthly', '2025-08-01', NULL, 1, 15, 0, TRUE),
+('Monthly Total Budget', 18000, 'INR', 'Monthly', '2025-08-01', NULL, 1, 16, 0, TRUE),
+('Monthly Total Budget', 18500, 'INR', 'Monthly', '2025-08-01', NULL, 1, 17, 0, TRUE),
+('Monthly Total Budget', 19000, 'INR', 'Monthly', '2025-08-01', NULL, 1, 18, 0, TRUE),
+('Monthly Total Budget', 19500, 'INR', 'Monthly', '2025-08-01', NULL, 1, 19, 0, TRUE),
+('Monthly Total Budget', 20000, 'INR', 'Monthly', '2025-08-01', NULL, 1, 20, 0, TRUE),
+('Monthly Total Budget', 20500, 'INR', 'Monthly', '2025-08-01', NULL, 1, 21, 0, TRUE),
+('Monthly Total Budget', 21000, 'INR', 'Monthly', '2025-08-01', NULL, 1, 22, 0, TRUE),
+('Monthly Total Budget', 21500, 'INR', 'Monthly', '2025-08-01', NULL, 1, 23, 0, TRUE),
+('Monthly Total Budget', 22000, 'INR', 'Monthly', '2025-08-01', NULL, 1, 24, 0, TRUE),
+('Monthly Total Budget', 22500, 'INR', 'Monthly', '2025-08-01', NULL, 1, 25, 0, TRUE),
+('Grocery Budget', 7000, 'INR', 'Monthly', '2025-08-01', NULL, 1, 25, 1, TRUE),
+('Rent Budget', 15000, 'INR', 'Monthly', '2025-08-01', NULL, 1, 25, 3, TRUE),
+('Monthly Total Budget', 23000, 'INR', 'Monthly', '2025-08-01', NULL, 1, 26, 0, TRUE),
+('Monthly Total Budget', 23500, 'INR', 'Monthly', '2025-08-01', NULL, 1, 27, 0, TRUE),
+('Monthly Total Budget', 24000, 'INR', 'Monthly', '2025-08-01', NULL, 1, 28, 0, TRUE),
+('Monthly Total Budget', 24500, 'INR', 'Monthly', '2025-08-01', NULL, 1, 29, 0, TRUE),
+('Monthly Total Budget', 25000, 'INR', 'Monthly', '2025-08-01', NULL, 1, 30, 0, TRUE),
+('Monthly Total Budget', 25500, 'INR', 'Monthly', '2025-08-01', NULL, 1, 31, 0, TRUE),
+('Monthly Total Budget', 26000, 'INR', 'Monthly', '2025-08-01', NULL, 1, 32, 0, TRUE),
+('Monthly Total Budget', 26500, 'INR', 'Monthly', '2025-08-01', NULL, 1, 33, 0, TRUE),
+('Monthly Total Budget', 27000, 'INR', 'Monthly', '2025-08-01', NULL, 1, 34, 0, TRUE),
+('Monthly Total Budget', 27500, 'INR', 'Monthly', '2025-08-01', NULL, 1, 35, 0, TRUE),
+('Monthly Total Budget', 28000, 'INR', 'Monthly', '2025-08-01', NULL, 1, 36, 0, TRUE),
+('Monthly Total Budget', 28500, 'INR', 'Monthly', '2025-08-01', NULL, 1, 37, 0, TRUE),
+('Monthly Total Budget', 29000, 'INR', 'Monthly', '2025-08-01', NULL, 1, 38, 0, TRUE),
+('Monthly Total Budget', 29500, 'INR', 'Monthly', '2025-08-01', NULL, 1, 39, 0, TRUE),
+('Monthly Total Budget', 30000, 'INR', 'Monthly', '2025-08-01', NULL, 1, 40, 0, TRUE),
+('Monthly Total Budget', 30500, 'INR', 'Monthly', '2025-08-01', NULL, 1, 41, 0, TRUE),
+('Monthly Total Budget', 31000, 'INR', 'Monthly', '2025-08-01', NULL, 1, 42, 0, TRUE),
+('Monthly Total Budget', 31500, 'INR', 'Monthly', '2025-08-01', NULL, 1, 43, 0, TRUE),
+
+-- 1	"Monthly Total Budget"	23000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	1	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 2	"Grocery Budget"	8000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	1	1	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 3	"Rent Budget"	12000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	1	3	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 4	"Transport Budget"	3000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	1	8	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 5	"Monthly Total Budget"	17500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	2	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 6	"Food Budget"	9000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	2	2	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 7	"Health Budget"	6000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	2	7	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 8	"Misc Budget"	2500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	2	10	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 9	"Monthly Total Budget"	60000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	3	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 10	"Salary Budget"	50000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	3	11	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 11	"Grocery Budget"	6000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	3	1	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 12	"Entertainment Budget"	4000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	3	4	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 13	"Monthly Total Budget"	12000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	4	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 14	"Monthly Total Budget"	12500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	5	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 15	"Monthly Total Budget"	13000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	6	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 16	"Monthly Total Budget"	13500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	7	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 17	"Monthly Total Budget"	14000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	8	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 18	"Monthly Total Budget"	14500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	9	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 19	"Monthly Total Budget"	13500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	10	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 20	"Health Budget"	9000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	10	7	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 21	"Transport Budget"	4500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	10	8	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 22	"Monthly Total Budget"	15500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	11	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 23	"Monthly Total Budget"	16000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	12	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 24	"Monthly Total Budget"	16500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	13	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 25	"Monthly Total Budget"	17000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	14	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 26	"Monthly Total Budget"	17500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	15	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 27	"Monthly Total Budget"	18000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	16	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 28	"Monthly Total Budget"	18500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	17	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 29	"Monthly Total Budget"	19000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	18	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 30	"Monthly Total Budget"	19500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	19	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 31	"Monthly Total Budget"	20000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	20	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 32	"Monthly Total Budget"	20500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	21	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 33	"Monthly Total Budget"	21000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	22	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 34	"Monthly Total Budget"	21500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	23	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 35	"Monthly Total Budget"	22000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	24	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 36	"Monthly Total Budget"	22000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	25	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 37	"Grocery Budget"	7000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	25	1	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 38	"Rent Budget"	15000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	25	3	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 39	"Monthly Total Budget"	23000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	26	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 40	"Monthly Total Budget"	23500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	27	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 41	"Monthly Total Budget"	24000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	28	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 42	"Monthly Total Budget"	24500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	29	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 43	"Monthly Total Budget"	25000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	30	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 44	"Monthly Total Budget"	25500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	31	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 45	"Monthly Total Budget"	26000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	32	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 46	"Monthly Total Budget"	26500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	33	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 47	"Monthly Total Budget"	27000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	34	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 48	"Monthly Total Budget"	27500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	35	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 49	"Monthly Total Budget"	28000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	36	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 50	"Monthly Total Budget"	28500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	37	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 51	"Monthly Total Budget"	29000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	38	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 52	"Monthly Total Budget"	29500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	39	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 53	"Monthly Total Budget"	30000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	40	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 54	"Monthly Total Budget"	30500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	41	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 55	"Monthly Total Budget"	31000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	42	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 56	"Monthly Total Budget"	31500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	43	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 57	"Monthly Total Budget"	32000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	44	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 58	"Monthly Total Budget"	32500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	45	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 59	"Monthly Total Budget"	33000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	46	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 60	"Monthly Total Budget"	33500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	47	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 61	"Monthly Total Budget"	34000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	48	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 62	"Monthly Total Budget"	34500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	49	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 63	"Monthly Total Budget"	35000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	50	0	true	"2025-11-24 19:53:39.030577"	"2025-11-24 19:53:39.030577"
+-- 64	"Monthly Total Budget"	31000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	42	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 65	"Monthly Total Budget"	24500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	29	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 66	"Monthly Total Budget"	12000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	4	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 67	"Monthly Total Budget"	27000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	34	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 68	"Monthly Total Budget"	30500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	41	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 69	"Monthly Total Budget"	33000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	46	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 70	"Monthly Total Budget"	30000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	40	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 71	"Monthly Total Budget"	31500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	43	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 72	"Monthly Total Budget"	26000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	32	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 73	"Monthly Total Budget"	13500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	10	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 74	"Monthly Total Budget"	14500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	9	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 75	"Monthly Total Budget"	13500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	7	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 76	"Monthly Total Budget"	27500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	35	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 77	"Monthly Total Budget"	32500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	45	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 78	"Monthly Total Budget"	29000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	38	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 79	"Monthly Total Budget"	17500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	15	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 80	"Monthly Total Budget"	13000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	6	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 81	"Monthly Total Budget"	34000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	48	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 82	"Monthly Total Budget"	23000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	26	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 83	"Monthly Total Budget"	16000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	12	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 84	"Monthly Total Budget"	29500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	39	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 85	"Monthly Total Budget"	22000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	24	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 86	"Monthly Total Budget"	19500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	19	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 87	"Monthly Total Budget"	28000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	36	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 88	"Monthly Total Budget"	22000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	25	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 89	"Monthly Total Budget"	25500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	31	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 90	"Monthly Total Budget"	25000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	30	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 91	"Monthly Total Budget"	35000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	50	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 92	"Monthly Total Budget"	20500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	21	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 93	"Monthly Total Budget"	34500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	49	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 94	"Monthly Total Budget"	33500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	47	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 95	"Monthly Total Budget"	17000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	14	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 96	"Monthly Total Budget"	60000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	3	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 97	"Monthly Total Budget"	18500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	17	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 98	"Monthly Total Budget"	28500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	37	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 99	"Monthly Total Budget"	24000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	28	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 100	"Monthly Total Budget"	21000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	22	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 101	"Monthly Total Budget"	20000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	20	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 102	"Monthly Total Budget"	26500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	33	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 103	"Monthly Total Budget"	16500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	13	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 104	"Monthly Total Budget"	23000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	1	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 105	"Monthly Total Budget"	12500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	5	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 106	"Monthly Total Budget"	19000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	18	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 107	"Monthly Total Budget"	17500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	2	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 108	"Monthly Total Budget"	18000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	16	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 109	"Monthly Total Budget"	23500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	27	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 110	"Monthly Total Budget"	21500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	23	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 111	"Monthly Total Budget"	32000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	44	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 112	"Monthly Total Budget"	15500	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	11	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+-- 113	"Monthly Total Budget"	14000	"INR"	"Monthly"	"2025-11-24 00:00:00"	"2025-11-30 00:00:00"	8	0	true	"2025-11-24 19:54:01.089229"	"2025-11-24 19:54:01.089229"
+
 
 --- This table stores information about accounts, such as their name, type, balance, currency, and associated user.
 CREATE TABLE accounts (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    type VARCHAR(50) NOT NULL, -- e.g., 'savings', 'checking', 'credit', 'wallet' etc.
+    type VARCHAR(50) NOT NULL, -- e.g., 'Savings', 'Checking', 'Credit', 'Wallet' etc.
     balance FLOAT DEFAULT 0,
     currency VARCHAR(10) DEFAULT 'INR', --'INR' or 'USD' or 'EUR' or 'GBP' etc.
     user_id INTEGER NOT NULL REFERENCES users(id),
@@ -233,31 +308,251 @@ CREATE TABLE accounts (
 
 INSERT INTO accounts (name, type, balance, currency, user_id)
 VALUES
-('Savings Account', 'Savings', 100000, 'INR', 1),
-('Checking Account', 'Checking', 20000, 'USD', 2),
-('Credit Card', 'Credit', 50000, 'EUR', 3),
-('Wallet', 'Wallet', 10000, 'GBP', 1),
-('Salary Account', 'Savings', 50000, 'INR', 2),
-('Business Account', 'Checking', 100000, 'USD', 3),
-('Loan Account', 'Credit', 20000, 'EUR', 1),
-('Current Account', 'Checking', 50000, 'GBP', 2),
-('Fixed Deposit', 'Savings', 20000, 'INR', 3),
-('Recurring deposit', 'Savings', 10000, 'USD', 1),
-('Debit Card', 'Credit', 50000, 'EUR', 2),
-('Credit Card 2', 'Credit', 20000, 'GBP', 3),
-('Salary Account 2', 'Savings', 10000, 'INR', 1),
-('Business Account 2', 'Checking', 50000, 'USD', 2),
-('Loan Account 2', 'Credit', 20000, 'EUR', 3),
-('Current Account 2', 'Checking', 10000, 'GBP', 1),
-('Fixed deposit 2', 'Savings', 50000, 'INR', 2),
-('Recurring deposit 2', 'Savings', 20000, 'USD', 3);
+('Emergency Fund Savings', 'Savings', 50100.00, 'INR', 1),
+('Main Checking Account', 'Checking', 50200.00, 'USD', 2),
+('Visa Credit Card', 'Credit', 50300.00, 'EUR', 3),
+('PayPal Wallet', 'Wallet', 50400.00, 'GBP', 4),
+('Vacation Savings', 'Savings', 50500.00, 'INR', 5),
+('Household Checking', 'Checking', 50600.00, 'USD', 6),
+('MasterCard Rewards', 'Credit', 50700.00, 'EUR', 7),
+('Google Pay Wallet', 'Wallet', 50800.00, 'GBP', 8),
+('Retirement Savings', 'Savings', 50900.00, 'INR', 9),
+('Business Checking', 'Checking', 51000.00, 'USD', 10),
+('Travel Credit Card', 'Credit', 51100.00, 'EUR', 11),
+('Apple Wallet', 'Wallet', 51200.00, 'GBP', 12),
+('College Fund Savings', 'Savings', 51300.00, 'INR', 13),
+('Joint Checking Account', 'Checking', 51400.00, 'USD', 14),
+('Corporate Credit Card', 'Credit', 51500.00, 'EUR', 15),
+('Cash Wallet', 'Wallet', 51600.00, 'GBP', 16),
+('Emergency Fund Savings', 'Savings', 51700.00, 'INR', 17),
+('Main Checking Account', 'Checking', 51800.00, 'USD', 18),
+('Visa Credit Card', 'Credit', 51900.00, 'EUR', 19),
+('PayPal Wallet', 'Wallet', 52000.00, 'GBP', 20),
+('Vacation Savings', 'Savings', 52100.00, 'INR', 21),
+('Household Checking', 'Checking', 52200.00, 'USD', 22),
+('MasterCard Rewards', 'Credit', 52300.00, 'EUR', 23),
+('Google Pay Wallet', 'Wallet', 52400.00, 'GBP', 24),
+('Retirement Savings', 'Savings', 52500.00, 'INR', 25),
+('Business Checking', 'Checking', 52600.00, 'USD', 26),
+('Travel Credit Card', 'Credit', 52700.00, 'EUR', 27),
+('Apple Wallet', 'Wallet', 52800.00, 'GBP', 28),
+('College Fund Savings', 'Savings', 52900.00, 'INR', 29),
+('Joint Checking Account', 'Checking', 53000.00, 'USD', 30),
+('Corporate Credit Card', 'Credit', 53100.00, 'EUR', 31),
+('Cash Wallet', 'Wallet', 53200.00, 'GBP', 32),
+('Emergency Fund Savings', 'Savings', 53300.00, 'INR', 33),
+('Main Checking Account', 'Checking', 53400.00, 'USD', 34),
+('Visa Credit Card', 'Credit', 53500.00, 'EUR', 35),
+('PayPal Wallet', 'Wallet', 53600.00, 'GBP', 36),
+('Vacation Savings', 'Savings', 53700.00, 'INR', 37),
+('Household Checking', 'Checking', 53800.00, 'USD', 38),
+('MasterCard Rewards', 'Credit', 53900.00, 'EUR', 39),
+('Google PayWallet', 'Wallet', 54000.00, 'GBP', 40),
+('Retirement Savings', 'Savings', 54100.00, 'INR', 41),
+('Business Checking', 'Checking', 54200.00, 'USD', 42),
+('Travel Credit Card', 'Credit', 54300.00, 'EUR', 43),
+('Apple Wallet', 'Wallet', 54400.00, 'GBP', 44),
+('College Fund Savings', 'Savings', 54500.00, 'INR', 45),
+('Joint Checking Account', 'Checking', 54600.00, 'USD', 46),
+('Corporate Credit Card', 'Credit', 54700.00, 'EUR', 47),
+('Cash Wallet', 'Wallet', 54800.00, 'GBP', 48),
+('Emergency Fund Savings', 'Savings', 54900.00, 'INR', 49),
+('Main Checking Account', 'Checking', 55000.00, 'USD', 50);
+
+--- This table stores information about transactions, such as their description, amount, category, and user.
+CREATE TABLE transactions (
+    id SERIAL PRIMARY KEY,
+    description VARCHAR(255) NOT NULL,
+    amount INTEGER NOT NULL,
+    type VARCHAR(50) DEFAULT 'Expense', -- 'Expense' or 'Encome' or 'Transfer'
+    currency VARCHAR(10) DEFAULT 'INR', --'INR' or 'USD' or 'EUR' or 'GBP' etc.
+    category_id INTEGER NOT NULL REFERENCES categories(id),
+    account_id INTEGER NOT NULL REFERENCES accounts(id),
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    transaction_date TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- TRUNCATE TABLE transactions RESTART IDENTITY;
+
+INSERT INTO transactions (description, amount, type, currency, category_id, account_id, user_id, transaction_date)
+VALUES
+-- ------------------------------
+-- USER 1 (Account 1)
+-- ------------------------------
+('Groceries for the week', 1500, 'Expense', 'INR', 1, 1, 1, CURRENT_DATE - INTERVAL '10 days'),
+('Dinner at a restaurant', 800, 'Expense', 'INR', 2, 1, 1, CURRENT_DATE - INTERVAL '8 days'),
+('Mobile bill payment', 400, 'Expense', 'INR', 6, 1, 1, CURRENT_DATE - INTERVAL '5 days'),
+('Salary deposit', 35000, 'Income', 'INR', 11, 1, 1, CURRENT_DATE - INTERVAL '2 days'),
+('Fuel for car', 2000, 'Expense', 'INR', 8, 1, 1, CURRENT_DATE - INTERVAL '1 day'),
+
+-- ------------------------------
+-- USER 2 (Account 2)
+-- ------------------------------
+('Shopping for new clothes', 3000, 'Expense', 'INR', 9, 2, 2, CURRENT_DATE - INTERVAL '7 days'),
+('Online subscription fee', 199, 'Expense', 'INR', 10, 2, 2, CURRENT_DATE - INTERVAL '3 days'),
+('Freelance payment received', 15000, 'Income', 'INR', 11, 2, 2, CURRENT_DATE - INTERVAL '1 day'),
+
+-- ------------------------------
+-- USER 3 (Account 3)
+-- ------------------------------
+('House rent payment', 12000, 'Expense', 'INR', 3, 3, 3, CURRENT_DATE - INTERVAL '15 days'),
+('Doctor visit', 500, 'Expense', 'INR', 7, 3, 3, CURRENT_DATE - INTERVAL '6 days'),
+('Gift received', 2000, 'Income', 'INR', 11, 3, 3, CURRENT_DATE - INTERVAL '2 days'),
+
+-- ------------------------------
+-- USER 4 (Account 4)
+-- ------------------------------
+('Public transport pass', 600, 'Expense', 'INR', 8, 4, 4, CURRENT_DATE - INTERVAL '10 days'),
+('Coffee and snack', 120, 'Expense', 'INR', 2, 4, 4, CURRENT_DATE - INTERVAL '4 days'),
+('Bonus from work', 5000, 'Income', 'INR', 11, 4, 4, CURRENT_DATE - INTERVAL '1 day'),
+
+-- ------------------------------
+-- USER 5 (Account 5)
+-- ------------------------------
+('Online shopping – clothes', 3000, 'Expense', 'INR', 9, 5, 5, CURRENT_DATE - INTERVAL '12 days'),
+('Electricity bill', 1200, 'Expense', 'INR', 6, 5, 5, CURRENT_DATE - INTERVAL '9 days'),
+('Freelance project payment', 15000, 'Income', 'INR', 11, 5, 5, CURRENT_DATE - INTERVAL '6 days'),
+('Taxi fare', 350, 'Expense', 'INR', 8, 5, 5, CURRENT_DATE - INTERVAL '4 days'),
+('Book purchase', 600, 'Expense', 'INR', 10, 5, 5, CURRENT_DATE - INTERVAL '3 days'),
+
+-- ------------------------------
+-- USER 6 (Account 6)
+-- ------------------------------
+('Dinner at restaurant', 750, 'Expense', 'INR', 2, 6, 6, CURRENT_DATE - INTERVAL '11 days'),
+('Internet bill', 900, 'Expense', 'INR', 6, 6, 6, CURRENT_DATE - INTERVAL '5 days'),
+('Service payment received', 8000, 'Income', 'INR', 11, 6, 6, CURRENT_DATE - INTERVAL '2 days'),
+
+-- ------------------------------
+-- USER 7 (Account 7)
+-- ------------------------------
+('New furniture purchase', 8500, 'Expense', 'INR', 9, 7, 7, CURRENT_DATE - INTERVAL '14 days'),
+('Haircut and grooming', 350, 'Expense', 'INR', 10, 7, 7, CURRENT_DATE - INTERVAL '8 days'),
+('Refund from store', 1200, 'Income', 'INR', 11, 7, 7, CURRENT_DATE - INTERVAL '3 days'),
+
+-- ------------------------------
+-- USER 8 (Account 8)
+-- ------------------------------
+('Movie tickets', 500, 'Expense', 'INR', 4, 8, 8, CURRENT_DATE - INTERVAL '9 days'),
+('Cleaning supplies', 300, 'Expense', 'INR', 10, 8, 8, CURRENT_DATE - INTERVAL '4 days'),
+('Dividend income', 2000, 'Income', 'INR', 11, 8, 8, CURRENT_DATE - INTERVAL '1 day'),
+
+-- ------------------------------
+-- USER 9 (Account 9)
+-- ------------------------------
+('Home repair service', 2500, 'Expense', 'INR', 10, 9, 9, CURRENT_DATE - INTERVAL '15 days'),
+('Gym membership', 1000, 'Expense', 'INR', 7, 9, 9, CURRENT_DATE - INTERVAL '11 days'),
+('Investment income', 5000, 'Income', 'INR', 11, 9, 9, CURRENT_DATE - INTERVAL '7 days'),
+('Coffee shop visit', 250, 'Expense', 'INR', 2, 9, 9, CURRENT_DATE - INTERVAL '2 days'),
+('Public transport ticket', 150, 'Expense', 'INR', 8, 9, 9, CURRENT_DATE - INTERVAL '1 day'),
+
+-- ------------------------------
+-- USER 10 (Account 10)
+-- ------------------------------
+('Groceries', 1200, 'Expense', 'INR', 1, 10, 10, CURRENT_DATE - INTERVAL '8 days'),
+('Utilities bill', 1500, 'Expense', 'INR', 6, 10, 10, CURRENT_DATE - INTERVAL '3 days'),
+('Side hustle earnings', 10000, 'Income', 'INR', 11, 10, 10, CURRENT_DATE - INTERVAL '1 day'),
+
+-- ------------------------------
+-- USER 11 (Account 11)
+-- ------------------------------
+('New shoes', 1800, 'Expense', 'INR', 9, 11, 11, CURRENT_DATE - INTERVAL '13 days'),
+('Pharmacy medicine', 250, 'Expense', 'INR', 7, 11, 11, CURRENT_DATE - INTERVAL '5 days'),
+('Gift received', 1200, 'Income', 'INR', 11, 11, 11, CURRENT_DATE - INTERVAL '2 days'),
+
+-- ------------------------------
+-- USER 12 (Account 12)
+-- ------------------------------
+('Concert tickets', 1500, 'Expense', 'INR', 4, 12, 12, CURRENT_DATE - INTERVAL '10 days'),
+('Car maintenance', 3500, 'Expense', 'INR', 8, 12, 12, CURRENT_DATE - INTERVAL '6 days'),
+('Sales commission', 6000, 'Income', 'INR', 11, 12, 12, CURRENT_DATE - INTERVAL '1 day'),
+
+-- ------------------------------
+-- USER 13 (Account 13)
+-- ------------------------------
+('Dining out', 1200, 'Expense', 'INR', 2, 13, 13, CURRENT_DATE - INTERVAL '9 days'),
+('Electricity bill', 800, 'Expense', 'INR', 6, 13, 13, CURRENT_DATE - INTERVAL '4 days'),
+('Consulting fee', 10000, 'Income', 'INR', 11, 13, 13, CURRENT_DATE - INTERVAL '2 days'),
+
+-- ------------------------------
+-- USER 14 (Account 14)
+-- ------------------------------
+('Books from Amazon', 650, 'Expense', 'INR', 10, 14, 14, CURRENT_DATE - INTERVAL '7 days'),
+('Gym membership', 1400, 'Expense', 'INR', 7, 14, 14, CURRENT_DATE - INTERVAL '3 days'),
+('Rental income', 15000, 'Income', 'INR', 11, 14, 14, CURRENT_DATE - INTERVAL '1 day'),
+
+-- ------------------------------
+-- USER 15 (Account 15)
+-- ------------------------------
+('Fuel for car', 2400, 'Expense', 'INR', 8, 15, 15, CURRENT_DATE - INTERVAL '12 days'),
+('Mobile phone bill', 550, 'Expense', 'INR', 6, 15, 15, CURRENT_DATE - INTERVAL '5 days'),
+('Project payment', 12000, 'Income', 'INR', 11, 15, 15, CURRENT_DATE - INTERVAL '2 days'),
+
+-- ------------------------------
+-- USER 16 (Account 16)
+-- ------------------------------
+('Home decor item', 900, 'Expense', 'INR', 10, 16, 16, CURRENT_DATE - INTERVAL '11 days'),
+('Takeaway food', 300, 'Expense', 'INR', 2, 16, 16, CURRENT_DATE - INTERVAL '6 days'),
+('Interest earned', 500, 'Income', 'INR', 11, 16, 16, CURRENT_DATE - INTERVAL '1 day'),
+
+-- ------------------------------
+-- USER 17 (Account 17)
+-- ------------------------------
+('New gadget', 8000, 'Expense', 'INR', 9, 17, 17, CURRENT_DATE - INTERVAL '14 days'),
+('Internet bill', 750, 'Expense', 'INR', 6, 17, 17, CURRENT_DATE - INTERVAL '8 days'),
+('Freelance work payment', 12000, 'Income', 'INR', 11, 17, 17, CURRENT_DATE - INTERVAL '3 days'),
+
+-- ------------------------------
+-- USER 18 (Account 18)
+-- ------------------------------
+('Groceries', 1000, 'Expense', 'INR', 1, 18, 18, CURRENT_DATE - INTERVAL '9 days'),
+('Movie tickets', 300, 'Expense', 'INR', 4, 18, 18, CURRENT_DATE - INTERVAL '4 days'),
+('Bonus payment', 7000, 'Income', 'INR', 11, 18, 18, CURRENT_DATE - INTERVAL '1 day'),
+
+-- ------------------------------
+-- USER 19 (Account 19)
+-- ------------------------------
+('Clothing purchase', 2700, 'Expense', 'INR', 9, 19, 19, CURRENT_DATE - INTERVAL '10 days'),
+('Water bill', 450, 'Expense', 'INR', 6, 19, 19, CURRENT_DATE - INTERVAL '5 days'),
+('Commission income', 3000, 'Income', 'INR', 11, 19, 19, CURRENT_DATE - INTERVAL '2 days'),
+
+-- ------------------------------
+-- USER 20 (Account 20)
+-- ------------------------------
+('Parking fee', 80, 'Expense', 'INR', 8, 20, 20, CURRENT_DATE - INTERVAL '7 days'),
+('Coffee shop', 120, 'Expense', 'INR', 2, 20, 20, CURRENT_DATE - INTERVAL '3 days'),
+('Gift from friend', 2000, 'Income', 'INR', 11, 20, 20, CURRENT_DATE - INTERVAL '1 day'),
+
+-- ------------------------------
+-- USER 21 (Account 21)
+-- ------------------------------
+('Kids activity fee', 2000, 'Expense', 'INR', 10, 21, 21, CURRENT_DATE - INTERVAL '13 days'),
+('Gas bill', 900, 'Expense', 'INR', 6, 21, 21, CURRENT_DATE - INTERVAL '6 days'),
+('Salary deposit', 40000, 'Income', 'INR', 11, 21, 21, CURRENT_DATE - INTERVAL '2 days'),
+
+-- ------------------------------
+-- USER 22 (Account 22)
+-- ------------------------------
+('Dining out', 800, 'Expense', 'INR', 2, 22, 22, CURRENT_DATE - INTERVAL '8 days'),
+('Online course fee', 2500, 'Expense', 'INR', 5, 22, 22, CURRENT_DATE - INTERVAL '4 days'),
+('Consulting income', 15000, 'Income', 'INR', 11, 22, 22, CURRENT_DATE - INTERVAL '1 day'),
+
+-- ------------------------------
+-- USER 23 (Account 23)
+-- ------------------------------
+('Groceries', 900, 'Expense', 'INR', 1, 23, 23, CURRENT_DATE - INTERVAL '11 days'),
+('Pharmacy purchase', 350, 'Expense', 'INR', 7, 23, 23, CURRENT_DATE - INTERVAL '5 days'),
+('Refund for return', 800, 'Income', 'INR', 11, 23, 23, CURRENT_DATE - INTERVAL '2 days');
+
+
 
 --- This table stores information about recurring transactions, such as their description, amount, category, recurrence pattern, and associated user.
 CREATE TABLE recurring_transactions (
     id SERIAL PRIMARY KEY,
     description VARCHAR(255) NOT NULL,
     amount INTEGER NOT NULL,
-    type VARCHAR(50) DEFAULT 'expense', -- 'expense' or 'income' or 'transfer'
+    type VARCHAR(50) DEFAULT 'Expense', -- 'Expense' or 'Income' or 'Transfer'
     currency VARCHAR(10) DEFAULT 'INR', --'INR' or 'USD' or 'EUR' or 'GBP' etc.
     category_id INTEGER NOT NULL REFERENCES categories(id),
     user_id INTEGER NOT NULL REFERENCES users(id),
@@ -267,62 +562,7 @@ CREATE TABLE recurring_transactions (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )
 
---- This table stores information about budgets, such as their name, amount, duration, and associated user.
-CREATE TABLE budgets (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    amount INTEGER NOT NULL,
-    currency VARCHAR(10) DEFAULT 'INR', --'INR' or 'USD' or 'EUR' or 'GBP' etc.
-    period VARCHAR(50) NOT NULL, -- e.g., 'daily', 'weekly', 'monthly', 'yearly'
-    start_date TIMESTAMP NOT NULL,
-    end_date TIMESTAMP NOT NULL,
-    user_id INTEGER NOT NULL REFERENCES users(id),
-    category_id INTEGER NOT NULL REFERENCES categories(id),
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- TRUNCATE TABLE budgets RESTART IDENTITY;
-
-INSERT INTO budgets (name, amount, currency, period, start_date, end_date, user_id, category_id)
-VALUES
-('Monthly Grocery Budget', 10000, 'INR', 'Monthly', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 month', 1, 1),
-('Daily Commute Budget', 500, 'INR', 'Daily', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 day', 2, 2),
-('Yearly Entertainment Budget', 20000, 'INR', 'Yearly', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 year', 3, 3),
-('Weekly Food Budget', 2000, 'INR', 'Weekly', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 week', 1, 4),
-('Monthly Rent Budget', 50000, 'INR', 'Monthly', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 month', 2, 5),
-('Quarterly Education Budget', 10000, 'INR', 'Quarterly', CURRENT_DATE, CURRENT_DATE + INTERVAL '3 months', 3, 6),
-('Daily Health Budget', 1000, 'INR', 'Daily', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 day', 1, 7),
-('Yearly Personal Budget', 100000, 'INR', 'Yearly', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 year', 2, 8),
-('Monthly Miscellaneous Budget', 5000, 'INR', 'Monthly', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 month', 3, 9),
-('Weekly Entertainment Budget', 2000, 'INR', 'Weekly', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 week', 1, 10),
-('Quarterly Transportation Budget', 5000, 'INR', 'Quarterly', CURRENT_DATE, CURRENT_DATE + INTERVAL '3 months', 2, 11),
-('Daily Education Budget', 500, 'INR', 'Daily', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 day', 3, 12),
-('Yearly Health Budget', 50000, 'INR', 'Yearly', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 year', 1, 13),
-('Monthly Personal Budget', 20000, 'INR', 'Monthly', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 month', 2, 14),
-('Weekly Miscellaneous Budget', 1000, 'INR', 'Weekly', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 week', 3, 15),
-('Quarterly Education Budget', 20000, 'INR', 'Quarterly', CURRENT_DATE, CURRENT_DATE + INTERVAL '3 months', 1, 16),
-('Daily Health Budget', 2000, 'INR', 'Daily', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 day', 2, 17),
-('Yearly Transportation Budget', 100000, 'INR', 'Yearly', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 year', 3, 18),
-('Monthly Education Budget', 5000, 'INR', 'Monthly', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 month', 1, 19),
-('Weekly Personal Budget', 5000, 'INR', 'Weekly', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 week', 2, 20),
-('Quarterly Health Budget', 10000, 'INR', 'Quarterly', CURRENT_DATE, CURRENT_DATE + INTERVAL '3 months', 3, 21),
-('Daily Education Budget', 1000, 'INR', 'Daily', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 day', 1, 22),
-('Yearly Miscellaneous Budget', 50000, 'INR', 'Yearly', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 year', 2, 23),
-('Monthly Transportation Budget', 20000, 'INR', 'Monthly', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 month', 3, 24),
-('Weekly Health Budget', 2000, 'INR', 'Weekly', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 week', 1, 25),
-('Quarterly Personal Budget', 5000, 'INR', 'Quarterly', CURRENT_DATE, CURRENT_DATE + INTERVAL '3 months', 2, 26),
-('Daily Health Budget', 2000, 'INR', 'Daily', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 day', 3, 27),
-('Yearly Health Budget', 100000, 'INR', 'Yearly', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 year', 1, 28),
-('Monthly Health Budget', 5000, 'INR', 'Monthly', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 month', 2, 29),
-('Weekly Transportation Budget', 5000, 'INR', 'Weekly', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 week', 3, 30),
-('Quarterly Health Budget', 20000, 'INR', 'Quarterly', CURRENT_DATE, CURRENT_DATE + INTERVAL '3 months', 1, 31),
-('Daily Personal Budget', 5000, 'INR', 'Daily', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 day', 2, 32),
-('Yearly Miscellaneous Budget', 200000, 'INR', 'Yearly', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 year', 3, 33),
-('Monthly Education Budget', 10000, 'INR', 'Monthly', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 month', 1, 34),
-('Weekly Health Budget', 10000, 'INR', 'Weekly', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 week', 2, 35);
-
+-- This table stores information about feedbacks, such as their issue type, subject, description, rating, status, and associated user.
 CREATE TABLE feedbacks (
     id SERIAL PRIMARY KEY,
     issue_type VARCHAR(255) NOT NULL,
@@ -401,3 +641,21 @@ CREATE TABLE tokens (
     expires_at TIMESTAMP NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+
+-- For now let us cosnider only Monthly budget with current date as start date and end day of current month as end date. Only one budget  per month per user, so please update the create table script for budget here:
+-- CREATE TABLE budgets (
+--     id SERIAL PRIMARY KEY,
+--     name VARCHAR(255) NOT NULL,
+--     amount INTEGER NOT NULL,
+--     currency VARCHAR(10) DEFAULT 'INR', --'INR' or 'USD' or 'EUR' or 'GBP' etc.
+--     period VARCHAR(50) NOT NULL, -- e.g., 'monthly'- for now let us consider only monthly
+--     start_date TIMESTAMP NOT NULL,
+--     end_date TIMESTAMP NOT NULL,
+--     user_id INTEGER NOT NULL REFERENCES users(id),
+--     category_id INTEGER NOT NULL REFERENCES categories(id),
+--     is_active BOOLEAN DEFAULT TRUE,
+--     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+--     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+-- );
+-- Also provide about 10 most common categories, which cover all types of expenses and income (mainly salary) based on the new table design.

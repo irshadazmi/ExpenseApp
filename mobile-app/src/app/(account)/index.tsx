@@ -31,7 +31,7 @@ const Accounts = () => {
         ? await accountService.getAll()
         : await accountService.getByUser(currentUserId!);
 
-      console.log(data);
+      // console.log(data);
       setAccounts(data);
     } catch (error) {
       console.error("Failed to load accounts", error);
