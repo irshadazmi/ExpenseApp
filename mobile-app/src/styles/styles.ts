@@ -1,8 +1,9 @@
+// mobile-app/src/styles/styles.ts
 import { COLORS } from "@/constants/COLORS";
 import { StyleSheet } from "react-native";
 
 const styles = StyleSheet.create({
-  // ========= Layout =========
+  //  Layout 
   container: {
     flex: 1,
     padding: 16,
@@ -14,7 +15,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
 
-  // ========= Text =========
+  //  Text 
   welcome: {
     fontSize: 26,
     fontWeight: "700",
@@ -30,7 +31,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     textAlign: "center",
   },
-    description: {
+  description: {
     fontSize: 13,
     marginBottom: 8,
     color: COLORS.text,
@@ -60,7 +61,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
 
-  // ========= Images / Media =========
+  //  Images / Media 
   image: {
     width: 240,
     height: 240,
@@ -72,7 +73,7 @@ const styles = StyleSheet.create({
     height: 280,
   },
 
-  // ========= Inputs =========
+  //  Inputs 
   textInput: {
     height: 46,
     borderColor: COLORS.primary,
@@ -115,7 +116,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 
-  // ========= Buttons =========
+  //  Buttons 
   button: {
     backgroundColor: COLORS.primary,
     paddingVertical: 10,
@@ -168,7 +169,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 
-  // ========= Dropdown & Picker =========
+  //  Dropdown & Picker =========
   dropdownWrapper: {
     height: 46,
     borderWidth: 1.5,
@@ -518,7 +519,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   drawerItemActive: {
-    backgroundColor: COLORS.tabBg,              // dark brinjal background
+    backgroundColor: COLORS.tabBg, // dark brinjal background
   },
   drawerItemText: {
     fontSize: 16,
@@ -526,7 +527,90 @@ const styles = StyleSheet.create({
     color: COLORS.text,
   },
   drawerItemTextActive: {
-    color: COLORS.tabActive,                    // neon pink/blue for active
+    color: COLORS.tabActive, // neon pink/blue for active
+  },
+
+  // ========= DASHBOARD =========
+  dashboardHeaderContainer: {
+    padding: 16,
+  },
+  dashboardCardRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  dashboardUsageBox: {
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  barBg: {
+    height: 10,
+    backgroundColor: "#ddd",
+    borderRadius: 10,
+    marginTop: 6,
+    overflow: "hidden",
+  },
+  barBgSmall: {
+    height: 6,
+    backgroundColor: "#eee",
+    borderRadius: 6,
+    marginTop: 4,
+    overflow: "hidden",
+  },
+  barFill: {
+    height: "100%",
+    borderRadius: 10,
+    backgroundColor: COLORS.primary,
+  },
+  dashboardChartBox: {
+    marginTop: 20,
+    marginBottom: 8,
+    borderRadius: 12,
+    backgroundColor: COLORS.white,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 3,
+  },
+  dashboardChartTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    marginBottom: 10,
+    paddingHorizontal: 12,
+    color: COLORS.text,
+  },
+  dashboardSection: {
+    marginTop: 16,
+    paddingHorizontal: 4,
+  },
+  dashboardCategoryRow: {
+    marginTop: 10,
+  },
+  dashboardCategoryTitle: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: COLORS.text,
+  },
+  // transactions list
+  txnRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    padding: 12,
+    borderBottomWidth: 1,
+    borderColor: "#eee",
+    backgroundColor: COLORS.white,
+  },
+  txnTitle: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: COLORS.text,
+  },
+  txnAmt: {
+    fontWeight: "700",
+    fontSize: 14,
   },
 });
 

@@ -15,7 +15,7 @@ from app.routers.seed_router import seed_router
 app = FastAPI()
 
 # Add authentication middleware
-# app.add_middleware(auth_middleware.AuthMiddleware)
+app.add_middleware(auth_middleware.AuthMiddleware)
 
 # Add CORS middleware
 add_cors_middleware(app)

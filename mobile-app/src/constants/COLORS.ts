@@ -1,3 +1,5 @@
+import { red } from "react-native-reanimated/lib/typescript/Colors";
+
 // src/constants/COLORS.ts
 const COLORS = {
   primary: '#7F00FF',
@@ -12,6 +14,10 @@ const COLORS = {
   danger: '#EA4C68',
   success: '#8BC34A',
   warning: '#FFC107',
+  red: '#FF3B30',
+  green: '#34C759',
+  blue: '#007AFF',
+  yellow: '#FFCC00',
 
   // Tab bar colors aligned with logo
   tabBg: '#6c5ce7',        // closest known color to deep violet, a dark blue-violet color

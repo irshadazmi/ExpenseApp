@@ -1,3 +1,4 @@
+// mobile-app/src/types/dashboard.ts
 export interface DashboardSummaryResponse {
   total_budget: number;
   total_spent: number;

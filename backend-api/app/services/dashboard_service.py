@@ -1,7 +1,7 @@
-# app/services/dashboard_service.py
+from app.repositories.dashboard_repository import DashboardRepository
 
 class DashboardService:
-    def __init__(self, repo):
+    def __init__(self, repo: DashboardRepository):
         self.repo = repo
 
     async def get_summary(self, user_id: int):
