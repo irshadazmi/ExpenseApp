@@ -612,6 +612,18 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     fontSize: 14,
   },
+
+  // dashboard 
+  value: {
+    marginTop: 4,
+    fontSize: 18,
+    fontWeight: "700",
+  },
+
+  subValue: {
+    fontSize: 12,
+    opacity: 0.7,
+  },
 });
 
 export default styles;
