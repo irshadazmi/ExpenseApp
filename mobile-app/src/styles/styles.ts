@@ -391,28 +391,48 @@ const styles = StyleSheet.create({
   },
   chipsContainer: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    marginBottom: 8,
+    alignItems: "center",
+    paddingVertical: 2,
+    marginBottom: 10,
   },
+
   chip: {
+    height: 30,
+    paddingHorizontal: 14,
+
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: COLORS.primary,
-    borderRadius: 16,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+
+    backgroundColor: COLORS.white,
+
+    alignItems: "center",
+    justifyContent: "center",
+
     marginRight: 6,
-    marginBottom: 6,
-    backgroundColor: "#fff",
+
+    shadowColor: COLORS.cardShadow,
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 2,
+    elevation: 1,
   },
+
   chipSelected: {
     backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
   },
+
   chipText: {
     fontSize: 12,
+    fontWeight: "600",
     color: COLORS.primary,
+    letterSpacing: 0.5,
   },
+
   chipTextSelected: {
     color: COLORS.white,
+    fontWeight: "700",
   },
 
   cardHeader: {

@@ -7,11 +7,11 @@ import {
   Text,
   Dimensions,
   ScrollView,
+  TouchableOpacity,
 } from "react-native";
 
 import Svg, { Rect, Text as SvgText } from "react-native-svg";
 import { PieChart } from "react-native-chart-kit";
-import { Picker } from "@react-native-picker/picker";
 
 import styles from "@/styles/styles";
 import { COLORS } from "@/constants/COLORS";
@@ -56,23 +56,20 @@ const screenWidth = Dimensions.get("window").width;
 export default function Dashboard() {
   const { user } = useAuth();
 
-  // Current year defaults
   const now = new Date();
   const currentYear = now.getFullYear();
+  const currentMonthIndex = now.getMonth(); // 0..11
 
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [categories, setCategories] = useState<CategoryReportItem[]>([]);
   const [recent, setRecent] = useState<RecentTransaction[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // ✅ Defaults:
-  // Year = current year
-  // Month = unselected (-1)
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
   const [selectedMonthIndex, setSelectedMonthIndex] =
-    useState<number>(-1);
+    useState<number>(-1); // ✅ Default = "ALL months"
 
-  // Year dropdown (current + last 4)
+  // 5 years range centered around current
   const yearOptions = useMemo(
     () => [
       currentYear - 4,
@@ -92,62 +89,38 @@ export default function Dashboard() {
     if (!user) return;
 
     setLoading(true);
-
     try {
-      const yearForApi =
-        selectedYear > 0 ? selectedYear : undefined;
-
+      const yearForApi = selectedYear;
       const monthForApi =
-        selectedMonthIndex >= 0
-          ? toApiMonth(selectedMonthIndex)
-          : undefined;
-
-      const summaryReq =
-        dashboardService
-          .getSummary(user.id, yearForApi, monthForApi)
-          .catch((e) => {
-            console.log("Summary API failed:", e);
-            return null;
-          });
-
-      const catReq =
-        dashboardService
-          .getCategories(user.id, yearForApi, monthForApi)
-          .catch((e) => {
-            console.log("Categories API failed:", e);
-            return [];
-          });
-
-      const recentReq =
-        dashboardService
-          .getRecent(user.id, yearForApi, monthForApi)
-          .catch((e) => {
-            console.log("Recent API failed:", e);
-            return [];
-          });
+        selectedMonthIndex >= 0 ? toApiMonth(selectedMonthIndex) : undefined;
 
       const [s, c, r] = await Promise.all([
-        summaryReq,
-        catReq,
-        recentReq,
+        dashboardService.getSummary(
+          user.id,
+          yearForApi,
+          monthForApi
+        ),
+        dashboardService.getCategories(
+          user.id,
+          yearForApi,
+          monthForApi
+        ),
+        dashboardService.getRecent(
+          user.id,
+          yearForApi,
+          monthForApi
+        ),
       ]);
 
       setSummary(s);
       setCategories(c || []);
       setRecent((r || []).slice(0, 6));
-    }
-    catch (e) {
-      console.log("Unexpected dashboard error:", e);
-    }
-    finally {
+    } catch (e) {
+      console.log("Dashboard load error:", e);
+    } finally {
       setLoading(false);
     }
-
   }, [user, selectedYear, selectedMonthIndex]);
-
-  /* ======================================================
-        INITIAL LOAD
-  ====================================================== */
 
   useEffect(() => {
     loadData();
@@ -170,7 +143,8 @@ export default function Dashboard() {
     return categories
       .filter((c) => c.spent > 0)
       .map((c, i) => ({
-        name: c.short_name,
+        name: c.category_name,
+        short_name: c.short_name,
         population: c.spent,
         color: PIE_COLORS[i % PIE_COLORS.length],
         legendFontColor: COLORS.text,
@@ -203,7 +177,113 @@ export default function Dashboard() {
         UI COMPONENTS
   ====================================================== */
 
-  /* ---------- KPI ---------- */
+  /* ---------- YEAR + MONTH CHIPS (TWO ROW SELECTOR) ---------- */
+
+  const YearMonthSelector = () => (
+    <View style={{ marginBottom: 8 }}>
+
+      {/* ====================
+        YEAR ROW
+    ==================== */}
+      <Text style={styles.label}>Year</Text>
+
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingHorizontal: 12,
+          flexDirection: "row",
+          alignItems: "center",
+        }}
+      >
+        {yearOptions.map((y) => {
+          const active = y === selectedYear;
+
+          return (
+            <TouchableOpacity
+              key={y}
+              onPress={() => setSelectedYear(y)}
+              style={[
+                styles.chip,
+                active && styles.chipSelected,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.chipText,
+                  active && styles.chipTextSelected,
+                ]}
+              >
+                {y}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+
+      {/* ====================
+        MONTH ROW
+    ==================== */}
+      <Text style={[styles.label, { marginTop: 6 }]}>Month</Text>
+
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingHorizontal: 12,
+          flexDirection: "row",
+          alignItems: "center",
+        }}
+      >
+
+        {/* ALL */}
+        <TouchableOpacity
+          onPress={() => setSelectedMonthIndex(-1)}
+          style={[
+            styles.chip,
+            selectedMonthIndex === -1 && styles.chipSelected,
+          ]}
+        >
+          <Text
+            style={[
+              styles.chipText,
+              selectedMonthIndex === -1 && styles.chipTextSelected,
+            ]}
+          >
+            ALL
+          </Text>
+        </TouchableOpacity>
+
+        {/* MONTHS */}
+        {MONTHS.map((m, i) => {
+          const active = i === selectedMonthIndex;
+
+          return (
+            <TouchableOpacity
+              key={m}
+              onPress={() => setSelectedMonthIndex(i)}
+              style={[
+                styles.chip,
+                active && styles.chipSelected,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.chipText,
+                  active && styles.chipTextSelected,
+                ]}
+              >
+                {m}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
+
+
+  /* ---------- KPI CARDS ---------- */
 
   const KPIs = () => (
     <View style={styles.dashboardCardRow}>
@@ -212,7 +292,7 @@ export default function Dashboard() {
         <Text style={styles.title}>
           ₹{summary.totals.budget.toLocaleString("en-IN")}
         </Text>
-        <Text style={{ color: COLORS.green, fontWeight: "700" }}>
+        <Text style={{ color: COLORS.green, fontSize: 14 }}>
           Income: ₹{summary.totals.earning.toLocaleString("en-IN")}
         </Text>
       </View>
@@ -222,14 +302,14 @@ export default function Dashboard() {
         <Text style={[styles.title, { color: COLORS.danger }]}>
           ₹{summary.totals.spent.toLocaleString("en-IN")}
         </Text>
-        <Text style={{ color: COLORS.green, fontWeight: "700" }}>
+        <Text style={{ color: COLORS.green, fontSize: 14 }}>
           Remaining: ₹{summary.totals.remaining.toLocaleString("en-IN")}
         </Text>
       </View>
     </View>
   );
 
-  /* ---------- USAGE ---------- */
+  /* ---------- USAGE BAR ---------- */
 
   const UsageBar = () => {
     const usage = summary.totals.usage_percent || 0;
@@ -241,9 +321,10 @@ export default function Dashboard() {
 
     return (
       <View style={styles.dashboardUsageBox}>
-        <Text style={styles.label}>
-          Monthly Usage: {usage.toFixed(1)}%
-        </Text>
+        <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+          <Text style={styles.label}>Usage</Text>
+          <Text style={styles.label}>{usage.toFixed(1)}%</Text>
+        </View>
 
         <View style={styles.barBg}>
           <View
@@ -254,28 +335,26 @@ export default function Dashboard() {
           />
         </View>
 
-        <View style={{ marginTop: 6 }}>
+        <View style={{ marginTop: 6, flexDirection: "row", justifyContent: "space-between" }}>
           <Text style={styles.metaText}>
-            Daily spent: ₹{Math.round(summary.burn_rate.daily_spend)}
+            Daily spent: ₹{Math.round(summary.burn_rate.daily_spend || 0)}
           </Text>
           <Text style={styles.metaText}>
-            Allowed/day: ₹{Math.round(summary.burn_rate.daily_budget)}
+            Allowed/day: ₹{Math.round(summary.burn_rate.daily_budget || 0)}
           </Text>
         </View>
       </View>
     );
   };
 
-  /* ---------- SPENDING VS BUDGET ---------- */
+  /* ---------- SPENDING CHART ---------- */
 
   const SpendingChart = () => {
     const width = categories.length * (BAR_WIDTH + BAR_GAP) + 40;
 
     return (
       <View style={styles.dashboardChartBox}>
-        <Text style={styles.dashboardChartTitle}>
-          Spending vs Budget
-        </Text>
+        <Text style={styles.dashboardChartTitle}>Spending vs Budget</Text>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <Svg
@@ -287,7 +366,6 @@ export default function Dashboard() {
               const spentH = (c.spent / maxBarValue) * BAR_HEIGHT;
 
               const x = i * (BAR_WIDTH + BAR_GAP) + 30;
-
               const yBudget = BAR_HEIGHT - budgetH;
               const ySpent = yBudget + (budgetH - spentH);
 
@@ -315,10 +393,11 @@ export default function Dashboard() {
                   <SvgText
                     x={x + BAR_WIDTH / 2}
                     y={BAR_HEIGHT + 16}
-                    rotation="-40"
                     fontSize={10}
-                    textAnchor="middle"
                     fill={COLORS.textSecondary}
+                    textAnchor="middle"
+                    rotation="-40"
+                    origin={`${x + BAR_WIDTH / 2},${BAR_HEIGHT + 16}`}
                   >
                     {c.short_name}
                   </SvgText>
@@ -331,14 +410,12 @@ export default function Dashboard() {
     );
   };
 
-  /* ---------- PIE ---------- */
+  /* ---------- PIE CHART ---------- */
 
   const ExpensePieChart = () =>
     pieData.length === 0 ? null : (
       <View style={styles.dashboardChartBox}>
-        <Text style={styles.dashboardChartTitle}>
-          Expenses by Category
-        </Text>
+        <Text style={styles.dashboardChartTitle}>Expenses by Category</Text>
 
         <PieChart
           data={pieData}
@@ -364,19 +441,11 @@ export default function Dashboard() {
       {recent.map((t) => (
         <View key={t.id} style={styles.card}>
           <View style={styles.metaRow}>
-            <Text style={styles.cardTitle}>
-              {t.description}
-            </Text>
-
+            <Text style={styles.cardTitle}>{t.description}</Text>
             <Text
               style={[
                 styles.txnAmt,
-                {
-                  color:
-                    t.type === "Income"
-                      ? COLORS.green
-                      : COLORS.red,
-                },
+                { color: t.type === "Income" ? COLORS.green : COLORS.red },
               ]}
             >
               {t.type === "Income" ? "+" : "-"}₹
@@ -385,13 +454,9 @@ export default function Dashboard() {
           </View>
 
           <View style={styles.metaRow}>
+            <Text style={styles.metaText}>{t.category}</Text>
             <Text style={styles.metaText}>
-              {t.category}
-            </Text>
-            <Text style={styles.metaText}>
-              {new Date(
-                t.transaction_date
-              ).toDateString()}
+              {new Date(t.transaction_date).toDateString()}
             </Text>
           </View>
         </View>
@@ -411,50 +476,12 @@ export default function Dashboard() {
       keyExtractor={() => "dashboard"}
       ListHeaderComponent={
         <View style={styles.dashboardHeaderContainer}>
-
-          {/* Filters */}
-          <View style={{ flexDirection: "row" }}>
-            <View style={[styles.dropdownWrapper, { flex: 1, marginRight: 8 }]}>
-              <Picker
-                selectedValue={selectedYear}
-                style={styles.picker}
-                onValueChange={(value) => setSelectedYear(value)}
-              >
-                {yearOptions.map((year) => (
-                  <Picker.Item
-                    key={year}
-                    label={String(year)}
-                    value={year}
-                  />
-                ))}
-              </Picker>
-            </View>
-
-            <View style={[styles.dropdownWrapper, { flex: 1 }]}>
-              <Picker
-                selectedValue={selectedMonthIndex}
-                style={styles.picker}
-                onValueChange={(val) =>
-                  setSelectedMonthIndex(Number(val))
-                }
-              >
-                <Picker.Item
-                  label="-- Select Month --"
-                  value={-1}
-                />
-                {MONTHS.map((m, i) => (
-                  <Picker.Item key={m} label={m} value={i} />
-                ))}
-              </Picker>
-            </View>
-          </View>
-
+          <YearMonthSelector />
           <KPIs />
           <UsageBar />
           <ExpensePieChart />
           <SpendingChart />
           <Transactions />
-
         </View>
       }
       renderItem={null}

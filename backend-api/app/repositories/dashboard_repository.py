@@ -217,31 +217,62 @@ class DashboardRepository:
         }
 
     # ============================================================
-    # CATEGORY REPORT
+    # CATEGORY REPORT  ✅ FIXED
     # ============================================================
+
     async def get_category_report(
         self,
         user_id: int,
         year: int | None = None,
         month: int | None = None,
     ):
+
         norm_year, norm_month, use_month = self._normalize_period(year, month)
+        today = date.today()
+
+        # ----------------------------------------------------------
+        # Resolve target period start date
+        # ----------------------------------------------------------
+
+        if use_month and norm_month is not None:
+            # Single month view
+            period_start = date(norm_year, norm_month, 1)
+            period_end = None  # handled by effective_to
+        else:
+            # Year view → take Jan 1
+            period_start = date(norm_year, 1, 1)
+            period_end = date(norm_year, 12, 31)
+
+        # ----------------------------------------------------------
+        # Base statement
+        # ----------------------------------------------------------
 
         stmt = (
             select(
                 CategoryModel.id.label("category_id"),
                 CategoryModel.name.label("category_name"),
+                CategoryModel.short_name.label("short_name"),
                 func.coalesce(func.sum(BudgetModel.amount), 0).label("budget"),
                 func.coalesce(func.sum(TransactionModel.amount), 0).label("spent"),
             )
             .select_from(CategoryModel)
+
+            # Join ACTIVE budget rows
             .join(
                 BudgetModel,
                 (BudgetModel.category_id == CategoryModel.id)
                 & (BudgetModel.user_id == user_id)
-                & (BudgetModel.is_active == True),
+                & (
+                    BudgetModel.effective_from <= period_start
+                )
+                & (
+                    (BudgetModel.effective_to.is_(None))
+                    | (BudgetModel.effective_to >= period_start)
+                ),
                 isouter=True,
             )
+
+            # Join EXPENSE transactions
             .join(
                 TransactionModel,
                 (TransactionModel.category_id == CategoryModel.id)
@@ -249,37 +280,49 @@ class DashboardRepository:
                 & (TransactionModel.type == "Expense"),
                 isouter=True,
             )
-            .group_by(CategoryModel.id, CategoryModel.name)
+
+            .group_by(
+                CategoryModel.id,
+                CategoryModel.name,
+                CategoryModel.short_name,
+            )
             .order_by(CategoryModel.name)
         )
 
-        # Period filter for budgets
-        stmt = stmt.where(
-            extract("year", BudgetModel.effective_from) == norm_year
-        )
+        # ----------------------------------------------------------
+        # Apply TRANSACTION period filter
+        # ----------------------------------------------------------
 
-        if use_month and norm_month is not None:
-            stmt = stmt.where(
-                extract("month", BudgetModel.effective_from) == norm_month
-            )
-
-        # Period filter for transactions
         stmt = self._apply_period_filter(
-            stmt, TransactionModel.transaction_date, norm_year, norm_month if use_month else None
+            stmt,
+            TransactionModel.transaction_date,
+            norm_year,
+            norm_month if use_month else None,
         )
+
+        # ----------------------------------------------------------
+        # Execute
+        # ----------------------------------------------------------
 
         result = await self.db.execute(stmt)
 
+        # ----------------------------------------------------------
+        # Build response
+        # ----------------------------------------------------------
+
         data = []
+
         for r in result:
-            budget = float(r.budget)
-            spent = float(r.spent)
+            budget = float(r.budget or 0)
+            spent = float(r.spent or 0)
+
             usage = (spent / budget * 100) if budget else None
 
             data.append(
                 {
                     "category_id": r.category_id,
                     "category_name": r.category_name,
+                    "short_name": r.short_name,
                     "budget": round(budget, 2),
                     "spent": round(spent, 2),
                     "remaining": round(budget - spent, 2) if budget else None,
