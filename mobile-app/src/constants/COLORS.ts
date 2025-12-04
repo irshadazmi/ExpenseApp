@@ -18,7 +18,8 @@ const COLORS = {
   green: '#34C759',
   blue: '#007AFF',
   yellow: '#FFCC00',
-
+  chartFill: '#333333',
+  
   // Tab bar colors aligned with logo
   tabBg: '#6c5ce7',        // closest known color to deep violet, a dark blue-violet color
   tabBorderTop: '#120420', // slightly darker for subtle border

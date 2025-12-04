@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
   dropdownText: {
-    fontSize: 16,
+    fontSize: 12,
     color: COLORS.text,
   },
   picker: {
@@ -576,7 +576,7 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
   },
   dashboardChartTitle: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: "700",
     marginBottom: 10,
     paddingHorizontal: 12,

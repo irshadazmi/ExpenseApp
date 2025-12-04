@@ -12,6 +12,7 @@ class BudgetVsSpendSchema(BaseModel):
 class CategorySpendSchema(BaseModel):
     category_id: int
     category_name: str
+    short_name: str
     budget_amount: int
     spent_amount: int
     remaining: int
@@ -23,6 +24,7 @@ class TransactionFeedSchema(BaseModel):
     amount: int
     category_id: int
     category_name: str
+    short_name: str
     date: str
 
 

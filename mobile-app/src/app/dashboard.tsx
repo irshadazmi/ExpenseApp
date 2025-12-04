@@ -11,9 +11,11 @@ import {
 
 import Svg, { Rect, Text as SvgText } from "react-native-svg";
 import { PieChart } from "react-native-chart-kit";
+import { Picker } from "@react-native-picker/picker";
 
 import styles from "@/styles/styles";
 import { COLORS } from "@/constants/COLORS";
+import { MONTHS, toApiMonth } from "@/constants/MONTHS";
 
 import { useAuth } from "@/contexts/auth-context";
 import {
@@ -54,10 +56,33 @@ const screenWidth = Dimensions.get("window").width;
 export default function Dashboard() {
   const { user } = useAuth();
 
+  // Current year defaults
+  const now = new Date();
+  const currentYear = now.getFullYear();
+
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [categories, setCategories] = useState<CategoryReportItem[]>([]);
   const [recent, setRecent] = useState<RecentTransaction[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // ✅ Defaults:
+  // Year = current year
+  // Month = unselected (-1)
+  const [selectedYear, setSelectedYear] = useState<number>(currentYear);
+  const [selectedMonthIndex, setSelectedMonthIndex] =
+    useState<number>(-1);
+
+  // Year dropdown (current + last 4)
+  const yearOptions = useMemo(
+    () => [
+      currentYear - 4,
+      currentYear - 3,
+      currentYear - 2,
+      currentYear - 1,
+      currentYear,
+    ],
+    [currentYear]
+  );
 
   /* ======================================================
         DATA FETCH
@@ -67,22 +92,62 @@ export default function Dashboard() {
     if (!user) return;
 
     setLoading(true);
+
     try {
+      const yearForApi =
+        selectedYear > 0 ? selectedYear : undefined;
+
+      const monthForApi =
+        selectedMonthIndex >= 0
+          ? toApiMonth(selectedMonthIndex)
+          : undefined;
+
+      const summaryReq =
+        dashboardService
+          .getSummary(user.id, yearForApi, monthForApi)
+          .catch((e) => {
+            console.log("Summary API failed:", e);
+            return null;
+          });
+
+      const catReq =
+        dashboardService
+          .getCategories(user.id, yearForApi, monthForApi)
+          .catch((e) => {
+            console.log("Categories API failed:", e);
+            return [];
+          });
+
+      const recentReq =
+        dashboardService
+          .getRecent(user.id, yearForApi, monthForApi)
+          .catch((e) => {
+            console.log("Recent API failed:", e);
+            return [];
+          });
+
       const [s, c, r] = await Promise.all([
-        dashboardService.getSummary(user.id),
-        dashboardService.getCategories(user.id),
-        dashboardService.getRecent(user.id),
+        summaryReq,
+        catReq,
+        recentReq,
       ]);
 
       setSummary(s);
       setCategories(c || []);
       setRecent((r || []).slice(0, 6));
-    } catch (e) {
-      console.log("Dashboard load error:", e);
-    } finally {
+    }
+    catch (e) {
+      console.log("Unexpected dashboard error:", e);
+    }
+    finally {
       setLoading(false);
     }
-  }, [user]);
+
+  }, [user, selectedYear, selectedMonthIndex]);
+
+  /* ======================================================
+        INITIAL LOAD
+  ====================================================== */
 
   useEffect(() => {
     loadData();
@@ -105,7 +170,7 @@ export default function Dashboard() {
     return categories
       .filter((c) => c.spent > 0)
       .map((c, i) => ({
-        name: c.category_name,
+        name: c.short_name,
         population: c.spent,
         color: PIE_COLORS[i % PIE_COLORS.length],
         legendFontColor: COLORS.text,
@@ -118,26 +183,27 @@ export default function Dashboard() {
     backgroundGradientTo: COLORS.white,
     color: (opacity = 1) => `rgba(0,0,0,${opacity})`,
     labelColor: (opacity = 1) => `rgba(0,0,0,${opacity})`,
-    propsForBackgroundLines: {
-      stroke: "#DDD",
-      strokeDasharray: "3 3",
-    },
   };
+
+  /* ======================================================
+        LOADING STATE
+  ====================================================== */
+
+  if (!summary) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>
+          {loading ? "Loading dashboard..." : "Unable to load dashboard"}
+        </Text>
+      </View>
+    );
+  }
 
   /* ======================================================
         UI COMPONENTS
   ====================================================== */
 
-  // Prevent early hook exit → safe loading screen
-  if (!summary) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.title}>Loading dashboard...</Text>
-      </View>
-    );
-  }
-
-  /* ---------- KPI CARDS ---------- */
+  /* ---------- KPI ---------- */
 
   const KPIs = () => (
     <View style={styles.dashboardCardRow}>
@@ -146,8 +212,8 @@ export default function Dashboard() {
         <Text style={styles.title}>
           ₹{summary.totals.budget.toLocaleString("en-IN")}
         </Text>
-        <Text style={{ color: COLORS.green, fontSize: 18, fontWeight: "700" }}>
-          Income: ₹0
+        <Text style={{ color: COLORS.green, fontWeight: "700" }}>
+          Income: ₹{summary.totals.earning.toLocaleString("en-IN")}
         </Text>
       </View>
 
@@ -156,15 +222,14 @@ export default function Dashboard() {
         <Text style={[styles.title, { color: COLORS.danger }]}>
           ₹{summary.totals.spent.toLocaleString("en-IN")}
         </Text>
-        <Text style={styles.text}>Transactions: {recent.length}</Text>
-        <Text style={styles.text}>
-          Remaining ₹{summary.totals.remaining.toLocaleString("en-IN")}
+        <Text style={{ color: COLORS.green, fontWeight: "700" }}>
+          Remaining: ₹{summary.totals.remaining.toLocaleString("en-IN")}
         </Text>
       </View>
     </View>
   );
 
-  /* ---------- USAGE BAR ---------- */
+  /* ---------- USAGE ---------- */
 
   const UsageBar = () => {
     const usage = summary.totals.usage_percent || 0;
@@ -176,10 +241,9 @@ export default function Dashboard() {
 
     return (
       <View style={styles.dashboardUsageBox}>
-        <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-          <Text style={styles.label}>Monthly Usage</Text>
-          <Text style={styles.label}>{usage.toFixed(1)}%</Text>
-        </View>
+        <Text style={styles.label}>
+          Monthly Usage: {usage.toFixed(1)}%
+        </Text>
 
         <View style={styles.barBg}>
           <View
@@ -190,18 +254,12 @@ export default function Dashboard() {
           />
         </View>
 
-        <View
-          style={{
-            marginTop: 6,
-            flexDirection: "row",
-            justifyContent: "space-between",
-          }}
-        >
-          <Text style={styles.subValue}>
-            Daily spent: ₹{Math.round(summary.burn_rate.daily_spend || 0)}
+        <View style={{ marginTop: 6 }}>
+          <Text style={styles.metaText}>
+            Daily spent: ₹{Math.round(summary.burn_rate.daily_spend)}
           </Text>
-          <Text style={styles.subValue}>
-            Allowed/day: ₹{Math.round(summary.burn_rate.daily_budget || 0)}
+          <Text style={styles.metaText}>
+            Allowed/day: ₹{Math.round(summary.burn_rate.daily_budget)}
           </Text>
         </View>
       </View>
@@ -211,12 +269,13 @@ export default function Dashboard() {
   /* ---------- SPENDING VS BUDGET ---------- */
 
   const SpendingChart = () => {
-    const width =
-      categories.length * (BAR_WIDTH * 2 + BAR_GAP) + 40;
+    const width = categories.length * (BAR_WIDTH + BAR_GAP) + 40;
 
     return (
       <View style={styles.dashboardChartBox}>
-        <Text style={styles.dashboardChartTitle}>Spending vs Budget</Text>
+        <Text style={styles.dashboardChartTitle}>
+          Spending vs Budget
+        </Text>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <Svg
@@ -224,43 +283,44 @@ export default function Dashboard() {
             height={BAR_HEIGHT + LABEL_HEIGHT}
           >
             {categories.map((c, i) => {
-              const spentH = (c.spent / maxBarValue) * BAR_HEIGHT;
               const budgetH = (c.budget / maxBarValue) * BAR_HEIGHT;
-              const x = i * (BAR_WIDTH * 2 + BAR_GAP) + 30;
+              const spentH = (c.spent / maxBarValue) * BAR_HEIGHT;
+
+              const x = i * (BAR_WIDTH + BAR_GAP) + 30;
+
+              const yBudget = BAR_HEIGHT - budgetH;
+              const ySpent = yBudget + (budgetH - spentH);
 
               return (
                 <React.Fragment key={i}>
-                  {/* Budget bar */}
                   <Rect
                     x={x}
-                    y={BAR_HEIGHT - budgetH}
+                    y={yBudget}
                     width={BAR_WIDTH}
                     height={budgetH}
                     rx={4}
-                    fill="#CFD8DC"
+                    fill={COLORS.textSecondary}
+                    opacity={0.35}
                   />
 
-                  {/* Spent bar */}
                   <Rect
-                    x={x + BAR_WIDTH + 4}
-                    y={BAR_HEIGHT - spentH}
+                    x={x}
+                    y={ySpent}
                     width={BAR_WIDTH}
                     height={spentH}
                     rx={4}
                     fill={PIE_COLORS[i % PIE_COLORS.length]}
                   />
 
-                  {/* Vertical label */}
                   <SvgText
-                    x={x + BAR_WIDTH}
+                    x={x + BAR_WIDTH / 2}
                     y={BAR_HEIGHT + 16}
-                    fontSize={10}
-                    fill={COLORS.textSecondary}
-                    textAnchor="middle"
                     rotation="-40"
-                    origin={`${x + BAR_WIDTH},${BAR_HEIGHT + 16}`}
+                    fontSize={10}
+                    textAnchor="middle"
+                    fill={COLORS.textSecondary}
                   >
-                    {c.category_name}
+                    {c.short_name}
                   </SvgText>
                 </React.Fragment>
               );
@@ -271,12 +331,14 @@ export default function Dashboard() {
     );
   };
 
-  /* ---------- PIE CHART ---------- */
+  /* ---------- PIE ---------- */
 
   const ExpensePieChart = () =>
     pieData.length === 0 ? null : (
       <View style={styles.dashboardChartBox}>
-        <Text style={styles.dashboardChartTitle}>Expenses by Category</Text>
+        <Text style={styles.dashboardChartTitle}>
+          Expenses by Category
+        </Text>
 
         <PieChart
           data={pieData}
@@ -295,16 +357,26 @@ export default function Dashboard() {
 
   const Transactions = () => (
     <View style={styles.dashboardSection}>
-      <Text style={styles.dashboardChartTitle}>Latest Transactions</Text>
+      <Text style={styles.dashboardChartTitle}>
+        Latest Transactions: {recent.length}
+      </Text>
 
       {recent.map((t) => (
         <View key={t.id} style={styles.card}>
           <View style={styles.metaRow}>
-            <Text style={styles.cardTitle}>{t.description}</Text>
+            <Text style={styles.cardTitle}>
+              {t.description}
+            </Text>
+
             <Text
               style={[
                 styles.txnAmt,
-                { color: t.type === "Income" ? COLORS.green : COLORS.red },
+                {
+                  color:
+                    t.type === "Income"
+                      ? COLORS.green
+                      : COLORS.red,
+                },
               ]}
             >
               {t.type === "Income" ? "+" : "-"}₹
@@ -313,9 +385,13 @@ export default function Dashboard() {
           </View>
 
           <View style={styles.metaRow}>
-            <Text style={styles.metaText}>{t.category}</Text>
             <Text style={styles.metaText}>
-              {new Date(t.transaction_date).toDateString()}
+              {t.category}
+            </Text>
+            <Text style={styles.metaText}>
+              {new Date(
+                t.transaction_date
+              ).toDateString()}
             </Text>
           </View>
         </View>
@@ -335,11 +411,50 @@ export default function Dashboard() {
       keyExtractor={() => "dashboard"}
       ListHeaderComponent={
         <View style={styles.dashboardHeaderContainer}>
+
+          {/* Filters */}
+          <View style={{ flexDirection: "row" }}>
+            <View style={[styles.dropdownWrapper, { flex: 1, marginRight: 8 }]}>
+              <Picker
+                selectedValue={selectedYear}
+                style={styles.picker}
+                onValueChange={(value) => setSelectedYear(value)}
+              >
+                {yearOptions.map((year) => (
+                  <Picker.Item
+                    key={year}
+                    label={String(year)}
+                    value={year}
+                  />
+                ))}
+              </Picker>
+            </View>
+
+            <View style={[styles.dropdownWrapper, { flex: 1 }]}>
+              <Picker
+                selectedValue={selectedMonthIndex}
+                style={styles.picker}
+                onValueChange={(val) =>
+                  setSelectedMonthIndex(Number(val))
+                }
+              >
+                <Picker.Item
+                  label="-- Select Month --"
+                  value={-1}
+                />
+                {MONTHS.map((m, i) => (
+                  <Picker.Item key={m} label={m} value={i} />
+                ))}
+              </Picker>
+            </View>
+          </View>
+
           <KPIs />
           <UsageBar />
           <ExpensePieChart />
           <SpendingChart />
           <Transactions />
+
         </View>
       }
       renderItem={null}

@@ -1,4 +1,4 @@
-from sqlalchemy import select, func
+from sqlalchemy import select, func, extract
 from datetime import date
 import calendar
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,26 +14,127 @@ class DashboardRepository:
         self.db = db
 
     # ============================================================
+    # Helper – Normalize period (year / month semantics)
+    # ============================================================
+    def _normalize_period(self, year: int | None, month: int | None):
+        """
+        Returns (norm_year, norm_month, use_month)
+
+        Rules:
+        - year=None, month=None       -> current year, current month (monthly view)
+        - year!=None, month=None      -> given year, full year view (month=None)
+        - year!=None, month!=None     -> given year + given month (monthly view)
+        - year=None, month!=None      -> current year + given month (monthly view)
+        """
+        today = date.today()
+
+        # No year & no month -> current month
+        if year is None and month is None:
+            return today.year, today.month, True
+
+        # Year only -> full year
+        if year is not None and month is None:
+            return year, None, False
+
+        # Month only (rare, but support it) -> current year, that month
+        if year is None and month is not None:
+            return today.year, month, True
+
+        # Both provided
+        return year, month, True
+
+    # ============================================================
+    # Helper – Apply Period Filters on a date column
+    # ============================================================
+    def _apply_period_filter(self, stmt, date_column, year: int | None, month: int | None):
+        if year is not None:
+            stmt = stmt.where(extract("year", date_column) == year)
+
+        if year is not None and month is not None:
+            stmt = stmt.where(extract("month", date_column) == month)
+
+        return stmt
+
+    # ============================================================
     # SUMMARY
     # ============================================================
-    async def get_summary(self, user_id: int):
+    async def get_summary(
+        self,
+        user_id: int,
+        year: int | None = None,
+        month: int | None = None,
+    ):
+        """
+        Business rules:
+        - Budgets are versioned.
+        - Exactly ONE budget is active at any point in time
+            (effective_from <= date <= effective_to OR effective_to IS NULL)
 
-        # ------------------------
-        # Total Budget
-        # ------------------------
-        stmt_budget = (
-            select(func.coalesce(func.sum(BudgetModel.amount), 0))
-            .where(
-                BudgetModel.user_id == user_id,
-                BudgetModel.category_id.is_(None),
-                BudgetModel.is_active == True,
+        Behavior:
+        - no year & no month   => current month (single active budget)
+        - year + month        => month view (single budget active in that month)
+        - year only           => yearly view (sum active budget for each month)
+        """
+
+        print("Dahboard repo - Year:", year, "Month:", month)
+
+        norm_year, norm_month, use_month = self._normalize_period(year, month)
+        today = date.today()
+
+        # ==================================================================
+        # ----------- BUDGET CALCULATION ----------------------------------
+        # ==================================================================
+
+        async def _get_monthly_budget(target_date: date) -> float:
+            """Return the SINGLE budget active on a given date."""
+
+            stmt = (
+                select(func.coalesce(func.sum(BudgetModel.amount), 0))
+                .where(
+                    BudgetModel.user_id == user_id,
+                    BudgetModel.effective_from <= target_date,
+                    func.coalesce(BudgetModel.effective_to, target_date) >= target_date,
+                )
             )
-        )
-        total_budget = (await self.db.execute(stmt_budget)).scalar() or 0
 
-        # ------------------------
-        # Total Spent
-        # ------------------------
+            return (await self.db.execute(stmt)).scalar() or 0
+
+        # ----------------------------------------------------------
+        # Monthly view
+        # ----------------------------------------------------------
+        if use_month and norm_month:
+
+            target_date = date(norm_year, norm_month, 15)  # any day in month works
+            total_budget = await _get_monthly_budget(target_date)
+
+            days_in_period = calendar.monthrange(norm_year, norm_month)[1]
+
+            if norm_year == today.year and norm_month == today.month:
+                days_elapsed = min(today.day, days_in_period)
+            else:
+                days_elapsed = days_in_period
+
+        # ----------------------------------------------------------
+        # Yearly view
+        # ----------------------------------------------------------
+        else:
+            total_budget = 0
+            days_in_period = 366 if calendar.isleap(norm_year) else 365
+
+            for m in range(1, 13):
+                month_date = date(norm_year, m, 15)
+                month_budget = await _get_monthly_budget(month_date)
+                total_budget += month_budget
+
+            if norm_year == today.year:
+                days_elapsed = today.timetuple().tm_yday
+            else:
+                days_elapsed = days_in_period
+
+        # ==================================================================
+        # ---------------- TRANSACTION TOTALS ------------------------------
+        # ==================================================================
+
         stmt_spent = (
             select(func.coalesce(func.sum(TransactionModel.amount), 0))
             .where(
@@ -41,19 +142,46 @@ class DashboardRepository:
                 TransactionModel.type == "Expense",
             )
         )
+
+        stmt_spent = self._apply_period_filter(
+            stmt_spent,
+            TransactionModel.transaction_date,
+            norm_year,
+            norm_month if use_month else None,
+        )
+
         total_spent = (await self.db.execute(stmt_spent)).scalar() or 0
 
+        # ----------------------------------------------------------
+
+        stmt_earning = (
+            select(func.coalesce(func.sum(TransactionModel.amount), 0))
+            .where(
+                TransactionModel.user_id == user_id,
+                TransactionModel.type == "Income",
+            )
+        )
+
+        stmt_earning = self._apply_period_filter(
+            stmt_earning,
+            TransactionModel.transaction_date,
+            norm_year,
+            norm_month if use_month else None,
+        )
+
+        total_earning = (await self.db.execute(stmt_earning)).scalar() or 0
+
+        # ==================================================================
+        # ---------------- KPI CALCULATIONS --------------------------------
+        # ==================================================================
+
         remaining = total_budget - total_spent
-        usage_percent = round((total_spent / total_budget) * 100, 2) if total_budget else 0
 
-        # ------------------------
-        # Period calculation (✅ Python — no SQL interval)
-        # ------------------------
-        today = date.today()
-        days_elapsed = today.day
-        days_in_month = calendar.monthrange(today.year, today.month)[1]
+        usage_percent = round(
+            (total_spent / total_budget) * 100, 2
+        ) if total_budget else 0
 
-        daily_budget = total_budget / days_in_month if total_budget else 0
+        daily_budget = total_budget / days_in_period if total_budget else 0
         daily_spend = total_spent / max(days_elapsed, 1)
 
         if daily_spend > daily_budget:
@@ -63,10 +191,15 @@ class DashboardRepository:
         else:
             risk = "under_budget"
 
+        # ==================================================================
+        # ---------------- RESPONSE ----------------------------------------
+        # ==================================================================
+
         return {
             "totals": {
                 "budget": round(total_budget, 2),
                 "spent": round(total_spent, 2),
+                "earning": round(total_earning, 2),
                 "remaining": round(remaining, 2),
                 "usage_percent": usage_percent,
             },
@@ -76,15 +209,23 @@ class DashboardRepository:
                 "risk": risk,
             },
             "period": {
+                "year": norm_year,
+                "month": norm_month if use_month else None,
                 "days_elapsed": days_elapsed,
-                "days_in_month": days_in_month,
+                "days_in_period": days_in_period,
             },
         }
 
     # ============================================================
     # CATEGORY REPORT
     # ============================================================
-    async def get_category_report(self, user_id: int):
+    async def get_category_report(
+        self,
+        user_id: int,
+        year: int | None = None,
+        month: int | None = None,
+    ):
+        norm_year, norm_month, use_month = self._normalize_period(year, month)
 
         stmt = (
             select(
@@ -112,30 +253,53 @@ class DashboardRepository:
             .order_by(CategoryModel.name)
         )
 
+        # Period filter for budgets
+        stmt = stmt.where(
+            extract("year", BudgetModel.effective_from) == norm_year
+        )
+
+        if use_month and norm_month is not None:
+            stmt = stmt.where(
+                extract("month", BudgetModel.effective_from) == norm_month
+            )
+
+        # Period filter for transactions
+        stmt = self._apply_period_filter(
+            stmt, TransactionModel.transaction_date, norm_year, norm_month if use_month else None
+        )
+
         result = await self.db.execute(stmt)
 
         data = []
-        for r in result.all():
+        for r in result:
             budget = float(r.budget)
             spent = float(r.spent)
-
             usage = (spent / budget * 100) if budget else None
 
-            data.append({
-                "category_id": r.category_id,
-                "category_name": r.category_name,
-                "budget": round(budget, 2),
-                "spent": round(spent, 2),
-                "remaining": round(budget - spent, 2) if budget else None,
-                "usage_percent": round(usage, 2) if usage else None,
-            })
+            data.append(
+                {
+                    "category_id": r.category_id,
+                    "category_name": r.category_name,
+                    "budget": round(budget, 2),
+                    "spent": round(spent, 2),
+                    "remaining": round(budget - spent, 2) if budget else None,
+                    "usage_percent": round(usage, 2) if usage is not None else None,
+                }
+            )
 
         return data
 
     # ============================================================
     # RECENT TRANSACTIONS
     # ============================================================
-    async def get_recent_transactions(self, user_id: int, limit=10):
+    async def get_recent_transactions(
+        self,
+        user_id: int,
+        year: int | None = None,
+        month: int | None = None,
+        limit: int = 10,
+    ):
+        norm_year, norm_month, use_month = self._normalize_period(year, month)
 
         stmt = (
             select(
@@ -153,6 +317,13 @@ class DashboardRepository:
             .limit(limit)
         )
 
+        stmt = self._apply_period_filter(
+            stmt,
+            TransactionModel.transaction_date,
+            norm_year,
+            norm_month if use_month else None,
+        )
+
         result = await self.db.execute(stmt)
 
         return [
@@ -164,14 +335,13 @@ class DashboardRepository:
                 "category": r.category,
                 "transaction_date": r.transaction_date,
             }
-            for r in result.all()
+            for r in result
         ]
 
     # ============================================================
     # ACCOUNTS
     # ============================================================
     async def get_accounts(self, user_id: int):
-
         stmt = (
             select(AccountModel)
             .where(AccountModel.user_id == user_id)

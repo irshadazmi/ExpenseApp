@@ -76,6 +76,7 @@ VALUES
 CREATE TABLE categories (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) UNIQUE NOT NULL,
+    short_name VARCHAR(5) UNIQUE NOT NULL,
     description VARCHAR(255),   
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
@@ -84,17 +85,17 @@ CREATE TABLE categories (
 
 -- TRUNCATE TABLE categories RESTART IDENTITY;
 
-INSERT INTO categories (name, description) VALUES
-('Food & Dining', 'Meals, groceries, cafes, restaurants, and takeout orders'),
-('Transportation', 'Fuel, public transit, ride-hailing, parking, and vehicle expenses'),
-('Housing', 'Rent, mortgage payments, property maintenance, and household utilities'),
-('Healthcare', 'Doctor visits, pharmacy purchases, medical insurance, and hospital bills'),
-('Entertainment', 'Movies, streaming subscriptions, concerts, gaming, and leisure activities'),
-('Travel', 'Flights, hotels, vacation packages, and related travel costs'),
-('Shopping', 'Clothing, electronics, household goods, and personal purchases'),
-('Education', 'Tuition fees, online courses, books, and professional training'),
-('Bills & Utilities', 'Recurring service bills like internet, phone, cable, and electricity'),
-('Miscellaneous', 'Catch-all for irregular or uncategorized expenses');
+INSERT INTO categories (name, short_name, description) VALUES
+('Food & Dining', 'FDNG', 'Meals, groceries, cafes, restaurants, and takeout orders'),
+('Transportation', 'TRAN', 'Fuel, public transit, ride-hailing, parking, and vehicle expenses'),
+('Housing', 'HOUS', 'Rent, mortgage payments, property maintenance, and household utilities'),
+('Healthcare', 'HLTH', 'Doctor visits, pharmacy purchases, medical insurance, and hospital bills'),
+('Entertainment', 'ENTR', 'Movies, streaming subscriptions, concerts, gaming, and leisure activities'),
+('Travel', 'TRVL', 'Flights, hotels, vacation packages, and related travel costs'),
+('Shopping', 'SHOP', 'Clothing, electronics, household goods, and personal purchases'),
+('Education', 'EDUC', 'Tuition fees, online courses, books, and professional training'),
+('Bills & Utilities', 'BILS', 'Recurring service bills like internet, phone, cable, and electricity'),
+('Miscellaneous', 'MISC', 'Catch-all for irregular or uncategorized expenses');
 
 --- This table stores information about budgets, such as their name, amount, duration, and associated user.
 CREATE TABLE budgets (

@@ -4,6 +4,7 @@ from datetime import datetime
 
 class CategoryBaseSchema(BaseModel):
     name: str
+    short_name: str
     is_active: bool
 
     model_config = {
@@ -11,6 +12,7 @@ class CategoryBaseSchema(BaseModel):
         "json_schema_extra": {
             "example": {
                 "name": "Groceries",
+                "short_name": "Groceries",
                 "is_active": True
             }
         }

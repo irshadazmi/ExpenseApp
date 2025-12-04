@@ -15,12 +15,13 @@ from app.routers.seed_router import seed_router
 app = FastAPI()
 
 # Add authentication middleware
-app.add_middleware(auth_middleware.AuthMiddleware)
+# app.add_middleware(auth_middleware.AuthMiddleware)
 
 # Add CORS middleware
 add_cors_middleware(app)
 
 # Include routers
+app.include_router(dashboard_router, prefix="/api/dashboard", tags=["Dashboard"])
 app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(user_router, prefix="/api/users", tags=["User"])
 app.include_router(category_router, prefix="/api/categories", tags=["Category"])
@@ -28,5 +29,4 @@ app.include_router(account_router, prefix="/api/accounts", tags=["Account"])
 app.include_router(budget_router, prefix="/api/budgets", tags=["Budget"])
 app.include_router(transaction_router, prefix="/api/transactions", tags=["Transaction"])
 app.include_router(feedback_router, prefix="/api/feedbacks", tags=["Feedback"])
-app.include_router(dashboard_router, prefix="/api/dashboard", tags=["Dashboard"])
 app.include_router(seed_router, prefix="/api/seed", tags=["Seed"])

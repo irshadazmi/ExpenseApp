@@ -9,6 +9,7 @@ export interface DashboardSummaryResponse {
 export interface DashboardCategoryResponse {
   category_id: number;
   category_name: string;
+  short_name: string;
   allocated_budget: number;
   spent_amount: number;
   remaining: number;
