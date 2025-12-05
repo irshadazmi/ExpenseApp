@@ -1,17 +1,51 @@
-import { View, Text } from "react-native";
+import { View, Text, Pressable } from "react-native";
+import { useRouter, useLocalSearchParams } from "expo-router";
+
 import styles from "@/styles/styles";
+import { COLORS } from "@/constants/COLORS";
 import BudgetForm from "@/components/budget-form";
-import { useLocalSearchParams } from "expo-router";
 
 const EditBudget = () => {
+  const router = useRouter();
   const { id } = useLocalSearchParams();
-  // BudgetForm expects a number for id
-  const categoryId = id ? Number(id) : undefined;
+
+  // Ensure proper number conversion for BudgetForm
+  const budgetId = id ? Number(id) : undefined;
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Edit Budget</Text>
-      <BudgetForm id={categoryId} />
+
+      {/* Header: Title + Back */}
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          marginBottom: 16,
+        }}
+      >
+        <Text
+          style={[
+            styles.title,
+            { flex: 1, textAlign: "left", marginBottom: 0 },
+          ]}
+        >
+          Edit Budget
+        </Text>
+
+        <Pressable onPress={() => router.back()}>
+          <Text
+            style={{
+              color: COLORS.primary,
+              fontSize: 14,
+              fontWeight: "600",
+            }}
+          >
+            Back to List
+          </Text>
+        </Pressable>
+      </View>
+
+      <BudgetForm id={budgetId} />
     </View>
   );
 };

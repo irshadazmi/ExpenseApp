@@ -55,8 +55,8 @@ export default function TabBar() {
                   color={isActive ? COLORS.tabActive : COLORS.tabInactive}
                 />
                 {badgeCount > 0 && (
-                  <View style={styles.badgeContainer}>
-                    <Text style={styles.badgeText}>
+                  <View style={styles.tabsBadgeContainer}>
+                    <Text style={styles.tabsBadgeText}>
                       {badgeCount > 99 ? '99+' : badgeCount}
                     </Text>
                   </View>

@@ -1,6 +1,6 @@
+// src/constants/COLORS.ts
 import { red } from "react-native-reanimated/lib/typescript/Colors";
 
-// src/constants/COLORS.ts
 const COLORS = {
   primary: '#7F00FF',
   secondary: '#E1C3fd',

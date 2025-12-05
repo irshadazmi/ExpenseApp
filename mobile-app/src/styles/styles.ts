@@ -1,5 +1,5 @@
 // mobile-app/src/styles/styles.ts
-import { COLORS } from "@/constants/COLORS";
+import { COLORS } from "@/constants/theme";
 import { StyleSheet } from "react-native";
 
 const styles = StyleSheet.create({
@@ -51,7 +51,6 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     marginTop: 8,
-    marginBottom: 4,
     color: COLORS.text,
   },
   errorText: {
@@ -78,7 +77,7 @@ const styles = StyleSheet.create({
     height: 46,
     borderColor: COLORS.primary,
     borderWidth: 1.5,
-    borderRadius: 0,
+    borderRadius: 5,
     paddingVertical: 10,
     paddingHorizontal: 10,
     backgroundColor: COLORS.white,
@@ -121,7 +120,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     paddingVertical: 10,
     paddingHorizontal: 10,
-    borderRadius: 0,
+    borderRadius: 5,
     marginVertical: 10,
     marginBottom: 10,
     alignItems: "center",
@@ -349,7 +348,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  badgeContainer: {
+  tabsBadgeContainer: {
     position: "absolute",
     top: -6,
     right: -12,
@@ -361,8 +360,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  badgeText: {
+  tabsBadgeText: {
     fontSize: 10,
+    color: COLORS.badgeText ?? "#FFFFFF",
+    fontWeight: "700",
+  },
+
+  dashboardBadgeContainer: {
+    alignSelf: "center",
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 6,
+    borderRadius: 25,
+    marginBottom: 8,
+  },
+  dashboardBadgeText: {
+    fontSize: 16,
     color: COLORS.badgeText ?? "#FFFFFF",
     fontWeight: "700",
   },
@@ -399,18 +412,14 @@ const styles = StyleSheet.create({
   chip: {
     height: 30,
     paddingHorizontal: 14,
-
     borderRadius: 16,
     borderWidth: 1,
     borderColor: COLORS.primary,
-
     backgroundColor: COLORS.white,
-
     alignItems: "center",
     justifyContent: "center",
-
     marginRight: 6,
-
+    marginBottom: 4,
     shadowColor: COLORS.cardShadow,
     shadowOpacity: 0.08,
     shadowOffset: { width: 0, height: 1 },

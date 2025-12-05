@@ -1,3 +1,5 @@
+// mobile-app/src/app/(account)/accounts.tsx
+
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -7,32 +9,43 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
-import styles from "@/styles/styles";
-import { accountService } from "@/services/account-service";
-import { COLORS } from "@/constants/COLORS";
+
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { AccountResponse } from "@/types/account";
-import { RelativePathString, useRouter } from "expo-router";
+
+import styles from "@/styles/styles";
+import { COLORS } from "@/constants/COLORS";
 import { useAuth } from "@/contexts/auth-context";
+import { useRouter, RelativePathString } from "expo-router";
+import { accountService } from "@/services/account-service";
+import { AccountResponse } from "@/types/account";
+
+/* ======================================================
+    ACCOUNTS LIST — MODERN CARD UX
+====================================================== */
 
 const Accounts = () => {
   const [accounts, setAccounts] = useState<AccountResponse[]>([]);
   const [loading, setLoading] = useState(false);
+
   const router = useRouter();
   const { user } = useAuth();
 
   const isSuperAdmin = user?.role_id === 1;
   const currentUserId = user?.id;
 
+  /* ======================================================
+      LOAD DATA
+  ====================================================== */
+
   const loadAccounts = async () => {
     setLoading(true);
+
     try {
       const data = isSuperAdmin
         ? await accountService.getAll()
         : await accountService.getByUser(currentUserId!);
 
-      // console.log(data);
-      setAccounts(data);
+      setAccounts(data || []);
     } catch (error) {
       console.error("Failed to load accounts", error);
       Alert.alert("Error", "Failed to load accounts. Please try again.");
@@ -45,97 +58,208 @@ const Accounts = () => {
     loadAccounts();
   }, []);
 
-  // Go to Add Account page (correct route path without parentheses)
-  const handleAddAccount = () => {
-    router.push('/(account)/add' as RelativePathString);
+  /* ======================================================
+      NAVIGATION ACTIONS
+  ====================================================== */
+
+  const handleAdd = () => {
+    router.push("/(account)/add" as RelativePathString);
   };
 
-  // Go to Edit/View Account page (correct route path without parentheses)
   const handleEdit = (acc: AccountResponse) => {
-    if (acc.id !== undefined) {
-      router.push(`/(account)/${acc.id}` as RelativePathString);
-    } else {
-      console.error("Account ID is undefined");
-    }
+    if (!acc.id) return;          // ✅ type guard
+    router.push(`/(account)/${acc.id}` as RelativePathString);
   };
 
-  // Delete account
   const handleDelete = async (acc: AccountResponse) => {
-    if (acc.id !== undefined) {
-      try {
-        await accountService.delete(acc.id);
-        await loadAccounts();
-      } catch (err) {
-        console.log("Failed to delete account", err);
-      }
-    }
+    if (!acc.id) return;          // ✅ type guard
+
+    Alert.alert(
+      "Delete Account",
+      `Are you sure you want to delete "${acc.name}"?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            if (acc.id !== undefined) {
+              try {
+                await accountService.delete(acc.id);
+                await loadAccounts();
+              } catch {
+                Alert.alert("Error", "Could not delete account.");
+              }
+            }
+          },
+        },
+      ]
+    );
   };
 
-  const renderItem = ({ item, index }: { item: AccountResponse; index: number }) => (
-    <View style={[
-      styles.listRow,
-      index % 2 === 1 && styles.listRowAlt, // alternate rows
-    ]}>
-      {/* Name */}
-      <View style={{ flex: 2 }}>
-        <Text style={{ fontSize: 16, color: COLORS.text }}>{item.name}</Text>
+  /* ======================================================
+      RENDER ITEM (CARD)
+  ====================================================== */
+
+  const renderItem = ({
+    item,
+  }: {
+    item: AccountResponse;
+  }) => {
+    return (
+      <View style={styles.card}>
+        {/* HEADER ROW */}
+        <View style={styles.metaRow}>
+          <Text style={styles.cardTitle}>{item.name}</Text>
+
+          <Text
+            style={[
+              styles.txnAmt,
+              {
+                color:
+                  item.is_active === false
+                    ? COLORS.danger
+                    : COLORS.green,
+              },
+            ]}
+          >
+            ₹{Number(item.balance || 0).toLocaleString("en-IN")}
+          </Text>
+        </View>
+
+        {/* META ROW */}
+        <View style={styles.metaRow}>
+          <Text style={styles.metaText}>
+            {item.type} · {item.currency}
+          </Text>
+
+          <Text
+            style={[
+              styles.metaText,
+              {
+                color:
+                  item.is_active === false
+                    ? COLORS.danger
+                    : COLORS.green,
+                fontWeight: "600",
+              },
+            ]}
+          >
+            {item.is_active ? "Active" : "Inactive"}
+          </Text>
+        </View>
+
+        {/* ACTION ROW */}
+        <View
+          style={[
+            styles.metaRow,
+            {
+              justifyContent: "flex-end",
+              gap: 18,
+              marginTop: 6,
+            },
+          ]}
+        >
+          <Pressable
+            style={[
+              styles.actionButton,
+              styles.editButton,
+            ]}
+            onPress={() => handleEdit(item)}
+          >
+            <MaterialIcons
+              name="edit"
+              size={16}
+              color={COLORS.white}
+            />
+          </Pressable>
+
+          <Pressable
+            style={[
+              styles.actionButton,
+              styles.deleteButton,
+            ]}
+            onPress={() => handleDelete(item)}
+          >
+            <MaterialIcons
+              name="delete"
+              size={16}
+              color={COLORS.white}
+            />
+          </Pressable>
+        </View>
       </View>
-      {/* Is Active */}
-      <View style={{ flex: 1, alignItems: "center" }}>
-        <Text style={{ color: item.is_active ? "green" : "red" }}>
-          {item.is_active ? "Active" : "Inactive"}
-        </Text>
-      </View>
-      {/* Actions */}
-      <View style={{
-        flex: 1,
-        flexDirection: "row",
-        justifyContent: "flex-end",
-        gap: 12,
-      }}>
-        <Pressable onPress={() => handleEdit(item)}>
-          <MaterialIcons name="edit" size={22} color={COLORS.primary} />
-        </Pressable>
-        <Pressable onPress={() => handleDelete(item)}>
-          <MaterialIcons name="delete" size={22} color={COLORS.danger} />
-        </Pressable>
-      </View>
-    </View>
-  );
+    );
+  };
+
+  /* ======================================================
+      MAIN RENDER
+  ====================================================== */
 
   return (
     <View style={[styles.container, { paddingHorizontal: 16 }]}>
+
       {/* Header row: title + Add button */}
-      <View style={{
-        flexDirection: "row",
-        alignItems: "center",
-        marginBottom: 16,
-      }}>
-        <Text style={[styles.title, { flex: 1 }]}>Accounts</Text>
-        <Pressable style={styles.button} onPress={handleAddAccount}>
-          <Text style={styles.buttonText}>Add Account</Text>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          marginBottom: 16,
+        }}
+      >
+        <Text
+          style={[
+            styles.title,
+            { flex: 1, textAlign: "left", marginBottom: 0 },
+          ]}
+        >
+          List Of Accounts
+        </Text>
+
+        <Pressable onPress={handleAdd}>
+          <Text
+            style={{
+              color: COLORS.primary,
+              fontSize: 14,
+              fontWeight: "600",
+            }}
+          >
+            + Add
+          </Text>
         </Pressable>
       </View>
 
-      {/* List header */}
-      <View style={styles.listHeader}>
-        <Text style={[styles.listHeaderText, { flex: 2, textAlign: "left" }]}>Name</Text>
-        <Text style={[styles.listHeaderText, { flex: 1, textAlign: "center" }]}>Active</Text>
-        <Text style={[styles.listHeaderText, { flex: 1, textAlign: "right" }]}>Action</Text>
-      </View>
-
+      {/* LIST */}
       {loading ? (
         <ActivityIndicator
-          style={{ marginTop: 16 }}
-          size="small"
+          size="large"
           color={COLORS.primary}
+          style={{ marginTop: 24 }}
         />
       ) : (
         <FlatList
           data={accounts}
-          keyExtractor={item => item?.id?.toString() ?? ''}
+          keyExtractor={(item) =>
+            item.id?.toString() ?? Math.random().toString()
+          }
           renderItem={renderItem}
-          contentContainerStyle={{ paddingBottom: 16 }}
+          refreshing={loading}
+          onRefresh={loadAccounts}
+          contentContainerStyle={{
+            paddingBottom: 24,
+          }}
+          ListEmptyComponent={
+            <View style={{ marginTop: 40 }}>
+              <Text
+                style={[
+                  styles.text,
+                  { textAlign: "center" },
+                ]}
+              >
+                No accounts found.
+              </Text>
+            </View>
+          }
         />
       )}
     </View>

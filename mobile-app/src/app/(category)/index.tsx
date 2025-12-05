@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+// mobile-app/src/app/(category)/index.tsx
+import React, { useEffect, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -6,26 +7,38 @@ import {
   Pressable,
   ActivityIndicator,
   Alert,
+  TextInput,
 } from "react-native";
+
 import styles from "@/styles/styles";
 import { categoryService } from "@/services/category-service";
 import { COLORS } from "@/constants/COLORS";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { CategoryResponse } from "@/types/category";
 import { RelativePathString, useRouter } from "expo-router";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+
+/* ======================================================
+    CATEGORIES LIST
+====================================================== */
 
 const Categories = () => {
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
   const [loading, setLoading] = useState(false);
+
   const router = useRouter();
 
+  /* ======================================================
+      LOAD DATA
+  ====================================================== */
+
   const loadCategories = async () => {
+    setLoading(true);
+
     try {
-      setLoading(true);
-      const res = await categoryService.getAll();
-      setCategories(res);
+      const data = await categoryService.getAll();
+      setCategories(data || []);
     } catch (err) {
-      console.log("Failed to load categories", err);
+      console.error("Failed to load categories", err);
       Alert.alert("Error", "Failed to load categories. Please try again.");
     } finally {
       setLoading(false);
@@ -36,97 +49,164 @@ const Categories = () => {
     loadCategories();
   }, []);
 
-  // Go to Add Category page (correct route path without parentheses)
-  const handleAddCategory = () => {
-    router.push('/(category)/add' as RelativePathString);
+  /* ======================================================
+      NAVIGATION
+  ====================================================== */
+
+  const handleAdd = () => {
+    router.push("/(category)/add" as RelativePathString);
   };
 
-  // Go to Edit/View Category page (correct route path without parentheses)
   const handleEdit = (cat: CategoryResponse) => {
-    if (cat.id !== undefined) {
-      router.push(`/(category)/${cat.id}` as RelativePathString);
-    } else {
-      console.error("Category ID is undefined");
-    }
+    if (typeof cat.id !== "number") return;
+
+    const id = cat.id; // ✅ TS now knows this is number
+    router.push(`/(category)/${id}` as RelativePathString);
   };
 
-  // Delete category
   const handleDelete = async (cat: CategoryResponse) => {
-    if (cat.id !== undefined) {
-      try {
-        await categoryService.delete(cat.id);
-        await loadCategories();
-      } catch (err) {
-        console.log("Failed to delete category", err);
-      }
-    }
+    if (typeof cat.id !== "number") return;
+
+    const id = cat.id; // ✅ narrowed to number
+
+    Alert.alert(
+      "Confirm Delete",
+      `Delete category "${cat.name}"?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await categoryService.delete(id); // ✅ no TS error
+              loadCategories();
+            } catch (err) {
+              console.error("Failed to delete category", err);
+              Alert.alert("Error", "Unable to delete category.");
+            }
+          },
+        },
+      ]
+    );
   };
 
-  const renderItem = ({ item, index }: { item: CategoryResponse; index: number }) => (
-    <View style={[
-      styles.listRow,
-      index % 2 === 1 && styles.listRowAlt, // alternate rows
-    ]}>
-      {/* Name */}
-      <View style={{ flex: 2 }}>
-        <Text style={{ fontSize: 16, color: COLORS.text }}>{item.name}</Text>
+  /* ======================================================
+      CATEGORY CARD
+  ====================================================== */
+
+  const renderItem = ({
+    item,
+  }: {
+    item: CategoryResponse;
+  }) => {
+    return (
+      <View style={styles.card}>
+        <View style={styles.metaRow}>
+          <Text style={styles.cardTitle}>{item.name}</Text>
+
+          <Text
+            style={[
+              styles.statusText,
+              {
+                color: item.is_active
+                  ? COLORS.green
+                  : COLORS.red,
+              },
+            ]}
+          >
+            {item.is_active ? "Active" : "Inactive"}
+          </Text>
+        </View>
+
+        <View style={styles.actionsRow}>
+          <Pressable
+            style={[
+              styles.actionButton,
+              styles.editButton,
+            ]}
+            onPress={() => handleEdit(item)}
+          >
+            <MaterialIcons
+              name="edit"
+              size={16}
+              color={COLORS.white}
+            />
+          </Pressable>
+
+          <Pressable
+            style={[
+              styles.actionButton,
+              styles.deleteButton,
+            ]}
+            onPress={() => handleDelete(item)}
+          >
+            <MaterialIcons
+              name="delete"
+              size={16}
+              color={COLORS.white}
+            />
+          </Pressable>
+        </View>
       </View>
-      {/* Is Active */}
-      <View style={{ flex: 1, alignItems: "center" }}>
-        <Text style={{ color: item.is_active ? "green" : "red" }}>
-          {item.is_active ? "Active" : "Inactive"}
-        </Text>
-      </View>
-      {/* Actions */}
-      <View style={{
-        flex: 1,
-        flexDirection: "row",
-        justifyContent: "flex-end",
-        gap: 12,
-      }}>
-        <Pressable onPress={() => handleEdit(item)}>
-          <MaterialIcons name="edit" size={22} color={COLORS.primary} />
-        </Pressable>
-        <Pressable onPress={() => handleDelete(item)}>
-          <MaterialIcons name="delete" size={22} color={COLORS.danger} />
-        </Pressable>
-      </View>
-    </View>
-  );
+    );
+  };
+
+  /* ======================================================
+      RENDER
+  ====================================================== */
 
   return (
     <View style={[styles.container, { paddingHorizontal: 16 }]}>
-      {/* Header row: title + Add button */}
-      <View style={{
-        flexDirection: "row",
-        alignItems: "center",
-        marginBottom: 16,
-      }}>
-        <Text style={[styles.title, { flex: 1 }]}>Categories</Text>
-        <Pressable style={styles.button} onPress={handleAddCategory}>
-          <Text style={styles.buttonText}>Add Category</Text>
+      {/* ---------- HEADER ---------- */}
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          marginBottom: 16,
+        }}
+      >
+        <Text
+          style={[
+            styles.title,
+            { flex: 1, textAlign: "left", marginBottom: 0 },
+          ]}
+        >
+          Categories
+        </Text>
+
+        <Pressable onPress={handleAdd}>
+          <Text
+            style={{
+              color: COLORS.primary,
+              fontSize: 14,
+              fontWeight: "600",
+            }}
+          >
+            + Add
+          </Text>
         </Pressable>
       </View>
 
-      {/* List header */}
-      <View style={styles.listHeader}>
-        <Text style={[styles.listHeaderText, { flex: 2, textAlign: "left" }]}>Name</Text>
-        <Text style={[styles.listHeaderText, { flex: 1, textAlign: "center" }]}>Active</Text>
-        <Text style={[styles.listHeaderText, { flex: 1, textAlign: "right" }]}>Action</Text>
-      </View>
+      {/* ---------- LIST ---------- */}
 
       {loading ? (
         <ActivityIndicator
-          style={{ marginTop: 16 }}
+          style={{ marginTop: 24 }}
           size="small"
           color={COLORS.primary}
         />
       ) : (
         <FlatList
           data={categories}
-          keyExtractor={item => item?.id?.toString() ?? ''}
+          keyExtractor={(item) =>
+            item.id?.toString() ?? ""
+          }
           renderItem={renderItem}
-          contentContainerStyle={{ paddingBottom: 16 }}
+          contentContainerStyle={{
+            paddingBottom: 16,
+          }}
+          showsVerticalScrollIndicator={false}
         />
       )}
     </View>

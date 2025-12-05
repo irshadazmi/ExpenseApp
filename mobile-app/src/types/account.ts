@@ -1,3 +1,4 @@
+// mobile-app/src/types/account.ts
 export interface AccountResponse {
   id?: number;
   name: string;

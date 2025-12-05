@@ -1,4 +1,5 @@
-// src/app/(drawer)/help-feedback/index.tsx
+// src/app/(feedback)/index.tsx
+
 import React, { useEffect, useMemo, useState } from "react";
 import {
 	View,
@@ -9,143 +10,184 @@ import {
 	Pressable,
 	Alert,
 } from "react-native";
+
 import { RelativePathString, useRouter } from "expo-router";
 import { useAuth } from "@/contexts/auth-context";
+
 import styles from "@/styles/styles";
 import { COLORS } from "@/constants/COLORS";
+
 import { feedbackService } from "@/services/feedback-service";
 import { FeedbackResponse } from "@/types/feedback";
+
 import { FEEDBACK_TYPES, STATUS_CODES } from "@/constants/CONSTANTS";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+
+/* ======================================================
+		FEEDBACK LIST
+====================================================== */
 
 const Feedbacks = () => {
 	const router = useRouter();
 	const { user } = useAuth();
+
 	const [loading, setLoading] = useState(false);
-	const [feedbacks, setFeedbacks] = useState<FeedbackResponse[]>([]);
-	const [searchTerm, setSearchTerm] = useState("");
-	const [selectedType, setSelectedType] = useState<string | null>(null);
-	const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+	const [feedbacks, setFeedbacks] =
+		useState<FeedbackResponse[]>([]);
+
+	const [search, setSearch] = useState("");
+	const [selectedType, setSelectedType] =
+		useState<string | null>(null);
+	const [selectedStatus, setSelectedStatus] =
+		useState<string | null>(null);
 
 	const isSuperAdmin = user?.role_id === 1;
 	const currentUserId = user?.id;
 
-	// Load feedbacks on mount & when user/role changes
+	/* ======================================================
+			LOAD DATA
+	====================================================== */
+
+	const loadFeedbacks = async () => {
+		if (!user) return;
+
+		setLoading(true);
+
+		try {
+			const data = isSuperAdmin
+				? await feedbackService.getAll()
+				: await feedbackService.getByUser(currentUserId!);
+
+			setFeedbacks(data || []);
+		} catch (error) {
+			console.error("Failed to load feedbacks", error);
+			Alert.alert(
+				"Error",
+				"Failed to load feedbacks. Please try again."
+			);
+		} finally {
+			setLoading(false);
+		}
+	};
+
 	useEffect(() => {
-		const fetchFeedbacks = async () => {
-			// console.log(user);
-			if (!user) return;
+		loadFeedbacks();
+	}, [user]);
 
-			setLoading(true);
-			try {
-				const data = isSuperAdmin
-					? await feedbackService.getAll()
-					: await feedbackService.getByUser(currentUserId!);
+	/* ======================================================
+			SEARCH + FILTER
+	====================================================== */
 
-				// console.log(data);
-				setFeedbacks(data);
-			} catch (error) {
-				console.error("Failed to load feedbacks", error);
-				Alert.alert("Error", "Failed to load feedbacks. Please try again.");
-			} finally {
-				setLoading(false);
-			}
-		};
-
-		fetchFeedbacks();
-	}, [user, isSuperAdmin, currentUserId]);
-
-	const handleDelete = async (id: number) => {
-		Alert.alert("Confirm Delete", "Are you sure you want to delete this feedback?", [
-			{ text: "Cancel", style: "cancel" },
-			{
-				text: "Delete",
-				style: "destructive",
-				onPress: async () => {
-					try {
-						await feedbackService.delete(id);
-						setFeedbacks((prev) => prev.filter((fb) => fb.id !== id));
-					} catch (error) {
-						console.error("Failed to delete feedback", error);
-						Alert.alert("Error", "Failed to delete feedback.");
-					}
-				},
-			},
-		]);
-	};
-
-	const handleEdit = (id: number) => {
-		if (id !== undefined) {
-			router.push(`/(feedback)/${id}` as RelativePathString);
-		} else {
-			console.error("Feedback ID is undefined");
-		}
-	};
-
-	const handleReply = (id: number) => {
-		// Use the same detail page for reply; it can show reply UI for SuperAdmin
-		if (id !== undefined) {
-			router.push({
-			pathname: `/(feedback)/${id}` as RelativePathString,
-			params: { id: String(id), mode: "reply" },
-		});
-		} else {
-			console.error("Feedback ID is undefined");
-		}
-	};
-
-	const handleAddFeedback = () => {
-		// Assuming new feedback route: /(drawer)/help-feedback/new.tsx
-		router.push("/(drawer)/help-feedback/new");
-	};
-
-	// Filtering logic: search + type + status
 	const filteredFeedbacks = useMemo(() => {
 		let data = [...feedbacks];
 
-		if (searchTerm.trim()) {
-			const term = searchTerm.toLowerCase();
+		const q = search.trim().toLowerCase();
+
+		if (q) {
 			data = data.filter(
-				(fb) =>
-					fb.subject.toLowerCase().includes(term) ||
-					fb.description.toLowerCase().includes(term) ||
-					fb.issue_type.toLowerCase().includes(term)
+				(f) =>
+					f.subject.toLowerCase().includes(q) ||
+					f.description.toLowerCase().includes(q) ||
+					f.issue_type.toLowerCase().includes(q)
 			);
 		}
 
-		if (selectedType) {
-			data = data.filter((fb) => fb.issue_type === selectedType);
-		}
+		if (selectedType)
+			data = data.filter(
+				(f) => f.issue_type === selectedType
+			);
 
-		if (selectedStatus) {
-			data = data.filter((fb) => fb.status === selectedStatus);
-		}
+		if (selectedStatus)
+			data = data.filter(
+				(f) => f.status === selectedStatus
+			);
 
-		// Newest first
+		// newest first
 		data.sort(
 			(a, b) =>
-				new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+				new Date(b.created_at).getTime() -
+				new Date(a.created_at).getTime()
 		);
 
 		return data;
-	}, [feedbacks, searchTerm, selectedType, selectedStatus]);
+	}, [feedbacks, search, selectedType, selectedStatus]);
+
+	/* ======================================================
+			NAVIGATION
+	====================================================== */
+
+	const handleAdd = () => {
+		router.push("/(feedback)/add" as RelativePathString);
+	};
+
+	const handleEdit = (fb: FeedbackResponse) => {
+		if (!fb.id) return;
+
+		router.push(
+			`/(feedback)/${fb.id}` as RelativePathString
+		);
+	};
+
+	const handleReply = (fb: FeedbackResponse) => {
+		if (!fb.id) return;
+
+		router.push({
+			pathname: `/(feedback)/${fb.id}` as RelativePathString,
+			params: { id: String(fb.id), mode: "reply" },
+		});
+	};
+
+	const handleDelete = async (
+		fb: FeedbackResponse
+	) => {
+		if (!fb.id) return;
+
+		Alert.alert(
+			"Confirm Delete",
+			"Are you sure you want to delete this feedback?",
+			[
+				{ text: "Cancel", style: "cancel" },
+				{
+					text: "Delete",
+					style: "destructive",
+					onPress: async () => {
+						try {
+							await feedbackService.delete(fb.id!);
+							loadFeedbacks();
+						} catch {
+							Alert.alert(
+								"Error",
+								"Failed to delete feedback."
+							);
+						}
+					},
+				},
+			]
+		);
+	};
+
+	/* ======================================================
+			FILTER CHIPS
+	====================================================== */
 
 	const renderChip = (
 		label: string,
-		isSelected: boolean,
+		isActive: boolean,
 		onPress: () => void
 	) => (
 		<Pressable
 			key={label}
 			style={[
 				styles.chip,
-				isSelected && styles.chipSelected,
+				isActive && styles.chipSelected,
 			]}
 			onPress={onPress}
 		>
 			<Text
 				style={[
 					styles.chipText,
-					isSelected && styles.chipTextSelected,
+					isActive &&
+					styles.chipTextSelected,
 				]}
 			>
 				{label}
@@ -153,141 +195,252 @@ const Feedbacks = () => {
 		</Pressable>
 	);
 
-	const renderFeedbackCard = ({ item }: { item: FeedbackResponse }) => {
-		const isOwner = currentUserId === item.user_id;
-		const createdAt = new Date(item.created_at).toLocaleString();
-		const statusLabel = item.status; // Already a string from STATUS_CODES
+	/* ======================================================
+			FEEDBACK CARD
+	====================================================== */
+
+	const renderItem = ({
+		item,
+	}: {
+		item: FeedbackResponse;
+	}) => {
+		const isOwner =
+			currentUserId === item.user_id;
+
+		const createdAt = new Date(
+			item.created_at
+		).toLocaleDateString();
 
 		return (
 			<View style={styles.card}>
 				<View style={styles.cardHeader}>
-					<Text style={styles.cardTitle}>{item.subject}</Text>
+					<Text style={styles.cardTitle}>
+						{item.subject}
+					</Text>
+
 					<View style={styles.statusBadge}>
-						<Text style={styles.statusText}>{statusLabel}</Text>
+						<Text style={styles.statusText}>
+							{item.status}
+						</Text>
 					</View>
 				</View>
 
-				<Text style={styles.issueType}>{item.issue_type}</Text>
-				<Text style={styles.description}>{item.description}</Text>
+				<Text style={styles.issueType}>
+					{item.issue_type}
+				</Text>
+
+				<Text style={styles.text}>
+					{item.description}
+				</Text>
 
 				<View style={styles.metaRow}>
-					<Text style={styles.metaText}>Rating: {item.rating} / 5</Text>
-					<Text style={styles.metaText}>{createdAt}</Text>
+					<Text style={styles.metaText}>
+						Rating: {item.rating} / 5
+					</Text>
+					<Text style={styles.metaText}>
+						{createdAt}
+					</Text>
 				</View>
 
-				{item.reply ? (
+				{item.reply && (
 					<View style={styles.replyBox}>
-						<Text style={styles.replyLabel}>Admin Reply:</Text>
-						<Text style={styles.replyText}>{item.reply}</Text>
+						<Text style={styles.replyLabel}>
+							Admin Reply:
+						</Text>
+						<Text style={styles.replyText}>
+							{item.reply}
+						</Text>
 					</View>
-				) : null}
+				)}
 
 				<View style={styles.actionsRow}>
-					{/* Owner edit/delete */}
 					{isOwner && (
 						<>
 							<Pressable
-								style={[styles.actionButton, styles.editButton]}
-								onPress={() => handleEdit(item.id)}
+								style={[
+									styles.actionButton,
+									styles.editButton,
+								]}
+								onPress={() =>
+									handleEdit(item)
+								}
 							>
-								<Text style={styles.actionButtonText}>Edit</Text>
+								<MaterialIcons
+									name="edit"
+									size={16}
+									color={COLORS.white}
+								/>
 							</Pressable>
+
 							<Pressable
-								style={[styles.actionButton, styles.deleteButton]}
-								onPress={() => handleDelete(item.id)}
+								style={[
+									styles.actionButton,
+									styles.deleteButton,
+								]}
+								onPress={() =>
+									handleDelete(item)
+								}
 							>
-								<Text style={styles.actionButtonText}>Delete</Text>
+								<MaterialIcons
+									name="delete"
+									size={16}
+									color={COLORS.white}
+								/>
 							</Pressable>
 						</>
 					)}
 
-					{/* SuperAdmin reply, only if no reply yet */}
-					{isSuperAdmin && !item.reply && (
-						<Pressable
-							style={[styles.actionButton, styles.replyButton]}
-							onPress={() => handleReply(item.id)}
-						>
-							<Text style={styles.actionButtonText}>Reply</Text>
-						</Pressable>
-					)}
+					{isSuperAdmin &&
+						!item.reply && (
+							<Pressable
+								style={[
+									styles.actionButton,
+									styles.replyButton,
+								]}
+								onPress={() =>
+									handleReply(item)
+								}
+							>
+								<MaterialIcons
+									name="reply"
+									size={16}
+									color={COLORS.white}
+								/>
+							</Pressable>
+						)}
 				</View>
 			</View>
 		);
 	};
 
+	/* ======================================================
+			RENDER
+	====================================================== */
+
 	return (
-		<View style={[styles.container, { paddingHorizontal: 16 }]}>
-      {/* Header row: title + Add button */}
-      <View style={{
-        flexDirection: "row",
-        alignItems: "center",
-        marginBottom: 16,
-      }}>
-        <Text style={[styles.title, { flex: 1 }]}>Feedback</Text>
-        <Pressable style={styles.button} onPress={handleAddFeedback}>
-          <Text style={styles.buttonText}>Add Feedback</Text>
+		<View
+			style={[
+				styles.container,
+				{ paddingHorizontal: 16 },
+			]}
+		>
+			{/* Header row: title + Add button */}
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          marginBottom: 16,
+        }}
+      >
+        <Text
+          style={[
+            styles.title,
+            { flex: 1, textAlign: "left", marginBottom: 0 },
+          ]}
+        >
+          List Of Feedbacks
+        </Text>
+
+        <Pressable onPress={handleAdd}>
+          <Text
+            style={{
+              color: COLORS.primary,
+              fontSize: 14,
+              fontWeight: "600",
+            }}
+          >
+            + Add
+          </Text>
         </Pressable>
       </View>
 
-			{/* Search Bar */}
+			{/* ---------- SEARCH ---------- */}
+
 			<TextInput
 				style={styles.searchInput}
-				placeholder="Search by subject, description, or type..."
-				value={searchTerm}
-				onChangeText={setSearchTerm}
+				placeholder="Search feedback..."
+				value={search}
+				onChangeText={setSearch}
 			/>
 
-			{/* Filter chips for feedback type */}
-			<Text style={styles.sectionLabel}>Filter by Type</Text>
+			{/* ---------- FILTER CHIPS ---------- */}
+
+			<Text style={styles.sectionLabel}>
+				Filter by Type
+			</Text>
 			<View style={styles.chipsContainer}>
 				{renderChip(
 					"All",
 					selectedType === null,
 					() => setSelectedType(null)
 				)}
-				{FEEDBACK_TYPES.map((type) =>
+
+				{FEEDBACK_TYPES.map((t) =>
 					renderChip(
-						type,
-						selectedType === type,
-						() => setSelectedType(selectedType === type ? null : type)
+						t,
+						selectedType === t,
+						() =>
+							setSelectedType(
+								selectedType === t
+									? null
+									: t
+							)
 					)
 				)}
 			</View>
 
-			{/* Filter chips for status */}
-			<Text style={styles.sectionLabel}>Filter by Status</Text>
+			<Text style={styles.sectionLabel}>
+				Filter by Status
+			</Text>
 			<View style={styles.chipsContainer}>
 				{renderChip(
 					"All",
 					selectedStatus === null,
 					() => setSelectedStatus(null)
 				)}
-				{STATUS_CODES.map((status) =>
+
+				{STATUS_CODES.map((s) =>
 					renderChip(
-						status,
-						selectedStatus === status,
+						s,
+						selectedStatus === s,
 						() =>
-							setSelectedStatus(selectedStatus === status ? null : status)
+							setSelectedStatus(
+								selectedStatus === s
+									? null
+									: s
+							)
 					)
 				)}
 			</View>
 
+			{/* ---------- LIST ---------- */}
+
 			{loading ? (
 				<ActivityIndicator
-					style={{ marginTop: 16 }}
+					style={{ marginTop: 24 }}
 					size="small"
 					color={COLORS.primary}
 				/>
 			) : filteredFeedbacks.length === 0 ? (
-				<Text style={{ marginTop: 16, textAlign: "center" }}>
+				<Text
+					style={{
+						marginTop: 24,
+						textAlign: "center",
+					}}
+				>
 					No feedbacks found.
 				</Text>
 			) : (
 				<FlatList
 					data={filteredFeedbacks}
-					keyExtractor={(item) => item.id.toString()}
-					renderItem={renderFeedbackCard}
-					contentContainerStyle={{ paddingVertical: 12, paddingBottom: 32 }}
+					keyExtractor={(item) =>
+						item.id?.toString() ?? ""
+					}
+					renderItem={renderItem}
+					contentContainerStyle={{
+						paddingBottom: 24,
+					}}
+					showsVerticalScrollIndicator={false}
 				/>
 			)}
 		</View>

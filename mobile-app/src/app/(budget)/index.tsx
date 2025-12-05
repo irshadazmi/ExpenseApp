@@ -7,31 +7,42 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
+
 import styles from "@/styles/styles";
 import { budgetService } from "@/services/budget-service";
 import { COLORS } from "@/constants/COLORS";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+
 import { BudgetResponse } from "@/types/budget";
 import { RelativePathString, useRouter } from "expo-router";
 import { useAuth } from "@/contexts/auth-context";
 
+/* ======================================================
+    BUDGET LIST
+====================================================== */
+
 const Budgets = () => {
   const [budgets, setBudgets] = useState<BudgetResponse[]>([]);
   const [loading, setLoading] = useState(false);
+
   const router = useRouter();
   const { user } = useAuth();
 
   const isSuperAdmin = user?.role_id === 1;
-	const currentUserId = user?.id;
+  const currentUserId = user?.id;
+
+  /* ======================================================
+      LOAD DATA
+  ====================================================== */
 
   const loadBudgets = async () => {
     setLoading(true);
+
     try {
       const data = isSuperAdmin
         ? await budgetService.getAll()
         : await budgetService.getByUser(currentUserId!);
 
-      // console.log(data);
       setBudgets(data);
     } catch (error) {
       console.error("Failed to load budgets", error);
@@ -45,97 +56,175 @@ const Budgets = () => {
     loadBudgets();
   }, []);
 
-  // Go to Add Budget page (correct route path without parentheses)
-  const handleAddBudget = () => {
-    router.push('/(budget)/add' as RelativePathString);
+  /* ======================================================
+      NAVIGATION
+  ====================================================== */
+
+  const handleAdd = () => {
+    router.push("/(budget)/add" as RelativePathString);
   };
 
-  // Go to Edit/View Budget page (correct route path without parentheses)
-  const handleEdit = (acc: BudgetResponse) => {
-    if (acc.id !== undefined) {
-      router.push(`/(budget)/${acc.id}` as RelativePathString);
-    } else {
-      console.error("Budget ID is undefined");
+  const handleEdit = (item: BudgetResponse) => {
+    if (!item.id) return;
+    router.push(`/(budget)/${item.id}` as RelativePathString);
+  };
+
+  const handleDelete = async (item: BudgetResponse) => {
+    if (!item.id) return;
+
+    try {
+      await budgetService.delete(item.id);
+      await loadBudgets();
+    } catch {
+      Alert.alert("Error", "Failed to delete budget");
     }
   };
 
-  // Delete budget
-  const handleDelete = async (acc: BudgetResponse) => {
-    if (acc.id !== undefined) {
-      try {
-        await budgetService.delete(acc.id);
-        await loadBudgets();
-      } catch (err) {
-        console.log("Failed to delete budget", err);
-      }
-    }
+  /* ======================================================
+      RENDER ITEM
+  ====================================================== */
+
+  const renderItem = ({ item }: { item: BudgetResponse }) => {
+    const isActive = item.is_active;
+
+    return (
+      <View style={styles.card}>
+        {/* HEADER ROW */}
+        <View style={styles.cardHeader}>
+          <Text style={styles.cardTitle}>
+            {item.name}
+          </Text>
+
+          <View style={styles.statusBadge}>
+            <Text
+              style={[
+                styles.statusText,
+                {
+                  color: isActive
+                    ? COLORS.success
+                    : COLORS.danger,
+                },
+              ]}
+            >
+              {isActive ? "ACTIVE" : "INACTIVE"}
+            </Text>
+          </View>
+        </View>
+
+        {/* META INFO */}
+        <View style={styles.metaRow}>
+          <Text style={styles.metaText}>
+            💰 {item.currency} {Number(item.amount).toLocaleString("en-IN")}
+          </Text>
+
+          <Text style={styles.metaText}>
+            ⏱ {item.period}
+          </Text>
+        </View>
+
+        <View style={styles.metaRow}>
+          <Text style={styles.metaText}>
+            📅 {new Date(item.start_date).toLocaleDateString()} →{" "}
+            {new Date(item.end_date).toLocaleDateString()}
+          </Text>
+
+          <Text style={styles.metaText}>
+            🏷 Cat ID: {item.category_id}
+          </Text>
+        </View>
+
+        {/* ACTIONS */}
+        <View
+          style={[
+            styles.actionsRow,
+            { marginTop: 6 },
+          ]}
+        >
+          <Pressable
+            style={[
+              styles.actionButton,
+              styles.editButton,
+            ]}
+            onPress={() => handleEdit(item)}
+          >
+            <MaterialIcons
+              name="edit"
+              size={16}
+              color={COLORS.white}
+            />
+          </Pressable>
+
+          <Pressable
+            style={[
+              styles.actionButton,
+              styles.deleteButton,
+            ]}
+            onPress={() => handleDelete(item)}
+          >
+            <MaterialIcons
+              name="delete"
+              size={16}
+              color={COLORS.white}
+            />
+          </Pressable>
+        </View>
+      </View>
+    );
   };
 
-  const renderItem = ({ item, index }: { item: BudgetResponse; index: number }) => (
-    <View style={[
-      styles.listRow,
-      index % 2 === 1 && styles.listRowAlt, // alternate rows
-    ]}>
-      {/* Name */}
-      <View style={{ flex: 2 }}>
-        <Text style={{ fontSize: 16, color: COLORS.text }}>{item.name}</Text>
-      </View>
-      {/* Is Active */}
-      <View style={{ flex: 1, alignItems: "center" }}>
-        <Text style={{ color: item.is_active ? "green" : "red" }}>
-          {item.is_active ? "Active" : "Inactive"}
-        </Text>
-      </View>
-      {/* Actions */}
-      <View style={{
-        flex: 1,
-        flexDirection: "row",
-        justifyContent: "flex-end",
-        gap: 12,
-      }}>
-        <Pressable onPress={() => handleEdit(item)}>
-          <MaterialIcons name="edit" size={22} color={COLORS.primary} />
-        </Pressable>
-        <Pressable onPress={() => handleDelete(item)}>
-          <MaterialIcons name="delete" size={22} color={COLORS.danger} />
-        </Pressable>
-      </View>
-    </View>
-  );
+  /* ======================================================
+      UI
+  ====================================================== */
 
   return (
-    <View style={[styles.container, { paddingHorizontal: 16 }]}>
+    <View style={styles.container}>
       {/* Header row: title + Add button */}
-      <View style={{
-        flexDirection: "row",
-        alignItems: "center",
-        marginBottom: 16,
-      }}>
-        <Text style={[styles.title, { flex: 1 }]}>Budgets</Text>
-        <Pressable style={styles.button} onPress={handleAddBudget}>
-          <Text style={styles.buttonText}>Add Budget</Text>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          marginBottom: 16,
+        }}
+      >
+        <Text
+          style={[
+            styles.title,
+            { flex: 1, textAlign: "left", marginBottom: 0 },
+          ]}
+        >
+          List Of Budgets
+        </Text>
+
+        <Pressable onPress={handleAdd}>
+          <Text
+            style={{
+              color: COLORS.primary,
+              fontSize: 14,
+              fontWeight: "600",
+            }}
+          >
+            + Add
+          </Text>
         </Pressable>
       </View>
 
-      {/* List header */}
-      <View style={styles.listHeader}>
-        <Text style={[styles.listHeaderText, { flex: 2, textAlign: "left" }]}>Name</Text>
-        <Text style={[styles.listHeaderText, { flex: 1, textAlign: "center" }]}>Active</Text>
-        <Text style={[styles.listHeaderText, { flex: 1, textAlign: "right" }]}>Action</Text>
-      </View>
-
+      {/* LOADING */}
       {loading ? (
         <ActivityIndicator
-          style={{ marginTop: 16 }}
-          size="small"
+          style={{ marginTop: 20 }}
+          size="large"
           color={COLORS.primary}
         />
       ) : (
         <FlatList
           data={budgets}
-          keyExtractor={item => item?.id?.toString() ?? ''}
+          keyExtractor={(item) =>
+            item.id?.toString() ?? Math.random().toString()
+          }
           renderItem={renderItem}
-          contentContainerStyle={{ paddingBottom: 16 }}
+          contentContainerStyle={{ paddingBottom: 50 }}
+          refreshing={loading}
+          onRefresh={loadBudgets}
         />
       )}
     </View>

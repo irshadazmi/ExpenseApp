@@ -1,3 +1,4 @@
+// mobile-app/src/types/budget.ts
 export interface BudgetResponse {
   id?: number;
   name: string;

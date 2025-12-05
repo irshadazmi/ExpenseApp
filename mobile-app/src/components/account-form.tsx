@@ -1,14 +1,32 @@
 // src/components/account-form.tsx
+
 import React, { useEffect, useState } from "react";
-import { View, Text, TextInput, Pressable, ScrollView, Alert, ActivityIndicator } from "react-native";
-import { Picker } from "@react-native-picker/picker";
-import styles from "@/styles/styles";
-import { COLORS } from "@/constants/COLORS";
-import { accountService } from "@/services/account-service";
+import {
+  View,
+  Text,
+  TextInput,
+  Pressable,
+  ScrollView,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
+
 import { Formik } from "formik";
 import * as Yup from "yup";
-import { CURRENCIES } from "@/constants/CONSTANTS";
-import { ACCOUNT_TYPES } from "@/constants/CONSTANTS";
+import { useRouter } from "expo-router";
+
+import styles from "@/styles/styles";
+import { COLORS } from "@/constants/COLORS";
+
+import { accountService } from "@/services/account-service";
+import {
+  ACCOUNT_TYPES,
+  CURRENCIES,
+} from "@/constants/CONSTANTS";
+
+/* ======================================================
+    TYPES
+====================================================== */
 
 export interface AccountCreate {
   name: string;
@@ -18,57 +36,90 @@ export interface AccountCreate {
   is_active: boolean;
 }
 
-const AccountSchema = Yup.object().shape({
-  name: Yup.string().trim().required("Account name is required"),
-  type: Yup.string().oneOf(ACCOUNT_TYPES).required("Account type is required"),
-  balance: Yup.number().typeError("Balance must be a number").required("Balance is required"),
-  currency: Yup.string().oneOf(CURRENCIES).required("Currency is required"),
-  is_active: Yup.boolean(),
-});
-
 interface AccountFormProps {
   id?: number;
   onSubmitSuccess?: () => void;
 }
 
-const AccountForm: React.FC<AccountFormProps> = ({ id, onSubmitSuccess }) => {
+/* ======================================================
+    VALIDATION
+====================================================== */
+
+const AccountSchema = Yup.object().shape({
+  name: Yup.string().trim().required("Account name is required"),
+  type: Yup.string()
+    .oneOf(ACCOUNT_TYPES)
+    .required("Account type is required"),
+  balance: Yup.number()
+    .typeError("Balance must be a number")
+    .required("Balance is required"),
+  currency: Yup.string()
+    .oneOf(CURRENCIES)
+    .required("Currency is required"),
+  is_active: Yup.boolean(),
+});
+
+/* ======================================================
+    MAIN COMPONENT
+====================================================== */
+
+const AccountForm: React.FC<AccountFormProps> = ({
+  id,
+  onSubmitSuccess,
+}) => {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [initialValues, setInitialValues] = useState<AccountCreate>({
-    name: "",
-    type: "Checking",
-    balance: 0,
-    currency: "INR",
-    is_active: true,
-  });
 
   const isEditing = typeof id === "number";
 
+  const [initialValues, setInitialValues] =
+    useState<AccountCreate>({
+      name: "",
+      type: "Checking",
+      balance: 0,
+      currency: "INR",
+      is_active: true,
+    });
+
+  /* ======================================================
+      LOAD EXISTING ACCOUNT
+  ====================================================== */
+
   useEffect(() => {
-    if (isEditing) {
-      setLoading(true);
-      accountService.getById(id!)
-        .then(account => {
-          if (account) {
-            setInitialValues({
-              name: account.name ?? "",
-              type: account.type ?? "Checking",
-              balance: Number(account.balance) ?? 0,
-              currency: account.currency ?? "INR",
-              is_active: account.is_active ?? true,
-            });
-          }
-        })
-        .catch(error => {
-          console.error("Failed to load account", error);
-          Alert.alert("Error", "Failed to load account data.");
-        })
-        .finally(() => setLoading(false));
-    }
+    if (!isEditing) return;
+
+    setLoading(true);
+
+    accountService
+      .getById(id!)
+      .then((account) => {
+        if (!account) return;
+
+        setInitialValues({
+          name: account.name ?? "",
+          type: account.type ?? "Checking",
+          balance: Number(account.balance ?? 0),
+          currency: account.currency ?? "INR",
+          is_active: account.is_active ?? true,
+        });
+      })
+      .catch(() => {
+        Alert.alert("Error", "Failed to load account data.");
+      })
+      .finally(() => setLoading(false));
   }, [id, isEditing]);
 
-  const handleSubmit = async (values: AccountCreate, { resetForm, setSubmitting }: any) => {
+  /* ======================================================
+      SUBMIT HANDLER
+  ====================================================== */
+
+  const handleSubmit = async (
+    values: AccountCreate,
+    { resetForm, setSubmitting }: any
+  ) => {
     try {
       setSubmitting(true);
+
       if (isEditing) {
         await accountService.update(id!, values);
         Alert.alert("Success", "Account updated successfully.");
@@ -77,23 +128,39 @@ const AccountForm: React.FC<AccountFormProps> = ({ id, onSubmitSuccess }) => {
         Alert.alert("Success", "Account added successfully.");
         resetForm();
       }
-      if (onSubmitSuccess) onSubmitSuccess();
-    } catch (error) {
-      console.error("Failed to save account", error);
-      Alert.alert("Error", "Failed to save account. Please try again.");
+
+      onSubmitSuccess?.();
+      router.back(); // ✅ auto return after submit
+    } catch {
+      Alert.alert("Error", "Failed to save account.");
     } finally {
       setSubmitting(false);
     }
   };
 
+  /* ======================================================
+      LOADING STATE
+  ====================================================== */
+
   if (loading && isEditing) {
     return (
-      <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
+      <View
+        style={[
+          styles.container,
+          { justifyContent: "center", alignItems: "center" },
+        ]}
+      >
         <ActivityIndicator size="large" color={COLORS.primary} />
-        <Text style={{ marginTop: 12 }}>Loading account data...</Text>
+        <Text style={{ marginTop: 12 }}>
+          Loading account data...
+        </Text>
       </View>
     );
   }
+
+  /* ======================================================
+      UI
+  ====================================================== */
 
   return (
     <ScrollView>
@@ -114,8 +181,11 @@ const AccountForm: React.FC<AccountFormProps> = ({ id, onSubmitSuccess }) => {
           setFieldValue,
         }) => (
           <View>
-            {/* Account Name */}
-            <Text>Name</Text>
+
+            {/* ----------------- NAME ----------------- */}
+
+            <Text style={styles.label}>Account Name</Text>
+
             <TextInput
               style={styles.textInput}
               placeholder="Enter account name"
@@ -123,76 +193,143 @@ const AccountForm: React.FC<AccountFormProps> = ({ id, onSubmitSuccess }) => {
               onChangeText={handleChange("name")}
               editable={!isSubmitting}
             />
+
             {touched.name && errors.name && (
-              <Text style={styles.errorText}>{errors.name}</Text>
+              <Text style={styles.errorText}>
+                {errors.name}
+              </Text>
             )}
 
-            {/* Account Type */}
-            <Text>Type</Text>
-            <View style={styles.dropdownWrapper}>
-              <Picker
-                selectedValue={values.type}
-                onValueChange={handleChange("type")}
-                style={styles.dropdown}
-                dropdownIconColor={COLORS.primary}
-              >
-                <Picker.Item
-                  label="-- Select Type --"
-                  value={0}
-                  color={COLORS.textSecondary}
-                />
-                {ACCOUNT_TYPES.map(type => (
-                  <Picker.Item key={type} label={type} value={type} />
-                ))}
-              </Picker>
+            {/* ---------------- ACCOUNT TYPE (WRAPPED CHIPS) ---------------- */}
+
+            <Text style={styles.label}>Account Type</Text>
+
+            <View
+              style={[
+                styles.chipsContainer,
+                { flexWrap: "wrap" },
+              ]}
+            >
+              {ACCOUNT_TYPES.map((type) => {
+                const active = values.type === type;
+
+                return (
+                  <Pressable
+                    key={type}
+                    style={[
+                      styles.chip,
+                      active && styles.chipSelected,
+                    ]}
+                    onPress={() =>
+                      setFieldValue("type", type)
+                    }
+                    disabled={isSubmitting}
+                  >
+                    <Text
+                      style={[
+                        styles.chipText,
+                        active && styles.chipTextSelected,
+                      ]}
+                    >
+                      {type}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
+
             {touched.type && errors.type && (
-              <Text style={styles.errorText}>{errors.type}</Text>
+              <Text style={styles.errorText}>
+                {errors.type}
+              </Text>
             )}
 
-            {/* Balance */}
-            <Text>Balance</Text>
+            {/* ----------------- BALANCE ----------------- */}
+
+            <Text style={styles.label}>Balance</Text>
+
             <TextInput
               style={styles.textInput}
               placeholder="Enter balance"
-              value={values.balance !== undefined ? String(values.balance) : ""}
-              onChangeText={(v) => setFieldValue("balance", Number(v))}
+              value={String(values.balance ?? "")}
+              onChangeText={(v) =>
+                setFieldValue("balance", Number(v))
+              }
               keyboardType="numeric"
               editable={!isSubmitting}
             />
+
             {touched.balance && errors.balance && (
-              <Text style={styles.errorText}>{errors.balance}</Text>
+              <Text style={styles.errorText}>
+                {errors.balance}
+              </Text>
             )}
 
-            {/* Currency */}
-            <Text>Currency</Text>
-            <View style={styles.dropdownWrapper}>
-              <Picker
-                selectedValue={values.currency}
-                onValueChange={handleChange("currency")}
-                style={styles.dropdown}
-                dropdownIconColor={COLORS.primary}
-              >
-                <Picker.Item
-                  label="-- Select Currency --"
-                  value={0}
-                  color={COLORS.textSecondary}
-                />
-                {CURRENCIES.map(currency => (
-                  <Picker.Item key={currency} label={currency} value={currency} />
-                ))}
-              </Picker>
+            {/* ---------------- CURRENCY (WRAPPED CHIPS) ---------------- */}
+
+            <Text style={styles.label}>Currency</Text>
+
+            <View
+              style={[
+                styles.chipsContainer,
+                { flexWrap: "wrap" },
+              ]}
+            >
+              {CURRENCIES.map((cur) => {
+                const active = values.currency === cur;
+
+                return (
+                  <Pressable
+                    key={cur}
+                    style={[
+                      styles.chip,
+                      active && styles.chipSelected,
+                    ]}
+                    onPress={() =>
+                      setFieldValue("currency", cur)
+                    }
+                    disabled={isSubmitting}
+                  >
+                    <Text
+                      style={[
+                        styles.chipText,
+                        active && styles.chipTextSelected,
+                      ]}
+                    >
+                      {cur}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
+
             {touched.currency && errors.currency && (
-              <Text style={styles.errorText}>{errors.currency}</Text>
+              <Text style={styles.errorText}>
+                {errors.currency}
+              </Text>
             )}
 
-            {/* Active Toggle */}
-            <View style={{ flexDirection: "row", alignItems: "center", marginVertical: 12 }}>
-              <Text style={{ fontSize: 16, marginRight: 8 }}>Active</Text>
+            {/* ---------------- ACTIVE ---------------- */}
+
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginVertical: 12,
+              }}
+            >
+              <Text style={{ fontSize: 16 }}>
+                Active
+              </Text>
+
               <Pressable
-                onPress={() => setFieldValue("is_active", !values.is_active)}
-                style={{ padding: 4 }}
+                onPress={() =>
+                  setFieldValue(
+                    "is_active",
+                    !values.is_active
+                  )
+                }
+                style={{ marginLeft: 10 }}
                 disabled={isSubmitting}
               >
                 <View
@@ -202,21 +339,35 @@ const AccountForm: React.FC<AccountFormProps> = ({ id, onSubmitSuccess }) => {
                     borderRadius: 12,
                     borderWidth: 2,
                     borderColor: COLORS.primary,
-                    backgroundColor: values.is_active ? COLORS.primary : "transparent",
+                    backgroundColor: values.is_active
+                      ? COLORS.primary
+                      : "transparent",
                   }}
                 />
               </Pressable>
             </View>
 
+            {/* ---------------- SUBMIT ---------------- */}
+
             <Pressable
-              style={[styles.button, !isValid || isSubmitting ? { opacity: 0.6 } : {}]}
-              onPress={() => handleSubmit()}
+              style={[
+                styles.button,
+                (!isValid || isSubmitting) && {
+                  opacity: 0.6,
+                },
+              ]}
               disabled={!isValid || isSubmitting}
+              onPress={() => handleSubmit()}
             >
               <Text style={styles.buttonText}>
-                {isSubmitting ? "Saving..." : isEditing ? "Update Account" : "Save Account"}
+                {isSubmitting
+                  ? "Saving..."
+                  : isEditing
+                  ? "Update Account"
+                  : "Save Account"}
               </Text>
             </Pressable>
+
           </View>
         )}
       </Formik>

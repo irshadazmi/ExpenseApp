@@ -1,6 +1,4 @@
-// src/components/transaction-form.tsx
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { Picker } from "@react-native-picker/picker";
 import {
   View,
   Text,
@@ -9,90 +7,159 @@ import {
   Platform,
   ScrollView,
   ActivityIndicator,
-  Alert
+  Alert,
 } from "react-native";
+
 import React, { useEffect, useState } from "react";
-import styles from "@/styles/styles";
-import { TransactionCreate } from "@/types/transaction";
-import { categoryService } from "@/services/category-service";
-import { COLORS } from "@/constants/COLORS";
-import { transactionService } from "@/services/transaction-service";
-import { useAuth } from "@/contexts/auth-context";
 import { Formik } from "formik";
 import * as Yup from "yup";
-import { CURRENCIES } from "@/constants/CONSTANTS";
-import { EXPENSE_TYPES } from "@/constants/CONSTANTS";
+
+import styles from "@/styles/styles";
+import { COLORS } from "@/constants/COLORS";
+
+import { TransactionCreate } from "@/types/transaction";
+import { categoryService } from "@/services/category-service";
+import { transactionService } from "@/services/transaction-service";
+
+import { useAuth } from "@/contexts/auth-context";
+
+import { CURRENCIES, EXPENSE_TYPES } from "@/constants/CONSTANTS";
+
+/* ======================================================
+    VALIDATION
+====================================================== */
 
 const TransactionSchema = Yup.object().shape({
-  description: Yup.string()
-    .trim()
-    .required("Description is required"),
+  description: Yup.string().trim().required("Description is required"),
+
   amount: Yup.number()
     .typeError("Amount must be a number")
     .positive("Amount must be greater than zero")
     .required("Amount is required"),
+
   category_id: Yup.number()
     .moreThan(0, "Category is required")
     .required("Category is required"),
-  transaction_date: Yup.date()
-    .required("Transaction date is required"),
+
+  transaction_date: Yup.date().required(
+    "Transaction date is required"
+  ),
+
   type: Yup.string()
-    .oneOf(EXPENSE_TYPES as unknown as string[])
+    .oneOf(EXPENSE_TYPES)
     .required("Type is required"),
+
   currency: Yup.string()
-    .oneOf(CURRENCIES as unknown as string[])
+    .oneOf(CURRENCIES)
     .required("Currency is required"),
 });
 
+/* ======================================================
+    TYPES
+====================================================== */
+
 interface TransactionFormProps {
-  id?: number; // optional transaction ID for edit
+  id?: number;
   onSubmitSuccess?: () => void;
 }
 
-const TransactionForm: React.FC<TransactionFormProps> = ({ id, onSubmitSuccess }) => {
-  const { user } = useAuth();
-  const [categories, setCategories] = useState<any[]>([]);
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [initialValues, setInitialValues] = useState<TransactionCreate | null>(null);
-  const isEditing = typeof id === "number";
+/* ======================================================
+    COMPONENT
+====================================================== */
 
-  // Load categories once
+const TransactionForm: React.FC<
+  TransactionFormProps
+> = ({ id, onSubmitSuccess }) => {
+  const { user } = useAuth();
+
+  const [categories, setCategories] =
+    useState<{ id: number; name: string }[]>(
+      []
+    );
+
+  const [showDatePicker, setShowDatePicker] =
+    useState(false);
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [
+    initialValues,
+    setInitialValues,
+  ] = useState<TransactionCreate | null>(
+    null
+  );
+
+  const isEditing =
+    typeof id === "number";
+
+  /* ======================================================
+      LOAD CATEGORIES
+  ====================================================== */
+
   useEffect(() => {
     (async () => {
       try {
         const res = await categoryService.getAll();
-        setCategories(res);
-      } catch (err) {
-        console.log("Failed to load categories", err);
+
+        // ✅ normalize + fix potential undefined ids
+        const safeCategories = res
+          .filter((c) => typeof c.id === "number")
+          .map((c) => ({
+            id: c.id as number,
+            name: c.name,
+          }));
+
+        setCategories(safeCategories);
+      } catch {
+        Alert.alert(
+          "Error",
+          "Failed to load categories"
+        );
       }
     })();
   }, []);
 
-  // Load existing transaction for edit mode
+
+  /* ======================================================
+      LOAD TRANSACTION
+  ====================================================== */
+
   useEffect(() => {
     if (!user) return;
+
     if (isEditing) {
       setLoading(true);
-      transactionService.getById(id!)
-        .then(transaction => {
-          if (transaction) {
-            setInitialValues({
-              description: transaction.description ?? "",
-              amount: Number(transaction.amount) ?? 0,
-              category_id: Number(transaction.category_id) ?? 0,
-              type: transaction.type ?? "Expense",
-              currency: transaction.currency ?? "INR",
-              transaction_date: transaction.transaction_date ?? new Date().toISOString(),
-              user_id: user.id,
-            });
-          }
+
+      transactionService
+        .getById(id!)
+        .then((tx) => {
+          if (!tx) return;
+
+          setInitialValues({
+            description:
+              tx.description ?? "",
+            amount: Number(tx.amount) ?? 0,
+            category_id:
+              Number(tx.category_id) ?? 0,
+            type: tx.type ?? "Expense",
+            currency:
+              tx.currency ?? "INR",
+            transaction_date:
+              tx.transaction_date ??
+              new Date().toISOString(),
+            user_id: user.id,
+          });
         })
-        .catch(error => {
-          console.error("Failed to load transaction", error);
-          Alert.alert("Error", "Failed to load transaction data.");
-        })
-        .finally(() => setLoading(false));
+        .catch(() =>
+          Alert.alert(
+            "Error",
+            "Failed to load transaction"
+          )
+        )
+        .finally(() =>
+          setLoading(false)
+        );
     } else {
       setInitialValues({
         description: "",
@@ -100,30 +167,50 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ id, onSubmitSuccess }
         category_id: 0,
         type: "Expense",
         currency: "INR",
-        transaction_date: new Date().toISOString(),
+        transaction_date:
+          new Date().toISOString(),
         user_id: user.id,
       });
     }
   }, [id, isEditing, user]);
 
+  /* ======================================================
+      USER SAFETY
+  ====================================================== */
+
   if (!user) {
     return (
-      <View>
-        <Text style={{ color: COLORS.danger }}>
-          Please login again. User information is not available.
+      <Text style={styles.errorText}>
+        Please login again. User is missing.
+      </Text>
+    );
+  }
+
+  if (!initialValues || loading) {
+    return (
+      <View
+        style={[
+          styles.container,
+          {
+            alignItems: "center",
+            justifyContent: "center",
+          },
+        ]}
+      >
+        <ActivityIndicator
+          size="large"
+          color={COLORS.primary}
+        />
+        <Text style={{ marginTop: 12 }}>
+          Loading transaction...
         </Text>
       </View>
     );
   }
 
-  if (!initialValues || (isEditing && loading)) {
-    return (
-      <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-        <Text style={{ marginTop: 12 }}>Loading transaction data...</Text>
-      </View>
-    );
-  }
+  /* ======================================================
+      SUBMIT
+  ====================================================== */
 
   const handleSubmit = async (
     values: TransactionCreate,
@@ -131,21 +218,42 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ id, onSubmitSuccess }
   ) => {
     try {
       if (isEditing) {
-        await transactionService.update(id!, values);
-        Alert.alert("Success", "Transaction updated successfully.");
+        await transactionService.update(
+          id!,
+          values
+        );
+
+        Alert.alert(
+          "Success",
+          "Transaction updated"
+        );
       } else {
-        await transactionService.create(values);
-        Alert.alert("Success", "Transaction created successfully.");
+        await transactionService.create(
+          values
+        );
+
+        Alert.alert(
+          "Success",
+          "Transaction created"
+        );
+
         resetForm();
       }
-      if (onSubmitSuccess) onSubmitSuccess();
-    } catch (error) {
-      console.log("Error saving transaction:", error);
-      Alert.alert("Error", "Failed to save transaction. Please try again.");
+
+      onSubmitSuccess?.();
+    } catch {
+      Alert.alert(
+        "Error",
+        "Failed to save transaction"
+      );
     } finally {
       setSubmitting(false);
     }
   };
+
+  /* ======================================================
+      RENDER
+  ====================================================== */
 
   return (
     <ScrollView keyboardShouldPersistTaps="handled">
@@ -166,184 +274,296 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ id, onSubmitSuccess }
           isValid,
         }) => (
           <View>
-            {/* Category Dropdown */}
-            <Text>Category</Text>
-            <View style={styles.dropdownWrapper}>
-              <Picker
-                selectedValue={values.category_id}
-                onValueChange={(v) => setFieldValue("category_id", v)}
-                style={styles.dropdown}
-                dropdownIconColor={COLORS.primary}
-              >
-                <Picker.Item
-                  label="-- Select Category --"
-                  value={0}
-                  color={COLORS.textSecondary}
-                />
-                {categories.map((cat: { id: number; name: string }) => (
-                  <Picker.Item
+            {/* ----------
+                CATEGORY
+            ---------- */}
+            <Text style={styles.label}>
+              Category
+            </Text>
+
+            <View
+              style={[
+                styles.chipsContainer,
+                { flexWrap: "wrap" },
+              ]}
+            >
+              {categories.map((cat) => {
+                const active =
+                  values.category_id ===
+                  cat.id;
+
+                return (
+                  <Pressable
                     key={cat.id}
-                    label={cat.name}
-                    value={cat.id}
-                    color={COLORS.text}
-                    style={styles.dropdownText}
-                  />
-                ))}
-              </Picker>
+                    style={[
+                      styles.chip,
+                      active &&
+                      styles.chipSelected,
+                    ]}
+                    onPress={() =>
+                      setFieldValue(
+                        "category_id",
+                        cat.id
+                      )
+                    }
+                  >
+                    <Text
+                      style={[
+                        styles.chipText,
+                        active &&
+                        styles.chipTextSelected,
+                      ]}
+                    >
+                      {cat.name}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
-            {touched.category_id && errors.category_id && (
-              <Text style={styles.errorText}>{errors.category_id}</Text>
-            )}
 
-            {/* Type Radio Buttons */}
-            <Text>Type</Text>
-            <View style={styles.radioGroup}>
-              {EXPENSE_TYPES.map((t) => (
-                <Pressable
-                  key={t}
-                  style={styles.radioOption}
-                  onPress={() => setFieldValue("type", t)}
-                >
-                  <View
+            {touched.category_id &&
+              errors.category_id && (
+                <Text style={styles.errorText}>
+                  {errors.category_id}
+                </Text>
+              )}
+
+            {/* ----------
+                TYPE
+            ---------- */}
+            <Text style={styles.label}>
+              Type
+            </Text>
+
+            <View
+              style={[
+                styles.chipsContainer,
+                { flexWrap: "wrap" },
+              ]}
+            >
+              {EXPENSE_TYPES.map((t) => {
+                const active =
+                  values.type === t;
+
+                return (
+                  <Pressable
+                    key={t}
                     style={[
-                      styles.radioOuter,
-                      values.type === t && styles.radioOuterSelected,
+                      styles.chip,
+                      active &&
+                      styles.chipSelected,
                     ]}
+                    onPress={() =>
+                      setFieldValue("type", t)
+                    }
                   >
-                    {values.type === t && <View style={styles.radioInner} />}
-                  </View>
-                  <Text
-                    style={[
-                      styles.radioLabel,
-                      values.type === t && styles.radioLabelSelected,
-                    ]}
-                  >
-                    {t}
-                  </Text>
-                </Pressable>
-              ))}
+                    <Text
+                      style={[
+                        styles.chipText,
+                        active &&
+                        styles.chipTextSelected,
+                      ]}
+                    >
+                      {t}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
-            {touched.type && errors.type && (
-              <Text style={styles.errorText}>{errors.type}</Text>
-            )}
 
-            {/* Currency Radio Buttons */}
-            <Text>Currency</Text>
-            <View style={styles.radioGroup}>
-              {CURRENCIES.map((cur) => (
-                <Pressable
-                  key={cur}
-                  style={styles.radioOption}
-                  onPress={() => setFieldValue("currency", cur)}
-                >
-                  <View
+            {touched.type &&
+              errors.type && (
+                <Text style={styles.errorText}>
+                  {errors.type}
+                </Text>
+              )}
+
+            {/* ----------
+                CURRENCY
+            ---------- */}
+            <Text style={styles.label}>
+              Currency
+            </Text>
+
+            <View
+              style={[
+                styles.chipsContainer,
+                { flexWrap: "wrap" },
+              ]}
+            >
+              {CURRENCIES.map((cur) => {
+                const active =
+                  values.currency === cur;
+
+                return (
+                  <Pressable
+                    key={cur}
                     style={[
-                      styles.radioOuter,
-                      values.currency === cur && styles.radioOuterSelected,
+                      styles.chip,
+                      active &&
+                      styles.chipSelected,
                     ]}
+                    onPress={() =>
+                      setFieldValue(
+                        "currency",
+                        cur
+                      )
+                    }
                   >
-                    {values.currency === cur && (
-                      <View style={styles.radioInner} />
-                    )}
-                  </View>
-                  <Text
-                    style={[
-                      styles.radioLabel,
-                      values.currency === cur && styles.radioLabelSelected,
-                    ]}
-                  >
-                    {cur}
-                  </Text>
-                </Pressable>
-              ))}
+                    <Text
+                      style={[
+                        styles.chipText,
+                        active &&
+                        styles.chipTextSelected,
+                      ]}
+                    >
+                      {cur}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
-            {touched.currency && errors.currency && (
-              <Text style={styles.errorText}>{errors.currency}</Text>
-            )}
 
-            {/* Description */}
-            <Text>Description</Text>
+            {touched.currency &&
+              errors.currency && (
+                <Text style={styles.errorText}>
+                  {errors.currency}
+                </Text>
+              )}
+
+            {/* ----------
+              DESCRIPTION
+            ---------- */}
+            <Text style={styles.label}>
+              Description
+            </Text>
+
             <TextInput
               value={values.description}
-              onChangeText={handleChange("description")}
+              onChangeText={handleChange(
+                "description"
+              )}
               style={styles.textInput}
             />
-            {touched.description && errors.description && (
-              <Text style={styles.errorText}>{errors.description}</Text>
-            )}
 
-            {/* Amount */}
-            <Text>Amount</Text>
+            {touched.description &&
+              errors.description && (
+                <Text style={styles.errorText}>
+                  {errors.description}
+                </Text>
+              )}
+
+            {/* ----------
+                AMOUNT
+            ---------- */}
+            <Text style={styles.label}>
+              Amount
+            </Text>
+
             <TextInput
-              value={
-                values.amount !== undefined && values.amount !== null
-                  ? String(values.amount)
-                  : ""
+              value={String(
+                values.amount ?? ""
+              )}
+              onChangeText={(v) =>
+                setFieldValue(
+                  "amount",
+                  Number(v)
+                )
               }
-              onChangeText={(v) => setFieldValue("amount", v)}
               keyboardType="numeric"
               style={styles.textInput}
             />
-            {touched.amount && errors.amount && (
-              <Text style={styles.errorText}>{errors.amount}</Text>
-            )}
 
-            {/* Date Picker */}
-            <Text>Transaction Date</Text>
+            {touched.amount &&
+              errors.amount && (
+                <Text style={styles.errorText}>
+                  {errors.amount}
+                </Text>
+              )}
+
+            {/* ----------
+                DATE
+            ---------- */}
+            <Text style={styles.label}>
+              Transaction Date
+            </Text>
+
             <Pressable
-              onPress={() => setShowDatePicker(true)}
-              style={[styles.textInput, styles.dateInput]}
+              onPress={() =>
+                setShowDatePicker(true)
+              }
+              style={[
+                styles.textInput,
+                styles.dateInput,
+              ]}
             >
-              <Text>
+              <Text style={styles.dateText}>
                 {values.transaction_date
-                  ? new Date(values.transaction_date).toISOString().split("T")[0]
+                  ? new Date(
+                    values.transaction_date
+                  ).toLocaleDateString()
                   : "Select Date"}
               </Text>
             </Pressable>
 
             {showDatePicker && (
               <DateTimePicker
-                value={
+                value={new Date(
                   values.transaction_date
-                    ? new Date(values.transaction_date)
-                    : new Date()
-                }
+                )}
                 mode="date"
-                display={Platform.OS === "ios" ? "spinner" : "default"}
-                onChange={(event, selectedDate) => {
+                display={
+                  Platform.OS === "ios"
+                    ? "spinner"
+                    : "default"
+                }
+                onChange={(
+                  _,
+                  selectedDate
+                ) => {
                   setShowDatePicker(false);
+
                   if (selectedDate) {
-                    setFieldValue("transaction_date", selectedDate.toISOString());
+                    setFieldValue(
+                      "transaction_date",
+                      selectedDate.toISOString()
+                    );
                   }
                 }}
               />
             )}
-            {touched.transaction_date && errors.transaction_date && (
-              <Text style={styles.errorText}>{errors.transaction_date as string}</Text>
-            )}
 
-            {/* Submit Button */}
+            {touched.transaction_date &&
+              errors.transaction_date && (
+                <Text style={styles.errorText}>
+                  {errors.transaction_date as string}
+                </Text>
+              )}
+
+            {/* ----------
+              SUBMIT
+            ---------- */}
             <Pressable
-              style={
-                isValid && !isSubmitting
-                  ? styles.button
-                  : styles.disabledButton
-              }
+              style={[
+                styles.button,
+                (!isValid ||
+                  isSubmitting) && {
+                  opacity: 0.6,
+                },
+              ]}
               onPress={() => handleSubmit()}
-              disabled={!isValid || isSubmitting}
+              disabled={
+                !isValid || isSubmitting
+              }
             >
               <Text
-                style={
-                  isValid && !isSubmitting
-                    ? styles.buttonText
-                    : styles.disabledButtonText
-                }
+                style={styles.buttonText}
               >
                 {isSubmitting
                   ? "Saving..."
                   : isEditing
-                  ? "Update Transaction"
-                  : "Save Transaction"}
+                    ? "Update Transaction"
+                    : "Save Transaction"}
               </Text>
             </Pressable>
           </View>

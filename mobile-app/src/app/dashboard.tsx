@@ -1,17 +1,26 @@
 // mobile-app/src/app/dashboard.tsx
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   View,
   FlatList,
   Text,
   Dimensions,
   ScrollView,
-  TouchableOpacity,
+  Pressable,
+  Animated,
+  PanResponder,
 } from "react-native";
 
 import Svg, { Rect, Text as SvgText } from "react-native-svg";
 import { PieChart } from "react-native-chart-kit";
+import * as Haptics from "expo-haptics";
 
 import styles from "@/styles/styles";
 import { COLORS } from "@/constants/COLORS";
@@ -50,6 +59,69 @@ const LABEL_HEIGHT = 50;
 const screenWidth = Dimensions.get("window").width;
 
 /* ======================================================
+    SMALL REUSABLE COMPONENTS
+====================================================== */
+
+const AnimatedChip = ({
+  label,
+  active,
+  onPress,
+}: {
+  label: string | number;
+  active: boolean;
+  onPress: () => void;
+}) => {
+  const scale = useRef(new Animated.Value(1)).current;
+
+  const pressIn = () =>
+    Animated.spring(scale, {
+      toValue: 0.92,
+      useNativeDriver: true,
+    }).start();
+
+  const pressOut = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    Animated.spring(scale, {
+      toValue: 1,
+      friction: 3,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
+
+    onPress();
+  };
+
+  return (
+    <Pressable onPressIn={pressIn} onPressOut={pressOut}>
+      <Animated.View
+        style={[
+          styles.chip,
+          active && styles.chipSelected,
+          { transform: [{ scale }] },
+        ]}
+      >
+        <Text style={[styles.chipText, active && styles.chipTextSelected]}>
+          {label}
+        </Text>
+      </Animated.View>
+    </Pressable>
+  );
+};
+
+const SkeletonBox = ({ height = 140 }) => (
+  <View
+    style={{
+      height,
+      borderRadius: 12,
+      backgroundColor: "#EEE",
+      marginVertical: 8,
+      opacity: 0.6,
+    }}
+  />
+);
+
+/* ======================================================
     DASHBOARD
 ====================================================== */
 
@@ -58,18 +130,23 @@ export default function Dashboard() {
 
   const now = new Date();
   const currentYear = now.getFullYear();
-  const currentMonthIndex = now.getMonth(); // 0..11
+  const currentMonthIndex = now.getMonth();
 
-  const [summary, setSummary] = useState<DashboardSummary | null>(null);
-  const [categories, setCategories] = useState<CategoryReportItem[]>([]);
-  const [recent, setRecent] = useState<RecentTransaction[]>([]);
+  const [summary, setSummary] =
+    useState<DashboardSummary | null>(null);
+  const [categories, setCategories] =
+    useState<CategoryReportItem[]>([]);
+  const [recent, setRecent] =
+    useState<RecentTransaction[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const [selectedYear, setSelectedYear] = useState<number>(currentYear);
-  const [selectedMonthIndex, setSelectedMonthIndex] =
-    useState<number>(-1); // ✅ Default = "ALL months"
+  const [selectedYear, setSelectedYear] =
+    useState<number>(currentYear);
 
-  // 5 years range centered around current
+  // default = current month
+  const [selectedMonthIndex, setSelectedMonthIndex] =
+    useState<number>(currentMonthIndex);
+
   const yearOptions = useMemo(
     () => [
       currentYear - 4,
@@ -82,32 +159,97 @@ export default function Dashboard() {
   );
 
   /* ======================================================
+        MONTH / QUARTER STATE
+====================================================== */
+
+  const quarterIndex = useMemo(() => {
+    if (selectedMonthIndex < 0) return -1;
+    return Math.floor(selectedMonthIndex / 3);
+  }, [selectedMonthIndex]);
+
+  // visible months only from active quarter
+  const visibleMonths = useMemo(() => {
+    if (quarterIndex < 0) return [];
+
+    const start = quarterIndex * 3;
+    return MONTHS.slice(start, start + 3).map((m, i) => ({
+      label: m,
+      index: start + i,
+    }));
+  }, [quarterIndex]);
+
+  /* ======================================================
+        MONTH SCROLL STABILITY
+====================================================== */
+
+  const monthScrollRef = useRef<ScrollView>(null);
+  const quarterAnim = useRef(new Animated.Value(1)).current;
+
+  const animateQuarter = () => {
+    quarterAnim.setValue(0.9);
+    Animated.spring(quarterAnim, {
+      toValue: 1,
+      friction: 5,
+      tension: 45,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  useEffect(() => {
+    animateQuarter();
+  }, [quarterIndex]);
+
+  /* ======================================================
+        SWIPE HANDLER
+====================================================== */
+
+  const monthSwipe = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, g) =>
+        Math.abs(g.dx) > 20,
+      onPanResponderRelease: (_, g) => {
+        if (g.dx < -40)
+          setSelectedMonthIndex((p) =>
+            Math.min(p + 1, 11)
+          );
+
+        if (g.dx > 40)
+          setSelectedMonthIndex((p) =>
+            Math.max(p - 1, 0)
+          );
+      },
+    })
+  ).current;
+
+  /* ======================================================
         DATA FETCH
-  ====================================================== */
+====================================================== */
 
   const loadData = useCallback(async () => {
     if (!user) return;
 
     setLoading(true);
+
     try {
-      const yearForApi = selectedYear;
       const monthForApi =
-        selectedMonthIndex >= 0 ? toApiMonth(selectedMonthIndex) : undefined;
+        selectedMonthIndex >= 0
+          ? toApiMonth(selectedMonthIndex)
+          : undefined;
 
       const [s, c, r] = await Promise.all([
         dashboardService.getSummary(
           user.id,
-          yearForApi,
+          selectedYear,
           monthForApi
         ),
         dashboardService.getCategories(
           user.id,
-          yearForApi,
+          selectedYear,
           monthForApi
         ),
         dashboardService.getRecent(
           user.id,
-          yearForApi,
+          selectedYear,
           monthForApi
         ),
       ]);
@@ -115,8 +257,8 @@ export default function Dashboard() {
       setSummary(s);
       setCategories(c || []);
       setRecent((r || []).slice(0, 6));
-    } catch (e) {
-      console.log("Dashboard load error:", e);
+    } catch (err) {
+      console.log("Dashboard load error:", err);
     } finally {
       setLoading(false);
     }
@@ -127,163 +269,161 @@ export default function Dashboard() {
   }, [loadData]);
 
   /* ======================================================
-        SHARED CALCULATIONS
-  ====================================================== */
+        SHARED CALCS
+====================================================== */
 
   const maxBarValue = useMemo(
     () =>
       Math.max(
-        ...categories.map((c) => Math.max(c.spent || 0, c.budget || 0)),
+        ...categories.map((c) =>
+          Math.max(c.spent || 0, c.budget || 0)
+        ),
         1
       ),
     [categories]
   );
 
-  const pieData = useMemo(() => {
-    return categories
-      .filter((c) => c.spent > 0)
-      .map((c, i) => ({
-        name: c.category_name,
-        short_name: c.short_name,
-        population: c.spent,
-        color: PIE_COLORS[i % PIE_COLORS.length],
-        legendFontColor: COLORS.text,
-        legendFontSize: 12,
-      }));
-  }, [categories]);
+  const pieData = useMemo(
+    () =>
+      categories
+        .filter((c) => c.spent > 0)
+        .map((c, i) => ({
+          name: c.category_name,
+          population: c.spent,
+          color: PIE_COLORS[i % PIE_COLORS.length],
+          legendFontColor: COLORS.text,
+          legendFontSize: 12,
+        })),
+    [categories]
+  );
 
   const chartConfig = {
     backgroundGradientFrom: COLORS.white,
     backgroundGradientTo: COLORS.white,
-    color: (opacity = 1) => `rgba(0,0,0,${opacity})`,
-    labelColor: (opacity = 1) => `rgba(0,0,0,${opacity})`,
+    color: () => `rgba(0,0,0,1)`,
+    labelColor: () => `rgba(0,0,0,1)`,
   };
 
   /* ======================================================
-        LOADING STATE
-  ====================================================== */
+        SELECTOR
+====================================================== */
 
-  if (!summary) {
+  const YearMonthSelector = () => (
+    <View style={{ marginBottom: 10 }}>
+
+      {/* YEAR */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 8 }}
+      >
+        {yearOptions.map((y) => (
+          <AnimatedChip
+            key={y}
+            label={y}
+            active={y === selectedYear}
+            onPress={() => setSelectedYear(y)}
+          />
+        ))}
+      </ScrollView>
+
+      {/* QUARTERS */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 8 }}
+      >
+        {["Q1", "Q2", "Q3", "Q4"].map((q, idx) => {
+          const start = idx * 3;
+          const active = quarterIndex === idx;
+
+          return (
+            <AnimatedChip
+              key={q}
+              label={q}
+              active={active}
+              onPress={() => {
+                setSelectedMonthIndex(start);
+              }}
+            />
+          );
+        })}
+      </ScrollView>
+
+      {/* MONTHS (Filtered to Quarter) */}
+
+      <Animated.View
+        style={{
+          transform: [{ scale: quarterAnim }],
+          opacity: quarterAnim,
+        }}
+      >
+        <ScrollView
+          ref={monthScrollRef}
+          horizontal
+          {...monthSwipe.panHandlers}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 8 }}
+        >
+          <AnimatedChip
+            label="ALL"
+            active={selectedMonthIndex === -1}
+            onPress={() => setSelectedMonthIndex(-1)}
+          />
+
+          {visibleMonths.map((m) => (
+            <AnimatedChip
+              key={m.index}
+              label={m.label}
+              active={m.index === selectedMonthIndex}
+              onPress={() => setSelectedMonthIndex(m.index)}
+            />
+          ))}
+        </ScrollView>
+      </Animated.View>
+    </View>
+  );
+
+  /* ======================================================
+        PERIOD BADGE
+====================================================== */
+
+  const periodLabel =
+    selectedMonthIndex === -1
+      ? `${selectedYear} • ALL`
+      : `${selectedYear} • ${MONTHS[selectedMonthIndex]}`;
+
+  const PeriodBadge = () => (
+    <View
+      style={styles.dashboardBadgeContainer}
+    >
+      <Text
+        style={styles.dashboardBadgeText}
+      >
+        {periodLabel}
+      </Text>
+    </View>
+  );
+
+  /* ======================================================
+        LOADING
+====================================================== */
+
+  if (loading || !summary) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.title}>
-          {loading ? "Loading dashboard..." : "Unable to load dashboard"}
-        </Text>
+      <View style={styles.dashboardHeaderContainer}>
+        <YearMonthSelector />
+        <SkeletonBox />
+        <SkeletonBox height={100} />
+        <SkeletonBox height={260} />
+        <SkeletonBox height={220} />
       </View>
     );
   }
 
   /* ======================================================
         UI COMPONENTS
-  ====================================================== */
-
-  /* ---------- YEAR + MONTH CHIPS (TWO ROW SELECTOR) ---------- */
-
-  const YearMonthSelector = () => (
-    <View style={{ marginBottom: 8 }}>
-
-      {/* ====================
-        YEAR ROW
-    ==================== */}
-      <Text style={styles.label}>Year</Text>
-
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingHorizontal: 12,
-          flexDirection: "row",
-          alignItems: "center",
-        }}
-      >
-        {yearOptions.map((y) => {
-          const active = y === selectedYear;
-
-          return (
-            <TouchableOpacity
-              key={y}
-              onPress={() => setSelectedYear(y)}
-              style={[
-                styles.chip,
-                active && styles.chipSelected,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.chipText,
-                  active && styles.chipTextSelected,
-                ]}
-              >
-                {y}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
-
-      {/* ====================
-        MONTH ROW
-    ==================== */}
-      <Text style={[styles.label, { marginTop: 6 }]}>Month</Text>
-
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingHorizontal: 12,
-          flexDirection: "row",
-          alignItems: "center",
-        }}
-      >
-
-        {/* ALL */}
-        <TouchableOpacity
-          onPress={() => setSelectedMonthIndex(-1)}
-          style={[
-            styles.chip,
-            selectedMonthIndex === -1 && styles.chipSelected,
-          ]}
-        >
-          <Text
-            style={[
-              styles.chipText,
-              selectedMonthIndex === -1 && styles.chipTextSelected,
-            ]}
-          >
-            ALL
-          </Text>
-        </TouchableOpacity>
-
-        {/* MONTHS */}
-        {MONTHS.map((m, i) => {
-          const active = i === selectedMonthIndex;
-
-          return (
-            <TouchableOpacity
-              key={m}
-              onPress={() => setSelectedMonthIndex(i)}
-              style={[
-                styles.chip,
-                active && styles.chipSelected,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.chipText,
-                  active && styles.chipTextSelected,
-                ]}
-              >
-                {m}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
-    </View>
-  );
-
-
-  /* ---------- KPI CARDS ---------- */
+====================================================== */
 
   const KPIs = () => (
     <View style={styles.dashboardCardRow}>
@@ -292,7 +432,7 @@ export default function Dashboard() {
         <Text style={styles.title}>
           ₹{summary.totals.budget.toLocaleString("en-IN")}
         </Text>
-        <Text style={{ color: COLORS.green, fontSize: 14 }}>
+        <Text style={{ color: COLORS.green }}>
           Income: ₹{summary.totals.earning.toLocaleString("en-IN")}
         </Text>
       </View>
@@ -302,14 +442,12 @@ export default function Dashboard() {
         <Text style={[styles.title, { color: COLORS.danger }]}>
           ₹{summary.totals.spent.toLocaleString("en-IN")}
         </Text>
-        <Text style={{ color: COLORS.green, fontSize: 14 }}>
+        <Text style={{ color: COLORS.green }}>
           Remaining: ₹{summary.totals.remaining.toLocaleString("en-IN")}
         </Text>
       </View>
     </View>
   );
-
-  /* ---------- USAGE BAR ---------- */
 
   const UsageBar = () => {
     const usage = summary.totals.usage_percent || 0;
@@ -350,11 +488,14 @@ export default function Dashboard() {
   /* ---------- SPENDING CHART ---------- */
 
   const SpendingChart = () => {
-    const width = categories.length * (BAR_WIDTH + BAR_GAP) + 40;
+    const width =
+      categories.length * (BAR_WIDTH + BAR_GAP) + 40;
 
     return (
       <View style={styles.dashboardChartBox}>
-        <Text style={styles.dashboardChartTitle}>Spending vs Budget</Text>
+        <Text style={styles.dashboardChartTitle}>
+          Spending vs Budget
+        </Text>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <Svg
@@ -362,12 +503,19 @@ export default function Dashboard() {
             height={BAR_HEIGHT + LABEL_HEIGHT}
           >
             {categories.map((c, i) => {
-              const budgetH = (c.budget / maxBarValue) * BAR_HEIGHT;
-              const spentH = (c.spent / maxBarValue) * BAR_HEIGHT;
+              const budgetH =
+                (c.budget / maxBarValue) * BAR_HEIGHT;
+              const spentH =
+                (c.spent / maxBarValue) * BAR_HEIGHT;
 
-              const x = i * (BAR_WIDTH + BAR_GAP) + 30;
-              const yBudget = BAR_HEIGHT - budgetH;
-              const ySpent = yBudget + (budgetH - spentH);
+              const x =
+                i * (BAR_WIDTH + BAR_GAP) + 30;
+
+              const yBudget =
+                BAR_HEIGHT - budgetH;
+
+              const ySpent =
+                yBudget + (budgetH - spentH);
 
               return (
                 <React.Fragment key={i}>
@@ -387,7 +535,9 @@ export default function Dashboard() {
                     width={BAR_WIDTH}
                     height={spentH}
                     rx={4}
-                    fill={PIE_COLORS[i % PIE_COLORS.length]}
+                    fill={
+                      PIE_COLORS[i % PIE_COLORS.length]
+                    }
                   />
 
                   <SvgText
@@ -410,12 +560,14 @@ export default function Dashboard() {
     );
   };
 
-  /* ---------- PIE CHART ---------- */
+  /* ---------- PIE ---------- */
 
   const ExpensePieChart = () =>
     pieData.length === 0 ? null : (
       <View style={styles.dashboardChartBox}>
-        <Text style={styles.dashboardChartTitle}>Expenses by Category</Text>
+        <Text style={styles.dashboardChartTitle}>
+          Expenses by Category
+        </Text>
 
         <PieChart
           data={pieData}
@@ -441,11 +593,19 @@ export default function Dashboard() {
       {recent.map((t) => (
         <View key={t.id} style={styles.card}>
           <View style={styles.metaRow}>
-            <Text style={styles.cardTitle}>{t.description}</Text>
+            <Text style={styles.cardTitle}>
+              {t.description}
+            </Text>
+
             <Text
               style={[
                 styles.txnAmt,
-                { color: t.type === "Income" ? COLORS.green : COLORS.red },
+                {
+                  color:
+                    t.type === "Income"
+                      ? COLORS.green
+                      : COLORS.red,
+                },
               ]}
             >
               {t.type === "Income" ? "+" : "-"}₹
@@ -454,9 +614,13 @@ export default function Dashboard() {
           </View>
 
           <View style={styles.metaRow}>
-            <Text style={styles.metaText}>{t.category}</Text>
             <Text style={styles.metaText}>
-              {new Date(t.transaction_date).toDateString()}
+              {t.category}
+            </Text>
+            <Text style={styles.metaText}>
+              {new Date(
+                t.transaction_date
+              ).toDateString()}
             </Text>
           </View>
         </View>
@@ -466,25 +630,32 @@ export default function Dashboard() {
 
   /* ======================================================
         MAIN RENDER
-  ====================================================== */
+====================================================== */
 
   return (
     <FlatList
+      style={{ padding: 10 }}
       data={[]}
+      stickyHeaderIndices={[0]}
       refreshing={loading}
       onRefresh={loadData}
+      renderItem={null}
       keyExtractor={() => "dashboard"}
       ListHeaderComponent={
         <View style={styles.dashboardHeaderContainer}>
           <YearMonthSelector />
+        </View>
+      }
+      ListFooterComponent={
+        <>
+          <PeriodBadge />
           <KPIs />
           <UsageBar />
           <ExpensePieChart />
           <SpendingChart />
           <Transactions />
-        </View>
+        </>
       }
-      renderItem={null}
     />
   );
 }

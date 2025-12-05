@@ -1,3 +1,4 @@
+// mobile-app/src/types/category.ts
 export interface CategoryResponse {
   id?: number;
   name: string;
