@@ -66,9 +66,9 @@ const Register = () => {
         source={require("@/assets/images/expense-logo.png")}
         style={{
           width: "40%",
-          height: "25%",
+          height: "20%",
           alignSelf: "center",
-          marginTop: -300,
+          marginTop: -100,
           marginBottom: 0,
         }}
       />

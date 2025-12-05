@@ -1,13 +1,12 @@
 import { View, Text } from "react-native";
-import React from "react";
 import styles from "@/styles/styles";
 
-const Reports = () => {
+const AIAssistant = () => {
 	return (
 		<View style={styles.container}>
-			<Text style={styles.title}>Reports</Text>
+			<Text style={styles.title}>AI Assistant</Text>
 		</View>
 	);
 };
 
-export default Reports;
+export default AIAssistant;

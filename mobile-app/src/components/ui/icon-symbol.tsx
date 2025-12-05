@@ -98,6 +98,15 @@ const MAPPING = {
   // ✅ Logout / Exit
   'arrow.right.square.fill': 'logout',
   'rectangle.portrait.and.arrow.right': 'exit-to-app',
+
+  // ✅ AI Assistant
+  'robotic.vacuum.fill': 'smart-toy',
+
+  // ✅ Hamberger Menu
+  'line.3.horizontal': 'menu',
+
+  // ✅ Email
+  'envelope.fill': 'email',
 } as IconMapping;
 
 /**
@@ -119,5 +128,6 @@ export function IconSymbol({
 }) {
   return <MaterialIcons color={color} size={size} name={MAPPING[name]} style={style} />;
 }
+
 
 

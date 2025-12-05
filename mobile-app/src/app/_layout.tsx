@@ -101,19 +101,24 @@ function RootLayoutContent() {
             backgroundColor: COLORS.primary,
             flexDirection: 'row',
             alignItems: 'center',
-            justifyContent: 'space-between',
+            justifyContent: 'center',
             paddingHorizontal: 16,
           }}
         >
-          <Pressable onPress={() => setDrawerVisible(true)} style={{ padding: 8 }}>
-            <MaterialIcons name="menu" size={28} color={COLORS.white} />
-          </Pressable>
           <Text style={{ color: COLORS.white, fontSize: 18, fontWeight: '700' }}>
             {title}
           </Text>
-          <Pressable onPress={() => router.replace('/logout')} style={{ padding: 8 }}>
-            <IconSymbol name="arrow.right.square.fill" color={COLORS.white} size={28} />
-          </Pressable>
+
+          {/* Logout stays to the right */}
+          <View style={{ position: 'absolute', right: 16 }}>
+            <Pressable onPress={() => router.replace('/logout')} style={{ padding: 8 }}>
+              <IconSymbol
+                name="arrow.right.square.fill"
+                color={COLORS.white}
+                size={28}
+              />
+            </Pressable>
+          </View>
         </View>
 
         {/* Page Content */}
@@ -122,7 +127,7 @@ function RootLayoutContent() {
         </View>
 
         {/* Tab Bar */}
-        <TabBar />
+        <TabBar onMenuPress={() => setDrawerVisible(true)} />
 
         {/* Drawer */}
         <CustomDrawer

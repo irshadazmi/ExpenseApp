@@ -1,7 +1,8 @@
 // src/components/custom-drawer.tsx
+
 import { View, Text, Pressable, Modal } from "react-native";
 import { DRAWER_ITEMS } from "@/constants/DRAWER_ITEMS";
-import { Route, useRouter, usePathname, useSegments } from "expo-router";
+import { Route, useRouter, useSegments } from "expo-router";
 import { COLORS } from "@/constants/COLORS";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import type { SFSymbol } from "expo-symbols";
@@ -15,56 +16,62 @@ type Props = {
 
 export default function CustomDrawer({ visible, onClose, setTitle }: Props) {
   const router = useRouter();
-  const pathname = usePathname();
+  const segments = useSegments();
 
-  const segments = useSegments(); // array of path segments
-  // Derive a "currentDrawerKey"
-  let currentDrawerKey: string = segments[0] || "dashboard"; // default to "dashboard";
+  const currentDrawerKey: string = segments[0] || "dashboard";
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
-      <View style={styles.backdrop}>
-        <View style={styles.drawerContainer}>
-          {DRAWER_ITEMS.map((item) => {
-            const routePath = `/${item.name}`;
-            const isActive = currentDrawerKey === item.name;
+      {/* Backdrop */}
+      <Pressable style={styles.backdrop} onPress={onClose}>
+        {/* POSITION WRAPPER – does not change existing styles */}
+        <View
+          style={{
+            width: "80%",
+            position: "absolute",
+            right: 0,
+            bottom: 64,        // aligns above bottom tab bar
+          }}
+        >
+          <View style={styles.drawerContainer}>
+            {DRAWER_ITEMS.map((item) => {
+              const routePath = `/${item.name}`;
+              const isActive = currentDrawerKey === item.name;
 
-            // console.log("currentDrawerKey", currentDrawerKey);
-            // console.log("item.name", item.name);
-
-            return (
-              <Pressable
-                key={item.name}
-                onPress={() => {
-                  onClose();
-                  setTitle(item.title.toUpperCase());
-                  router.replace(routePath as Route);
-                }}
-                style={[
-                  styles.drawerItem,
-                  isActive && styles.drawerItemActive,
-                ]}
-              >
-                <IconSymbol
-                  name={item.icon as SFSymbol}
-                  size={22}
-                  color={isActive ? COLORS.tabActive : COLORS.tabInactive}
-                />
-                <Text
+              return (
+                <Pressable
+                  key={item.name}
+                  onPress={() => {
+                    onClose();
+                    setTitle(item.title.toUpperCase());
+                    router.replace(routePath as Route);
+                  }}
                   style={[
-                    styles.drawerItemText,
-                    isActive && styles.drawerItemTextActive,
+                    styles.drawerItem,
+                    isActive && styles.drawerItemActive,
                   ]}
                 >
-                  {item.title}
-                </Text>
-              </Pressable>
-            );
-          })}
+                  <IconSymbol
+                    name={item.icon as SFSymbol}
+                    size={22}
+                    color={
+                      isActive ? COLORS.tabActive : COLORS.tabInactive
+                    }
+                  />
+                  <Text
+                    style={[
+                      styles.drawerItemText,
+                      isActive && styles.drawerItemTextActive,
+                    ]}
+                  >
+                    {item.title}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
         </View>
-        {/* tap outside to close */}
-        <Pressable onPress={onClose} style={{ flex: 1 }} />
-      </View>
+      </Pressable>
     </Modal>
   );
 }

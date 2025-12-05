@@ -1,4 +1,5 @@
 // src/components/TabBar.tsx
+
 import { View, Pressable, Text } from 'react-native';
 import { useRouter, useSegments, Route } from 'expo-router';
 import { TAB_ITEMS } from '@/constants/TAB_ITEMS';
@@ -8,24 +9,20 @@ import styles from '@/styles/styles';
 import type { SFSymbol } from 'expo-symbols';
 import { LinearGradient } from 'expo-linear-gradient';
 
-export default function TabBar() {
+type TabBarProps = {
+  onMenuPress?: () => void; // ✅ Callback for Menu tab
+};
+
+export default function TabBar({ onMenuPress }: TabBarProps) {
   const router = useRouter();
-  const segments = useSegments(); // array of path segments
+  const segments = useSegments(); // gets [...segments] from the current path
 
-  // segments example:
-  //  - on Dashboard: []
-  //  - on /(budget): ['(budget)']  or sometimes still []
-  //  - on /(expense): ['(expense)']
-
-  // let currentTabKey: string = 'dashboard';
-  // if (segments.length > 0) {
-  //   const first = segments[0];
-  //   currentTabKey = first;
-  // } else {
-  //   currentTabKey = 'dashboard';
-  // }
-
-  let currentTabKey: string = segments[0] || "dashboard"; // default to "dashboard";
+  // Determine active tab
+  // Example:
+  // []                → dashboard
+  // ["(budget)"]      → (budget)
+  // ["(transaction)"] → (transaction)
+  let currentTabKey: string = segments[0] || 'dashboard';
 
   return (
     <LinearGradient
@@ -39,21 +36,34 @@ export default function TabBar() {
           const isActive = currentTabKey === item.name;
           const badgeCount = item.badgeCount ?? 0;
 
-          // console.log("currentDrawerKey", currentTabKey);
-          // console.log("item.name", item.name);
+          const handlePress = () => {
+            // ✅ Special behavior for Menu tab – open drawer instead of navigating
+            if (item.name === '(menu)') {
+              onMenuPress?.();
+              return;
+            }
+
+            // ✅ Normal navigation for other tabs
+            router.replace(routePath as Route);
+          };
 
           return (
             <Pressable
               key={item.name}
-              onPress={() => router.replace(routePath as Route)}
+              onPress={handlePress}
               style={styles.tabItem}
             >
               <View style={styles.tabIconWrapper}>
                 <IconSymbol
                   name={item.icon as SFSymbol}
                   size={22}
-                  color={isActive ? COLORS.tabActive : COLORS.tabInactive}
+                  color={
+                    isActive
+                      ? COLORS.tabActive
+                      : COLORS.tabInactive
+                  }
                 />
+
                 {badgeCount > 0 && (
                   <View style={styles.tabsBadgeContainer}>
                     <Text style={styles.tabsBadgeText}>
@@ -62,11 +72,14 @@ export default function TabBar() {
                   </View>
                 )}
               </View>
+
               <Text
                 style={[
                   styles.tabLabel,
                   {
-                    color: isActive ? COLORS.tabActive : COLORS.tabInactive,
+                    color: isActive
+                      ? COLORS.tabActive
+                      : COLORS.tabInactive,
                     fontWeight: isActive ? '600' : '400',
                   },
                 ]}

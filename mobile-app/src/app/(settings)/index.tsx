@@ -1,13 +1,240 @@
-import { View, Text } from "react-native";
-import React from "react";
+// mobile-app/src/app/(settings)/index.tsx
+
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  Alert,
+} from "react-native";
+
 import styles from "@/styles/styles";
+import { COLORS } from "@/constants/COLORS";
+import { CURRENCIES } from "@/constants/CONSTANTS";
+import { settingsService } from "@/services/settings-service";
+import { AppSettings } from "@/types/settings";
+import { RelativePathString, useRouter } from "expo-router";
+
+/* ======================================================
+    CONSTANTS
+====================================================== */
+
+const DATE_FORMATS = ["DD-MM-YYYY", "MM-DD-YYYY"] as const;
+const PERIODS = ["Monthly", "Quarterly", "Yearly"] as const;
+
+/* ======================================================
+    COMPONENT
+====================================================== */
 
 const Settings = () => {
-	return (
-		<View style={styles.container}>
-			<Text style={styles.title}>Settings</Text>
-		</View>
-	);
+  const router = useRouter();
+
+  const [settings, setSettings] = useState<AppSettings>({
+    currency: "INR",
+    dateFormat: "DD-MM-YYYY",
+    dashboardPeriod: "Monthly",
+    budgetAlerts: true,
+  });
+
+  const [loading, setLoading] = useState(true);
+
+  /* ======================================================
+      LOAD SETTINGS
+  ====================================================== */
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const prefs = await settingsService.get();
+        setSettings(prefs);
+      } catch {
+        Alert.alert("Error", "Failed to load settings.");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  /* ======================================================
+      SAVE SETTINGS
+  ====================================================== */
+
+  const update = async <K extends keyof AppSettings>(
+    key: K,
+    value: AppSettings[K]
+  ) => {
+    const next = {
+      ...settings,
+      [key]: value,
+    };
+
+    setSettings(next);
+    await settingsService.save(next);
+  };
+
+  /* ======================================================
+      CHIP UI
+  ====================================================== */
+
+  const renderChips = (
+    title: string,
+    options: readonly string[],
+    selected: string,
+    onSelect: (val: string) => void
+  ) => (
+    <View style={styles.card}>
+      <Text style={styles.label}>{title}</Text>
+
+      <View style={[styles.chipsContainer, { flexWrap: "wrap" }]}>
+        {options.map((opt) => {
+          const active = selected === opt;
+
+          return (
+            <Pressable
+              key={opt}
+              style={[styles.chip, active && styles.chipSelected]}
+              onPress={() => onSelect(opt)}
+            >
+              <Text
+                style={[
+                  styles.chipText,
+                  active && styles.chipTextSelected,
+                ]}
+              >
+                {opt}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+
+  /* ======================================================
+      RENDER
+  ====================================================== */
+
+  if (loading) return null;
+
+  return (
+    <View style={[styles.container, { paddingHorizontal: 16 }]}>
+      {/* ---------- HEADER ---------- */}
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          marginBottom: 16,
+        }}
+      >
+        <Text
+          style={[
+            styles.title,
+            { flex: 1, textAlign: "left", marginBottom: 0 },
+          ]}
+        >
+          Settings
+        </Text>
+      </View>
+
+      {/* ---------- CONTENT ---------- */}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 24 }}
+      >
+        {/* ---------- PREFERENCES ---------- */}
+
+        <Text style={styles.sectionLabel}>
+          Preferences
+        </Text>
+
+        {renderChips(
+          "Default Currency",
+          CURRENCIES,
+          settings.currency,
+          (v) => update("currency", v)
+        )}
+
+        {renderChips(
+          "Date Format",
+          DATE_FORMATS as unknown as string[],
+          settings.dateFormat,
+          (v) => update("dateFormat", v as AppSettings["dateFormat"])
+        )}
+
+        {renderChips(
+          "Dashboard Period",
+          PERIODS as unknown as string[],
+          settings.dashboardPeriod,
+          (v) =>
+            update("dashboardPeriod", v as AppSettings["dashboardPeriod"])
+        )}
+
+        {/* ---------- BUDGET ALERT ---------- */}
+
+        <View style={styles.card}>
+          <View style={styles.metaRow}>
+            <Text style={styles.cardTitle}>
+              Budget Alerts
+            </Text>
+
+            <Pressable
+              onPress={() =>
+                update("budgetAlerts", !settings.budgetAlerts)
+              }
+            >
+              <View
+                style={{
+                  width: 26,
+                  height: 26,
+                  borderRadius: 13,
+                  borderWidth: 2,
+                  borderColor: COLORS.primary,
+                  backgroundColor: settings.budgetAlerts
+                    ? COLORS.primary
+                    : "transparent",
+                }}
+              />
+            </Pressable>
+          </View>
+        </View>
+
+        {/* ---------- ACCOUNT ---------- */}
+
+        <Text style={styles.sectionLabel}>
+          Account
+        </Text>
+
+        <Pressable
+          style={styles.card}
+          onPress={() =>
+            router.push("/profile" as RelativePathString)
+          }
+        >
+          <Text style={styles.cardTitle}>
+            Profile
+          </Text>
+          <Text style={styles.metaText}>
+            Update your personal information
+          </Text>
+        </Pressable>
+
+        <Pressable
+          style={styles.card}
+          onPress={() =>
+            router.push("/change-password" as RelativePathString)
+          }
+        >
+          <Text style={styles.cardTitle}>
+            Change Password
+          </Text>
+          <Text style={styles.metaText}>
+            Update your account password
+          </Text>
+        </Pressable>
+      </ScrollView>
+    </View>
+  );
 };
 
 export default Settings;
