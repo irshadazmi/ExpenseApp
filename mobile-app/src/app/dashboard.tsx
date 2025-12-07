@@ -1,5 +1,4 @@
 // mobile-app/src/app/dashboard.tsx
-
 import React, {
   useCallback,
   useEffect,
@@ -21,8 +20,8 @@ import {
 import Svg, { Rect, Text as SvgText } from "react-native-svg";
 import { PieChart } from "react-native-chart-kit";
 import * as Haptics from "expo-haptics";
+import  styles from "@/styles/styles";
 
-import styles from "@/styles/styles";
 import { COLORS } from "@/constants/COLORS";
 import { MONTHS, toApiMonth } from "@/constants/MONTHS";
 
@@ -298,91 +297,97 @@ export default function Dashboard() {
   );
 
   const chartConfig = {
-    backgroundGradientFrom: COLORS.white,
-    backgroundGradientTo: COLORS.white,
+    // backgroundGradientFrom: COLORS.white,
+    // backgroundGradientTo: COLORS.white,
     color: () => `rgba(0,0,0,1)`,
     labelColor: () => `rgba(0,0,0,1)`,
   };
 
   /* ======================================================
-        SELECTOR
+      SELECTOR
 ====================================================== */
 
   const YearMonthSelector = () => (
-    <View style={{ marginBottom: 10 }}>
+    <View>
 
-      {/* YEAR */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 8 }}
-      >
-        {yearOptions.map((y) => (
-          <AnimatedChip
-            key={y}
-            label={y}
-            active={y === selectedYear}
-            onPress={() => setSelectedYear(y)}
-          />
-        ))}
-      </ScrollView>
-
-      {/* QUARTERS */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 8 }}
-      >
-        {["Q1", "Q2", "Q3", "Q4"].map((q, idx) => {
-          const start = idx * 3;
-          const active = quarterIndex === idx;
-
-          return (
-            <AnimatedChip
-              key={q}
-              label={q}
-              active={active}
-              onPress={() => {
-                setSelectedMonthIndex(start);
-              }}
-            />
-          );
-        })}
-      </ScrollView>
-
-      {/* MONTHS (Filtered to Quarter) */}
-
-      <Animated.View
-        style={{
-          transform: [{ scale: quarterAnim }],
-          opacity: quarterAnim,
-        }}
-      >
+      {/* ---------- YEAR ---------- */}
+      <View style={styles.chipsContainer}>
+        <Text style={styles.chipLabel}>Year:</Text>
         <ScrollView
-          ref={monthScrollRef}
           horizontal
-          {...monthSwipe.panHandlers}
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 8 }}
         >
-          <AnimatedChip
-            label="ALL"
-            active={selectedMonthIndex === -1}
-            onPress={() => setSelectedMonthIndex(-1)}
-          />
-
-          {visibleMonths.map((m) => (
+          {yearOptions.map((y) => (
             <AnimatedChip
-              key={m.index}
-              label={m.label}
-              active={m.index === selectedMonthIndex}
-              onPress={() => setSelectedMonthIndex(m.index)}
+              key={y}
+              label={y}
+              active={y === selectedYear}
+              onPress={() => setSelectedYear(y)}
             />
           ))}
         </ScrollView>
-      </Animated.View>
+      </View>
+
+      {/* ---------- QUARTER ---------- */}
+      <View style={styles.chipsContainer}>
+        <Text style={styles.chipLabel}>Quarter:</Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+        >
+          {["Q1", "Q2", "Q3", "Q4"].map((q, idx) => {
+            const start = idx * 3;
+            const active = quarterIndex === idx;
+
+            return (
+              <AnimatedChip
+                key={q}
+                label={q}
+                active={active}
+                onPress={() => setSelectedMonthIndex(start)}
+              />
+            );
+          })}
+        </ScrollView>
+      </View>
+
+      {/* ---------- MONTH ---------- */}
+      <View style={styles.chipsContainer}>
+        <Text style={styles.chipLabel}>Month:</Text>
+
+        <Animated.View
+          style={{
+            transform: [{ scale: quarterAnim }],
+            opacity: quarterAnim,
+          }}
+        >
+          <ScrollView
+            ref={monthScrollRef}
+            horizontal
+            {...monthSwipe.panHandlers}
+            showsHorizontalScrollIndicator={false}
+          >
+            <AnimatedChip
+              label="All"
+              active={selectedMonthIndex === -1}
+              onPress={() => setSelectedMonthIndex(-1)}
+            />
+
+            {visibleMonths.map((m) => (
+              <AnimatedChip
+                key={m.index}
+                label={m.label}
+                active={m.index === selectedMonthIndex}
+                onPress={() => setSelectedMonthIndex(m.index)}
+              />
+            ))}
+          </ScrollView>
+        </Animated.View>
+
+      </View>
     </View>
   );
+
 
   /* ======================================================
         PERIOD BADGE
@@ -633,29 +638,32 @@ export default function Dashboard() {
 ====================================================== */
 
   return (
-    <FlatList
-      style={{ padding: 10 }}
-      data={[]}
-      stickyHeaderIndices={[0]}
-      refreshing={loading}
-      onRefresh={loadData}
-      renderItem={null}
-      keyExtractor={() => "dashboard"}
-      ListHeaderComponent={
-        <View style={styles.dashboardHeaderContainer}>
-          <YearMonthSelector />
-        </View>
-      }
-      ListFooterComponent={
-        <>
-          <PeriodBadge />
-          <KPIs />
-          <UsageBar />
-          <ExpensePieChart />
-          <SpendingChart />
-          <Transactions />
-        </>
-      }
-    />
+    <View style={styles.container}>
+      <FlatList
+        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: 5 }}
+        data={[]}
+        stickyHeaderIndices={[0]}
+        refreshing={loading}
+        onRefresh={loadData}
+        renderItem={null}
+        keyExtractor={() => "dashboard"}
+        ListHeaderComponent={
+          <View style={styles.dashboardHeaderContainer}>
+            <YearMonthSelector />
+          </View>
+        }
+        ListFooterComponent={
+          <>
+            <PeriodBadge />
+            <KPIs />
+            <UsageBar />
+            <ExpensePieChart />
+            <SpendingChart />
+            <Transactions />
+          </>
+        }
+      />
+    </View>
   );
 }

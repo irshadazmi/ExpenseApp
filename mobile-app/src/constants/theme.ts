@@ -1,60 +1,157 @@
+// mobile-app/src/constants/theme.ts
+
 import { Platform } from "react-native";
 
 /* ======================================================
-    BASE COLOR PALETTE (Merged from COLORS.ts)
+    SEMANTIC COLOR PALETTES
 ====================================================== */
 
-export const COLORS = {
+/* ---------- LIGHT MODE ---------- */
+const lightColors = {
+  // Core brand
   primary: "#7F00FF",
-  secondary: "#E1C3fd",
-  lightPurple: "#efc3f8ff",
-  lightGray: "#F7F7F7",
-  white: "#FFFFFF",
+  secondary: "#E1C3FD",
 
-  disabled: "#A9C3F5",
-
-  text: "#292140",
-  textSecondary: "#5A3D8C",
-
-  cardShadow: "#B095D4",
-
-  danger: "#EA4C68",
+  // Feedback
   success: "#8BC34A",
   warning: "#FFC107",
+  danger: "#EA4C68",
+  info: "#007AFF",
 
+  // Status aliases
+  error: "#EA4C68",
+
+  // Neutrals
+  background: "#FFFFFF",
+  surface: "#F7F7F7",
+  card: "#FFFFFF",
+  border: "#E0E0E0",
+  divider: "#EFEFEF",
+  disabled: "#A9C3F5",
+
+  white: "#FFFFFF",
+  lightGray: "#F7F7F7",
+
+  // Typography
+  text: "#292140",
+  textSecondary: "#5A3D8C",
+  textMuted: "#8884A5",
+  textInverse: "#FFFFFF",
+
+  // Effects
+  cardShadow: "#B095D4",
+
+  // Charts
+  chartFill: "#333333",
+
+  // Raw colors (rarely used, kept for backward compatibility)
   red: "#FF3B30",
   green: "#34C759",
   blue: "#007AFF",
   yellow: "#FFCC00",
 
-  chartFill: "#333333",
-
-  // ========= Tab Bar =========
-  tabBg: "#6c5ce7",
+  // Tab bar
+  tabBg: "#6C5CE7",
   tabBorderTop: "#120420",
   tabActive: "#44E4FF",
   tabActiveAlt: "#FF3FBF",
   tabInactive: "#E0E0F5",
 
-  // ========= Badges =========
+  // Badges
   badgeBg: "#FF4D8D",
   badgeText: "#FFFFFF",
+
+  skeleton: '#f0f0f0',
+};
+
+/* ---------- DARK MODE ---------- */
+const darkColors = {
+  // Core brand
+  primary: "#9D7BFF",
+  secondary: "#1B132F",
+
+  // Feedback
+  success: "#9BE15D",
+  warning: "#FFD54F",
+  danger: "#FF5A74",
+  info: "#0A84FF",
+
+  // Status aliases
+  error: "#FF5A74",
+
+  // Neutrals
+  background: "#151718",
+  surface: "#1F1B2E",
+  card: "#1F1B2E",
+  border: "#3C3558",
+  divider: "#332D49",
+  disabled: "#44405A",
+
+  white: "#000000",
+  lightGray: "#2A2238",
+
+  // Typography
+  text: "#F5F3FF",
+  textSecondary: "#B8B0E0",
+  textMuted: "#9993C9",
+  textInverse: "#000000",
+
+  // Effects
+  cardShadow: "#000000",
+
+  // Charts
+  chartFill: "#EAE8F7",
+
+  // Raw colors
+  red: "#FF453A",
+  green: "#32D74B",
+  blue: "#0A84FF",
+  yellow: "#FFD60A",
+
+  // Tab bar
+  tabBg: "#1F154A",
+  tabBorderTop: "#0F061B",
+  tabActive: "#44E4FF",
+  tabActiveAlt: "#FF3FBF",
+  tabInactive: "#8882B9",
+
+  // Badges
+  badgeBg: "#FF4D8D",
+  badgeText: "#FFFFFF",
+  skeleton: '#f0f0f0',
 };
 
 /* ======================================================
-    THEME TOKENS (Merged from theme.ts)
+    ACTIVE THEME PICKER
+====================================================== */
+
+export type ThemeMode = "light" | "dark";
+
+export const getColors = (mode: ThemeMode) =>
+  mode === "dark" ? darkColors : lightColors;
+
+/**
+ * Default export remains LIGHT colors so
+ * existing imports continue to work:
+ *
+ *   import { COLORS } from "@/constants/theme";
+ */
+export const COLORS = lightColors;
+
+/* ======================================================
+    NAVIGATION TOKENS (React Navigation)
 ====================================================== */
 
 export const Colors = {
   light: {
-    tint: COLORS.primary,
-    tabBg: COLORS.white,
-    iconDefault: "#9265e7",
+    tint: lightColors.primary,
+    tabBg: lightColors.background,
+    iconDefault: "#9265E7",
   },
   dark: {
-    tint: COLORS.primary,
-    tabBg: "#1f154a",
-    iconDefault: COLORS.cardShadow,
+    tint: darkColors.primary,
+    tabBg: darkColors.background,
+    iconDefault: darkColors.textSecondary,
   },
 };
 

@@ -15,6 +15,7 @@ import { CURRENCIES } from "@/constants/CONSTANTS";
 import { settingsService } from "@/services/settings-service";
 import { AppSettings } from "@/types/settings";
 import { RelativePathString, useRouter } from "expo-router";
+import { useTheme } from "@/contexts/theme-context";
 
 /* ======================================================
     CONSTANTS
@@ -23,18 +24,24 @@ import { RelativePathString, useRouter } from "expo-router";
 const DATE_FORMATS = ["DD-MM-YYYY", "MM-DD-YYYY"] as const;
 const PERIODS = ["Monthly", "Quarterly", "Yearly"] as const;
 
+const THEMES = ["System", "Light", "Dark"] as const;
+
 /* ======================================================
     COMPONENT
 ====================================================== */
 
 const Settings = () => {
   const router = useRouter();
+  const { setMode } = useTheme();
 
   const [settings, setSettings] = useState<AppSettings>({
     currency: "INR",
     dateFormat: "DD-MM-YYYY",
     dashboardPeriod: "Monthly",
     budgetAlerts: true,
+
+    // ✅ ADD DEFAULT
+    theme: "System",
   });
 
   const [loading, setLoading] = useState(true);
@@ -71,6 +78,18 @@ const Settings = () => {
 
     setSettings(next);
     await settingsService.save(next);
+
+    // ✅ Sync Theme with ThemeContext
+    if (key === "theme") {
+      const mapped =
+        value === "System"
+          ? "system"
+          : value === "Light"
+          ? "light"
+          : "dark";
+
+      await setMode(mapped);
+    }
   };
 
   /* ======================================================
@@ -137,16 +156,21 @@ const Settings = () => {
         </Text>
       </View>
 
-      {/* ---------- CONTENT ---------- */}
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 24 }}
       >
         {/* ---------- PREFERENCES ---------- */}
 
-        <Text style={styles.sectionLabel}>
-          Preferences
-        </Text>
+        <Text style={styles.sectionLabel}>Preferences</Text>
+
+        {/* ✅ THEME PICKER */}
+        {renderChips(
+          "App Theme",
+          THEMES,
+          settings.theme,
+          (v) => update("theme", v as AppSettings["theme"])
+        )}
 
         {renderChips(
           "Default Currency",
@@ -201,9 +225,7 @@ const Settings = () => {
 
         {/* ---------- ACCOUNT ---------- */}
 
-        <Text style={styles.sectionLabel}>
-          Account
-        </Text>
+        <Text style={styles.sectionLabel}>Account</Text>
 
         <Pressable
           style={styles.card}

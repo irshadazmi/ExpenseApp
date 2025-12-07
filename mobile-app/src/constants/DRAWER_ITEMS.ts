@@ -5,7 +5,7 @@ export const DRAWER_ITEMS = [
 	{ name: '(account)', title: 'Account', icon: 'person.crop.circle' },
   { name: '(budget)', title: 'Budget', icon: 'wallet.pass.fill' }, 
   { name: '(transaction)', title: 'Transaction', icon: 'creditcard.fill' },
-  { name: '(ai-assistant)', title: 'AI Assistant', icon: 'robotic.vacuum.fill' },
+  { name: '(ai)', title: 'AI Assistant', icon: 'robotic.vacuum.fill' },
   { name: '(help)', title: 'Help', icon: 'questionmark.circle.fill' },
   { name: '(feedback)', title: 'Feedback', icon: 'envelope.badge.fill' },
   { name: '(settings)', title: 'Settings', icon: 'gearshape.fill' },

@@ -1,21 +1,39 @@
 // mobile-app/src/styles/styles.ts
-import { COLORS } from "@/constants/theme";
-import { StyleSheet } from "react-native";
+import { getColors } from "@/constants/theme";
+import { Appearance, StyleSheet } from "react-native";
+
+/* ======================================================
+   ACTIVE THEME
+====================================================== */
+
+const COLORS = getColors(
+  Appearance.getColorScheme() === "dark" ? "dark" : "light"
+);
+
+// Surfaces / helpers derived from theme tokens
+const SURFACE = COLORS.lightGray;
+const SURFACE_SOFT = COLORS.secondary;
+
+const OVERLAY = COLORS.cardShadow;
+const SKELETON = COLORS.lightGray; // neutral skeleton
+
+const CHIP_BG = COLORS.card;
+const BAR_BG = COLORS.disabled;
 
 const styles = StyleSheet.create({
-  //  Layout 
+  //  Layout
   container: {
     flex: 1,
-    padding: 16,
-    backgroundColor: COLORS.secondary, // Softer background
+    padding: 10,
+    backgroundColor: SURFACE_SOFT,
     justifyContent: "center",
   },
   contentContainer: {
-    paddingVertical: 24,
-    paddingHorizontal: 24,
+    paddingVertical: 0,
+    paddingHorizontal: 0,
   },
 
-  //  Text 
+  //  Text
   welcome: {
     fontSize: 26,
     fontWeight: "700",
@@ -60,7 +78,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
 
-  //  Images / Media 
+  //  Images / Media
   image: {
     width: 240,
     height: 240,
@@ -72,7 +90,7 @@ const styles = StyleSheet.create({
     height: 280,
   },
 
-  //  Inputs 
+  //  Inputs
   textInput: {
     height: 46,
     borderColor: COLORS.primary,
@@ -80,7 +98,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     paddingVertical: 10,
     paddingHorizontal: 10,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.card,
     color: COLORS.text,
     fontSize: 16,
     marginVertical: 10,
@@ -98,7 +116,7 @@ const styles = StyleSheet.create({
     borderRadius: 0,
     paddingVertical: 10,
     paddingHorizontal: 10,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.card,
     justifyContent: "center",
     color: COLORS.text,
     fontSize: 16,
@@ -115,7 +133,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 
-  //  Buttons 
+  //  Buttons
   button: {
     backgroundColor: COLORS.primary,
     paddingVertical: 10,
@@ -131,7 +149,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   buttonText: {
-    color: COLORS.white,
+    color: COLORS.badgeText,
     fontSize: 17,
     fontWeight: "600",
     letterSpacing: 0.5,
@@ -151,7 +169,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   disabledButtonText: {
-    color: COLORS.white,
+    color: COLORS.badgeText,
     fontSize: 17,
     fontWeight: "600",
     letterSpacing: 0.5,
@@ -164,16 +182,16 @@ const styles = StyleSheet.create({
   },
   smallButtonText: {
     fontSize: 12,
-    color: COLORS.white,
+    color: COLORS.badgeText,
     fontWeight: "600",
   },
 
-  //  Dropdown & Picker =========
+  //  Dropdown & Picker
   dropdownWrapper: {
     height: 46,
     borderWidth: 1.5,
     borderColor: COLORS.primary,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.card,
     borderRadius: 0,
     paddingHorizontal: 10,
     justifyContent: "center",
@@ -201,7 +219,7 @@ const styles = StyleSheet.create({
     color: COLORS.text,
   },
 
-  // ========= Header =========
+  //  Header
   headerContainer: {
     width: "100%",
     height: 56,
@@ -215,13 +233,13 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
   },
   headerText: {
-    color: COLORS.white,
+    color: COLORS.badgeText,
     fontSize: 20,
     fontWeight: "700",
     letterSpacing: 1,
   },
 
-  // ========= List / Table =========
+  //  List / Table
   listHeader: {
     height: 46,
     flexDirection: "row",
@@ -231,13 +249,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: COLORS.primary,
     borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
+    borderBottomColor: COLORS.border,
   },
   listHeaderText: {
     fontSize: 16,
     fontWeight: "bold",
     textAlign: "right",
-    color: COLORS.white,
+    color: COLORS.badgeText,
   },
   listRow: {
     flexDirection: "row",
@@ -245,14 +263,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     alignItems: "center",
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-    backgroundColor: "#F7F3FF",
+    borderBottomColor: COLORS.border,
+    backgroundColor: SURFACE,
   },
   listRowAlt: {
     backgroundColor: COLORS.lightGray,
   },
 
-  // ========= Radio Buttons =========
+  //  Radio Buttons
   radioGroup: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -272,7 +290,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.textSecondary,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.card,
   },
   radioOuterSelected: {
     borderColor: COLORS.primary,
@@ -294,25 +312,25 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 
-  // ========= Generic Card =========
+  //  Generic Card
   card: {
-    backgroundColor: COLORS.white,
+    backgroundColor: SURFACE,
     borderRadius: 10,
     padding: 12,
     marginBottom: 10,
     elevation: 2,
-    shadowColor: "#000",
+    shadowColor: OVERLAY,
     shadowOpacity: 0.1,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
   },
 
-  // ========= Tab Bar =========
+  //  Tab Bar
   tabBarContainer: {
     flexDirection: "row",
     justifyContent: "space-around",
     height: 64,
-    backgroundColor: COLORS.tabBg, // dark brinjal
+    backgroundColor: COLORS.tabBg,
     borderTopWidth: 0,
     shadowColor: COLORS.cardShadow,
     shadowOffset: { width: 0, height: -4 },
@@ -336,7 +354,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   tabBarText: {
-    color: COLORS.white,
+    color: COLORS.badgeText,
     fontWeight: "600",
     fontSize: 14,
     letterSpacing: 0.5,
@@ -356,13 +374,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     height: 16,
     borderRadius: 8,
-    backgroundColor: COLORS.badgeBg ?? "#FF4D8D",
+    backgroundColor: COLORS.badgeBg,
     alignItems: "center",
     justifyContent: "center",
   },
   tabsBadgeText: {
     fontSize: 10,
-    color: COLORS.badgeText ?? "#FFFFFF",
+    color: COLORS.badgeText,
     fontWeight: "700",
   },
 
@@ -376,11 +394,11 @@ const styles = StyleSheet.create({
   },
   dashboardBadgeText: {
     fontSize: 16,
-    color: COLORS.badgeText ?? "#FFFFFF",
+    color: COLORS.badgeText,
     fontWeight: "700",
   },
 
-  // ========= Feedback List & Form =========
+  //  Feedback List & Form
   headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -389,12 +407,12 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: COLORS.border,
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 8,
     marginBottom: 12,
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.card,
   },
   sectionLabel: {
     fontSize: 14,
@@ -405,8 +423,7 @@ const styles = StyleSheet.create({
   chipsContainer: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 2,
-    marginBottom: 10,
+    marginBottom: 6,
   },
 
   chip: {
@@ -415,7 +432,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     borderColor: COLORS.primary,
-    backgroundColor: COLORS.white,
+    backgroundColor: CHIP_BG,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 6,
@@ -439,8 +456,16 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 
+  chipLabel: {
+    marginRight: 6,
+    marginBottom: 12,
+    fontSize: 14,
+    fontWeight: "600",
+    color: COLORS.textSecondary,
+  },
+
   chipTextSelected: {
-    color: COLORS.white,
+    color: COLORS.badgeText,
     fontWeight: "700",
   },
 
@@ -481,10 +506,10 @@ const styles = StyleSheet.create({
   },
   metaText: {
     fontSize: 11,
-    color: "#666",
+    color: COLORS.textSecondary,
   },
   replyBox: {
-    backgroundColor: "#F5F0FF",
+    backgroundColor: SURFACE_SOFT,
     borderRadius: 8,
     padding: 8,
     marginBottom: 8,
@@ -513,29 +538,29 @@ const styles = StyleSheet.create({
   },
   actionButtonText: {
     fontSize: 12,
-    color: COLORS.white,
+    color: COLORS.badgeText,
     fontWeight: "600",
   },
   editButton: {
-    backgroundColor: "#3498db",
+    backgroundColor: COLORS.blue,
   },
   deleteButton: {
-    backgroundColor: "#e74c3c",
+    backgroundColor: COLORS.danger,
   },
   replyButton: {
-    backgroundColor: "#27ae60",
+    backgroundColor: COLORS.success,
   },
 
-  // ========= Custom Drawer =========
+  //  Custom Drawer
   drawer: {
     flex: 1,
   },
   backdrop: {
     flex: 1,
-    backgroundColor: "#00000088",
+    backgroundColor: COLORS.cardShadow,
   },
   drawerContainer: {
-    backgroundColor: COLORS.white,
+    backgroundColor: SURFACE,
     padding: 20,
     marginTop: 60,
   },
@@ -548,7 +573,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   drawerItemActive: {
-    backgroundColor: COLORS.tabBg, // dark brinjal background
+    backgroundColor: COLORS.tabBg,
   },
   drawerItemText: {
     fontSize: 16,
@@ -556,13 +581,16 @@ const styles = StyleSheet.create({
     color: COLORS.text,
   },
   drawerItemTextActive: {
-    color: COLORS.tabActive, // neon pink/blue for active
+    color: COLORS.tabActive,
   },
 
-  // ========= DASHBOARD =========
+  //  DASHBOARD
   dashboardHeaderContainer: {
-    padding: 16,
+    padding: 10,
+    width: "100%",
+    backgroundColor: SURFACE,
   },
+
   dashboardCardRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -574,14 +602,14 @@ const styles = StyleSheet.create({
   },
   barBg: {
     height: 10,
-    backgroundColor: "#ddd",
+    backgroundColor: BAR_BG,
     borderRadius: 10,
     marginTop: 6,
     overflow: "hidden",
   },
   barBgSmall: {
     height: 6,
-    backgroundColor: "#eee",
+    backgroundColor: BAR_BG,
     borderRadius: 6,
     marginTop: 4,
     overflow: "hidden",
@@ -595,11 +623,11 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginBottom: 8,
     borderRadius: 12,
-    backgroundColor: COLORS.white,
+    backgroundColor: SURFACE,
     paddingVertical: 12,
     paddingHorizontal: 4,
     elevation: 2,
-    shadowColor: "#000",
+    shadowColor: OVERLAY,
     shadowOpacity: 0.08,
     shadowOffset: { width: 0, height: 1 },
     shadowRadius: 3,
@@ -623,14 +651,15 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: COLORS.text,
   },
+
   // transactions list
   txnRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     padding: 12,
     borderBottomWidth: 1,
-    borderColor: "#eee",
-    backgroundColor: COLORS.white,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.card,
   },
   txnTitle: {
     fontSize: 14,
@@ -642,7 +671,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 
-  // dashboard 
+  // dashboard
   value: {
     marginTop: 4,
     fontSize: 18,
@@ -652,6 +681,23 @@ const styles = StyleSheet.create({
   subValue: {
     fontSize: 12,
     opacity: 0.7,
+  },
+
+  // === DARK SAFE HELPERS ===
+  skeleton: {
+    borderRadius: 12,
+    backgroundColor: SKELETON,
+    marginVertical: 8,
+    opacity: 0.4,
+  },
+
+  chartSurface: {
+    backgroundColor: SURFACE,
+  },
+
+  usageLabelRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
 });
 

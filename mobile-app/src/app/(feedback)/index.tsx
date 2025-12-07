@@ -325,34 +325,34 @@ const Feedbacks = () => {
 			]}
 		>
 			{/* Header row: title + Add button */}
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          marginBottom: 16,
-        }}
-      >
-        <Text
-          style={[
-            styles.title,
-            { flex: 1, textAlign: "left", marginBottom: 0 },
-          ]}
-        >
-          List Of Feedbacks
-        </Text>
+			<View
+				style={{
+					flexDirection: "row",
+					alignItems: "center",
+					marginBottom: 16,
+				}}
+			>
+				<Text
+					style={[
+						styles.title,
+						{ flex: 1, textAlign: "left", marginBottom: 0 },
+					]}
+				>
+					List Of Feedbacks
+				</Text>
 
-        <Pressable onPress={handleAdd}>
-          <Text
-            style={{
-              color: COLORS.primary,
-              fontSize: 14,
-              fontWeight: "600",
-            }}
-          >
-            + Add
-          </Text>
-        </Pressable>
-      </View>
+				<Pressable onPress={handleAdd}>
+					<Text
+						style={{
+							color: COLORS.primary,
+							fontSize: 14,
+							fontWeight: "600",
+						}}
+					>
+						+ Add
+					</Text>
+				</Pressable>
+			</View>
 
 			{/* ---------- SEARCH ---------- */}
 
@@ -368,7 +368,8 @@ const Feedbacks = () => {
 			<Text style={styles.sectionLabel}>
 				Filter by Type
 			</Text>
-			<View style={styles.chipsContainer}>
+
+			<View style={[styles.chipsContainer, { flexWrap: "wrap" }]}>
 				{renderChip(
 					"All",
 					selectedType === null,
