@@ -1,4 +1,5 @@
-// // mobile-app/src/app/transaction)/index.tsx
+// mobile-app/src/app/(transaction)/index.tsx
+
 import React, { useEffect, useMemo, useState } from "react";
 import {
   View,
@@ -10,19 +11,23 @@ import {
   TextInput,
 } from "react-native";
 
-import styles from "@/styles/styles";
+import { useStyles } from "@/styles/styles";
 import { transactionService } from "@/services/transaction-service";
-import { COLORS } from "@/constants/COLORS";
 import { TransactionResponse } from "@/types/transaction";
 import { RelativePathString, useRouter } from "expo-router";
 import { useAuth } from "@/contexts/auth-context";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+
+import { useAppColors } from "@/hooks/use-app-colors";
 
 /* ======================================================
     TRANSACTIONS LIST
 ====================================================== */
 
 const Transactions = () => {
+  const styles = useStyles();
+  const COLORS = useAppColors();
+
   const [transactions, setTransactions] =
     useState<TransactionResponse[]>([]);
   const [loading, setLoading] = useState(false);
@@ -42,6 +47,7 @@ const Transactions = () => {
     if (!currentUserId && !isSuperAdmin) return;
 
     setLoading(true);
+
     try {
       const data = isSuperAdmin
         ? await transactionService.getAll()
@@ -138,8 +144,8 @@ const Transactions = () => {
                   item.type === "Income"
                     ? COLORS.green
                     : item.type === "Transfer"
-                      ? COLORS.blue
-                      : COLORS.red,
+                    ? COLORS.blue
+                    : COLORS.red,
               },
             ]}
           >

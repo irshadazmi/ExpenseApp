@@ -7,79 +7,65 @@ import { Platform } from "react-native";
 ====================================================== */
 
 /* ---------- LIGHT MODE ---------- */
-const lightColors = {
-  // Core brand
+export const lightColors = {
   primary: "#7F00FF",
   secondary: "#E1C3FD",
 
-  // Feedback
   success: "#8BC34A",
   warning: "#FFC107",
   danger: "#EA4C68",
   info: "#007AFF",
-
-  // Status aliases
   error: "#EA4C68",
 
-  // Neutrals
-  background: "#FFFFFF",
-  surface: "#F7F7F7",
-  card: "#FFFFFF",
-  border: "#E0E0E0",
-  divider: "#EFEFEF",
+  appBackground: "#F6F2FF",
+  background: "#F6F2FF",
+  surface: "#E9E3FB",
+  card: "#F0EBFC",
+  border: "#D2C8F2",
+  divider: "#EFEAFE",
   disabled: "#A9C3F5",
 
   white: "#FFFFFF",
-  lightGray: "#F7F7F7",
+  lightGray: "#F3EEFC",
 
-  // Typography
-  text: "#292140",
+  text: "#2A2143",
+  legendText: "#1F1F1F",
   textSecondary: "#5A3D8C",
   textMuted: "#8884A5",
   textInverse: "#FFFFFF",
 
-  // Effects
   cardShadow: "#B095D4",
 
-  // Charts
   chartFill: "#333333",
 
-  // Raw colors (rarely used, kept for backward compatibility)
   red: "#FF3B30",
   green: "#34C759",
   blue: "#007AFF",
   yellow: "#FFCC00",
 
-  // Tab bar
-  tabBg: "#6C5CE7",
-  tabBorderTop: "#120420",
+  tabBg: "#1A1A1A",
+  tabBorderTop: "#5A00B5",
   tabActive: "#44E4FF",
-  tabActiveAlt: "#FF3FBF",
-  tabInactive: "#E0E0F5",
+  tabActiveAlt: "#4CAF50",
+  tabInactive: "#FFC0CB",
 
-  // Badges
   badgeBg: "#FF4D8D",
   badgeText: "#FFFFFF",
 
-  skeleton: '#f0f0f0',
+  skeleton: "#f0f0f0",
 };
 
 /* ---------- DARK MODE ---------- */
-const darkColors = {
-  // Core brand
+export const darkColors = {
   primary: "#9D7BFF",
   secondary: "#1B132F",
 
-  // Feedback
   success: "#9BE15D",
   warning: "#FFD54F",
   danger: "#FF5A74",
   info: "#0A84FF",
-
-  // Status aliases
   error: "#FF5A74",
 
-  // Neutrals
   background: "#151718",
   surface: "#1F1B2E",
   card: "#1F1B2E",
@@ -90,35 +76,31 @@ const darkColors = {
   white: "#000000",
   lightGray: "#2A2238",
 
-  // Typography
   text: "#F5F3FF",
+  legendText: "#F5F3FF",
   textSecondary: "#B8B0E0",
   textMuted: "#9993C9",
   textInverse: "#000000",
 
-  // Effects
   cardShadow: "#000000",
 
-  // Charts
   chartFill: "#EAE8F7",
 
-  // Raw colors
   red: "#FF453A",
   green: "#32D74B",
   blue: "#0A84FF",
   yellow: "#FFD60A",
 
-  // Tab bar
-  tabBg: "#1F154A",
+  tabBg: "#181920",
   tabBorderTop: "#0F061B",
   tabActive: "#44E4FF",
   tabActiveAlt: "#FF3FBF",
   tabInactive: "#8882B9",
 
-  // Badges
   badgeBg: "#FF4D8D",
   badgeText: "#FFFFFF",
-  skeleton: '#f0f0f0',
+
+  skeleton: "#f0f0f0",
 };
 
 /* ======================================================
@@ -130,23 +112,15 @@ export type ThemeMode = "light" | "dark";
 export const getColors = (mode: ThemeMode) =>
   mode === "dark" ? darkColors : lightColors;
 
-/**
- * Default export remains LIGHT colors so
- * existing imports continue to work:
- *
- *   import { COLORS } from "@/constants/theme";
- */
-export const COLORS = lightColors;
-
 /* ======================================================
-    NAVIGATION TOKENS (React Navigation)
+    NAVIGATION TOKENS
 ====================================================== */
 
 export const Colors = {
   light: {
     tint: lightColors.primary,
     tabBg: lightColors.background,
-    iconDefault: "#9265E7",
+    iconDefault: lightColors.textSecondary,
   },
   dark: {
     tint: darkColors.primary,

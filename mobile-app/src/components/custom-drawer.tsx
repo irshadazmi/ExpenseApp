@@ -6,7 +6,7 @@ import { Route, useRouter, useSegments } from "expo-router";
 import { COLORS } from "@/constants/COLORS";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import type { SFSymbol } from "expo-symbols";
-import styles from "@/styles/styles";
+import { useStyles } from "@/styles/styles";
 
 type Props = {
   visible: boolean;
@@ -15,6 +15,7 @@ type Props = {
 };
 
 export default function CustomDrawer({ visible, onClose, setTitle }: Props) {
+  const styles = useStyles();
   const router = useRouter();
   const segments = useSegments();
 

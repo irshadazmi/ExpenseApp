@@ -9,8 +9,9 @@ import {
   Alert,
 } from "react-native";
 
-import styles from "@/styles/styles";
-import { COLORS } from "@/constants/COLORS";
+import { useStyles } from "@/styles/styles";
+import { useAppColors } from "@/hooks/use-app-colors";
+
 import { CURRENCIES } from "@/constants/CONSTANTS";
 import { settingsService } from "@/services/settings-service";
 import { AppSettings } from "@/types/settings";
@@ -23,7 +24,6 @@ import { useTheme } from "@/contexts/theme-context";
 
 const DATE_FORMATS = ["DD-MM-YYYY", "MM-DD-YYYY"] as const;
 const PERIODS = ["Monthly", "Quarterly", "Yearly"] as const;
-
 const THEMES = ["System", "Light", "Dark"] as const;
 
 /* ======================================================
@@ -31,6 +31,8 @@ const THEMES = ["System", "Light", "Dark"] as const;
 ====================================================== */
 
 const Settings = () => {
+  const styles = useStyles();
+  const COLORS = useAppColors();
   const router = useRouter();
   const { setMode } = useTheme();
 
@@ -40,7 +42,7 @@ const Settings = () => {
     dashboardPeriod: "Monthly",
     budgetAlerts: true,
 
-    // ✅ ADD DEFAULT
+    // ✅ default matches backend contract
     theme: "System",
   });
 
@@ -79,7 +81,7 @@ const Settings = () => {
     setSettings(next);
     await settingsService.save(next);
 
-    // ✅ Sync Theme with ThemeContext
+    // ✅ Sync theme immediately
     if (key === "theme") {
       const mapped =
         value === "System"
@@ -112,13 +114,17 @@ const Settings = () => {
           return (
             <Pressable
               key={opt}
-              style={[styles.chip, active && styles.chipSelected]}
+              style={[
+                styles.chip,
+                active && styles.chipSelected,
+              ]}
               onPress={() => onSelect(opt)}
             >
               <Text
                 style={[
                   styles.chipText,
-                  active && styles.chipTextSelected,
+                  active &&
+                    styles.chipTextSelected,
                 ]}
               >
                 {opt}
@@ -138,7 +144,8 @@ const Settings = () => {
 
   return (
     <View style={[styles.container, { paddingHorizontal: 16 }]}>
-      {/* ---------- HEADER ---------- */}
+      {/* ================= HEADER ================= */}
+
       <View
         style={{
           flexDirection: "row",
@@ -160,7 +167,7 @@ const Settings = () => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 24 }}
       >
-        {/* ---------- PREFERENCES ---------- */}
+        {/* ================= PREFERENCES ================= */}
 
         <Text style={styles.sectionLabel}>Preferences</Text>
 
@@ -183,7 +190,11 @@ const Settings = () => {
           "Date Format",
           DATE_FORMATS as unknown as string[],
           settings.dateFormat,
-          (v) => update("dateFormat", v as AppSettings["dateFormat"])
+          (v) =>
+            update(
+              "dateFormat",
+              v as AppSettings["dateFormat"]
+            )
         )}
 
         {renderChips(
@@ -191,10 +202,13 @@ const Settings = () => {
           PERIODS as unknown as string[],
           settings.dashboardPeriod,
           (v) =>
-            update("dashboardPeriod", v as AppSettings["dashboardPeriod"])
+            update(
+              "dashboardPeriod",
+              v as AppSettings["dashboardPeriod"]
+            )
         )}
 
-        {/* ---------- BUDGET ALERT ---------- */}
+        {/* ================= BUDGET ALERT ================= */}
 
         <View style={styles.card}>
           <View style={styles.metaRow}>
@@ -204,7 +218,10 @@ const Settings = () => {
 
             <Pressable
               onPress={() =>
-                update("budgetAlerts", !settings.budgetAlerts)
+                update(
+                  "budgetAlerts",
+                  !settings.budgetAlerts
+                )
               }
             >
               <View
@@ -223,14 +240,16 @@ const Settings = () => {
           </View>
         </View>
 
-        {/* ---------- ACCOUNT ---------- */}
+        {/* ================= ACCOUNT ================= */}
 
         <Text style={styles.sectionLabel}>Account</Text>
 
         <Pressable
           style={styles.card}
           onPress={() =>
-            router.push("/profile" as RelativePathString)
+            router.push(
+              "/profile" as RelativePathString
+            )
           }
         >
           <Text style={styles.cardTitle}>
@@ -244,7 +263,9 @@ const Settings = () => {
         <Pressable
           style={styles.card}
           onPress={() =>
-            router.push("/change-password" as RelativePathString)
+            router.push(
+              "/change-password" as RelativePathString
+            )
           }
         >
           <Text style={styles.cardTitle}>

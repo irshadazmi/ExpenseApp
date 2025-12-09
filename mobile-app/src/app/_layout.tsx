@@ -7,37 +7,45 @@ import {
   Stack,
   usePathname,
 } from "expo-router";
+
 import {
   View,
   Pressable,
   Text,
   StatusBar,
 } from "react-native";
+
 import { SafeAreaView } from "react-native-safe-area-context";
-
-import TabBar from "@/components/tab-bar";
-import CustomDrawer from "@/components/custom-drawer";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import { AuthProvider, useAuth } from "@/contexts/auth-context";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useTheme } from "@/contexts/theme-context";
-
-import Loading from "./(auth)/loading";
-
 import {
   DarkTheme,
   DefaultTheme,
   ThemeProvider,
 } from "@react-navigation/native";
 
-import { DRAWER_ITEMS } from "@/constants/DRAWER_ITEMS";
-import { PUBLIC_ROUTES } from "@/constants/PUBLIC_ROUTES";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
-/* ✅ Wrap with AppThemeProvider */
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import TabBar from "@/components/tab-bar";
+import CustomDrawer from "@/components/custom-drawer";
+import Loading from "./(auth)/loading";
+
+import { AuthProvider, useAuth } from "@/contexts/auth-context";
+import { useTheme } from "@/contexts/theme-context";
+
 import {
   ThemeProvider as AppThemeProvider,
 } from "@/contexts/theme-context";
+
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+import { DRAWER_ITEMS } from "@/constants/DRAWER_ITEMS";
+import { PUBLIC_ROUTES } from "@/constants/PUBLIC_ROUTES";
+
+import { useAppColors } from "@/hooks/use-app-colors";
+
+/* ======================================================
+    ROOT PROVIDERS
+====================================================== */
 
 export default function RootLayout() {
   return (
@@ -49,10 +57,17 @@ export default function RootLayout() {
   );
 }
 
+/* ======================================================
+    MAIN LAYOUT
+====================================================== */
+
 function RootLayoutContent() {
   const pathname = usePathname();
   const { user, loading } = useAuth();
-  const { mode, resolvedMode, toggle } = useTheme(); // ✅ use theme context
+  const { mode, resolvedMode, toggle } = useTheme();
+
+  // ✅ NEW: unified color hook
+  const COLORS = useAppColors();
 
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [title, setTitle] = useState("DASHBOARD");
@@ -63,6 +78,7 @@ function RootLayoutContent() {
   /* ======================================================
       INTRO / ROUTE GUARDS
   ====================================================== */
+
   useEffect(() => {
     (async () => {
       const flag = await AsyncStorage.getItem("hasSeenIntro");
@@ -73,12 +89,13 @@ function RootLayoutContent() {
 
   useEffect(() => {
     if (!introChecked) return;
+
     if (hasSeenIntro === false) {
       router.replace("/intro/first_screen");
     }
   }, [introChecked, hasSeenIntro]);
 
-  // Auth guard
+  // Auth Guard
   useEffect(() => {
     if (loading) return;
 
@@ -92,23 +109,29 @@ function RootLayoutContent() {
     }
   }, [pathname, user, loading]);
 
-  // Header title
+  // Header Title
   useEffect(() => {
     const folder = pathname.split("/")[1] || "dashboard";
-    const matched = DRAWER_ITEMS.find((i) => i.name === folder);
+
+    const matched = DRAWER_ITEMS.find(
+      (i) => i.name === folder
+    );
+
     if (matched) setTitle(matched.title.toUpperCase());
   }, [pathname]);
 
   /* ======================================================
       LOADING
   ====================================================== */
+
   if (loading || !introChecked) {
     return <Loading />;
   }
 
   /* ======================================================
-      PUBLIC ROUTES
+      PUBLIC ROUTES (Auth Layout)
   ====================================================== */
+
   if (!user) {
     return (
       <ThemeProvider
@@ -119,16 +142,21 @@ function RootLayoutContent() {
         </Stack>
 
         <StatusBar
-          barStyle={resolvedMode === "dark" ? "light-content" : "dark-content"}
-          backgroundColor={resolvedMode === "dark" ? "#151718" : "#FFFFFF"}
+          barStyle={
+            resolvedMode === "dark"
+              ? "light-content"
+              : "dark-content"
+          }
+          backgroundColor={COLORS.background}
         />
       </ThemeProvider>
     );
   }
 
   /* ======================================================
-      MAIN APP LAYOUT
+      APP LAYOUT
   ====================================================== */
+
   return (
     <ThemeProvider
       value={resolvedMode === "dark" ? DarkTheme : DefaultTheme}
@@ -136,14 +164,15 @@ function RootLayoutContent() {
       <SafeAreaView
         style={{
           flex: 1,
-          backgroundColor: resolvedMode === "dark" ? "#151718" : "#FFFFFF",
+          backgroundColor: COLORS.background,
         }}
       >
         {/* ================= HEADER ================= */}
+
         <View
           style={{
             height: 72,
-            backgroundColor: resolvedMode === "dark" ? "#9D7BFF" : "#7F00FF",
+            backgroundColor: COLORS.primary,
             flexDirection: "row",
             alignItems: "center",
             paddingHorizontal: 16,
@@ -153,7 +182,7 @@ function RootLayoutContent() {
           <Text
             style={{
               flex: 1,
-              color: "#fff",
+              color: COLORS.textInverse,
               fontSize: 18,
               fontWeight: "700",
             }}
@@ -162,7 +191,10 @@ function RootLayoutContent() {
           </Text>
 
           {/* Theme Toggle */}
-          <Pressable onPress={toggle} style={{ padding: 8, marginRight: 8 }}>
+          <Pressable
+            onPress={toggle}
+            style={{ padding: 8, marginRight: 8 }}
+          >
             <MaterialIcons
               name={
                 mode === "light"
@@ -172,7 +204,7 @@ function RootLayoutContent() {
                   : "settings"
               }
               size={26}
-              color="#fff"
+              color={COLORS.textInverse}
             />
           </Pressable>
 
@@ -183,7 +215,7 @@ function RootLayoutContent() {
           >
             <IconSymbol
               name="arrow.right.square.fill"
-              color="#fff"
+              color={COLORS.textInverse}
               size={28}
             />
           </Pressable>
@@ -207,8 +239,12 @@ function RootLayoutContent() {
 
       {/* ================= STATUS BAR ================= */}
       <StatusBar
-        barStyle={resolvedMode === "dark" ? "light-content" : "dark-content"}
-        backgroundColor={resolvedMode === "dark" ? "#151718" : "#FFFFFF"}
+        barStyle={
+          resolvedMode === "dark"
+            ? "light-content"
+            : "dark-content"
+        }
+        backgroundColor={COLORS.background}
       />
     </ThemeProvider>
   );

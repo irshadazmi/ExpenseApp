@@ -1,5 +1,4 @@
-// mobile-app/src/app/(category)/index.tsx
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -7,14 +6,15 @@ import {
   Pressable,
   ActivityIndicator,
   Alert,
-  TextInput,
 } from "react-native";
 
-import styles from "@/styles/styles";
+import { useStyles } from "@/styles/styles";
+import { useAppColors } from "@/hooks/use-app-colors";
+
 import { categoryService } from "@/services/category-service";
-import { COLORS } from "@/constants/COLORS";
 import { CategoryResponse } from "@/types/category";
 import { RelativePathString, useRouter } from "expo-router";
+
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 /* ======================================================
@@ -22,7 +22,12 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 ====================================================== */
 
 const Categories = () => {
-  const [categories, setCategories] = useState<CategoryResponse[]>([]);
+  const styles = useStyles();
+  const COLORS = useAppColors(); // ✅ central theming
+
+  const [categories, setCategories] =
+    useState<CategoryResponse[]>([]);
+
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
@@ -39,7 +44,10 @@ const Categories = () => {
       setCategories(data || []);
     } catch (err) {
       console.error("Failed to load categories", err);
-      Alert.alert("Error", "Failed to load categories. Please try again.");
+      Alert.alert(
+        "Error",
+        "Failed to load categories. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -60,14 +68,13 @@ const Categories = () => {
   const handleEdit = (cat: CategoryResponse) => {
     if (typeof cat.id !== "number") return;
 
-    const id = cat.id; // ✅ TS now knows this is number
-    router.push(`/(category)/${id}` as RelativePathString);
+    router.push(
+      `/(category)/${cat.id}` as RelativePathString
+    );
   };
 
   const handleDelete = async (cat: CategoryResponse) => {
     if (typeof cat.id !== "number") return;
-
-    const id = cat.id; // ✅ narrowed to number
 
     Alert.alert(
       "Confirm Delete",
@@ -79,11 +86,19 @@ const Categories = () => {
           style: "destructive",
           onPress: async () => {
             try {
-              await categoryService.delete(id); // ✅ no TS error
-              loadCategories();
+              if (typeof cat.id === "number") {
+                await categoryService.delete(cat.id);
+                loadCategories();
+              }
             } catch (err) {
-              console.error("Failed to delete category", err);
-              Alert.alert("Error", "Unable to delete category.");
+              console.error(
+                "Failed to delete category",
+                err
+              );
+              Alert.alert(
+                "Error",
+                "Unable to delete category."
+              );
             }
           },
         },
@@ -99,65 +114,75 @@ const Categories = () => {
     item,
   }: {
     item: CategoryResponse;
-  }) => {
-    return (
-      <View style={styles.card}>
-        <View style={styles.metaRow}>
-          <Text style={styles.cardTitle}>{item.name}</Text>
+  }) => (
+    <View style={styles.card}>
 
-          <Text
-            style={[
-              styles.statusText,
-              {
-                color: item.is_active
-                  ? COLORS.green
-                  : COLORS.red,
-              },
-            ]}
-          >
-            {item.is_active ? "Active" : "Inactive"}
-          </Text>
-        </View>
+      {/* HEADER ROW */}
+      <View style={styles.metaRow}>
+        <Text style={styles.cardTitle}>
+          {item.name}
+        </Text>
 
-        <View style={styles.actionsRow}>
-          <Pressable
-            style={[
-              styles.actionButton,
-              styles.editButton,
-            ]}
-            onPress={() => handleEdit(item)}
-          >
-            <MaterialIcons
-              name="edit"
-              size={16}
-              color={COLORS.white}
-            />
-          </Pressable>
-
-          <Pressable
-            style={[
-              styles.actionButton,
-              styles.deleteButton,
-            ]}
-            onPress={() => handleDelete(item)}
-          >
-            <MaterialIcons
-              name="delete"
-              size={16}
-              color={COLORS.white}
-            />
-          </Pressable>
-        </View>
+        <Text
+          style={[
+            styles.statusText,
+            {
+              color: item.is_active
+                ? COLORS.green
+                : COLORS.red,
+            },
+          ]}
+        >
+          {item.is_active ? "Active" : "Inactive"}
+        </Text>
       </View>
-    );
-  };
+
+      {/* ACTIONS */}
+      <View style={styles.actionsRow}>
+
+        <Pressable
+          style={[
+            styles.actionButton,
+            styles.editButton,
+          ]}
+          onPress={() => handleEdit(item)}
+        >
+          <MaterialIcons
+            name="edit"
+            size={16}
+            color={COLORS.white}
+          />
+        </Pressable>
+
+        <Pressable
+          style={[
+            styles.actionButton,
+            styles.deleteButton,
+          ]}
+          onPress={() => handleDelete(item)}
+        >
+          <MaterialIcons
+            name="delete"
+            size={16}
+            color={COLORS.white}
+          />
+        </Pressable>
+
+      </View>
+    </View>
+  );
 
   /* ======================================================
       RENDER
   ====================================================== */
 
   return (
-    <View style={[styles.container, { paddingHorizontal: 16 }]}>
+    <View
+      style={[
+        styles.container,
+        { paddingHorizontal: 16 },
+      ]}
+    >
       {/* ---------- HEADER ---------- */}
       <View
         style={{
@@ -169,7 +194,11 @@ const Categories = () => {
         <Text
           style={[
             styles.title,
-            { flex: 1, textAlign: "left", marginBottom: 0 },
+            {
+              flex: 1,
+              textAlign: "left",
+              marginBottom: 0,
+            },
           ]}
         >
           Categories
@@ -189,7 +218,6 @@ const Categories = () => {
       </View>
 
       {/* ---------- LIST ---------- */}
-
       {loading ? (
         <ActivityIndicator
           style={{ marginTop: 24 }}

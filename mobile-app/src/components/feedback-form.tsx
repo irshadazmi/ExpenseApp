@@ -15,8 +15,8 @@ import { useLocalSearchParams } from "expo-router";
 import { Formik } from "formik";
 import * as Yup from "yup";
 
-import styles from "@/styles/styles";
-import { COLORS } from "@/constants/COLORS";
+import { useStyles } from "@/styles/styles";
+import { useAppColors } from "@/hooks/use-app-colors";
 
 import { FEEDBACK_TYPES, STATUS_CODES } from "@/constants/CONSTANTS";
 import { feedbackService } from "@/services/feedback-service";
@@ -25,7 +25,7 @@ import { FeedbackResponse, FeedbackUpdate } from "@/types/feedback";
 import { StatusCode } from "@/types/status";
 
 /* ======================================================
-    TYPES
+   TYPES
 ====================================================== */
 
 interface FeedbackFormProps {
@@ -45,7 +45,7 @@ type FeedbackFormValues = {
 };
 
 /* ======================================================
-    VALIDATION
+   VALIDATION
 ====================================================== */
 
 const FeedbackSchema = Yup.object().shape({
@@ -74,7 +74,7 @@ const FeedbackSchema = Yup.object().shape({
 });
 
 /* ======================================================
-    COMPONENT
+   COMPONENT
 ====================================================== */
 
 const FeedbackForm: React.FC<FeedbackFormProps> = ({
@@ -82,6 +82,8 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({
   mode = "edit",
   onSubmitSuccess,
 }) => {
+  const styles = useStyles();
+  const COLORS = useAppColors(); // ✅ theme-correct colors
   const { user } = useAuth();
 
   const isSuperAdmin = user?.role_id === 1;
@@ -93,6 +95,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({
 
   const isReplyMode = effectiveMode === "reply";
   const isEditing = typeof id === "number";
+
   const disableCoreFields = isReplyMode && isSuperAdmin;
 
   const [loading, setLoading] = useState(false);
@@ -109,8 +112,8 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({
     });
 
   /* ======================================================
-      LOAD FEEDBACK
-  ====================================================== */
+     LOAD FEEDBACK
+====================================================== */
 
   useEffect(() => {
     if (!isEditing) return;
@@ -137,8 +140,8 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({
   }, [id, isEditing]);
 
   /* ======================================================
-      SUBMIT
-  ====================================================== */
+     SUBMIT
+====================================================== */
 
   const handleSubmit = async (
     values: FeedbackFormValues,
@@ -186,19 +189,23 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({
   };
 
   /* ======================================================
-      LOADING STATE
-  ====================================================== */
+     LOADING
+====================================================== */
 
   if (loading) {
     return (
       <View
         style={[
           styles.container,
-          { alignItems: "center", justifyContent: "center" },
+          {
+            justifyContent: "center",
+            alignItems: "center",
+          },
         ]}
       >
         <ActivityIndicator size="large" color={COLORS.primary} />
-        <Text style={{ marginTop: 12 }}>
+
+        <Text style={{ marginTop: 12, color: COLORS.text }}>
           Loading feedback...
         </Text>
       </View>
@@ -206,11 +213,14 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({
   }
 
   /* ======================================================
-      RENDER
-  ====================================================== */
+     UI
+====================================================== */
 
   return (
-    <ScrollView keyboardShouldPersistTaps="handled">
+    <ScrollView
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator
+    >
       <Formik
         initialValues={initialValues}
         enableReinitialize
@@ -227,9 +237,9 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({
           isSubmitting,
           isValid,
         }) => (
-          <View>
+          <View style={styles.formContainer}>
 
-            {/* ---------- ISSUE TYPE ---------- */}
+            {/* ================= ISSUE TYPE ================= */}
 
             <Text style={styles.label}>
               Issue Type
@@ -270,7 +280,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({
               </Text>
             )}
 
-            {/* ---------- SUBJECT ---------- */}
+            {/* ================= SUBJECT ================= */}
 
             <Text style={styles.label}>
               Subject
@@ -278,6 +288,8 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({
 
             <TextInput
               style={styles.textInput}
+              placeholder="Enter subject"
+              placeholderTextColor={COLORS.textMuted}
               value={values.subject}
               onChangeText={handleChange("subject")}
               editable={!disableCoreFields}
@@ -289,17 +301,25 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({
               </Text>
             )}
 
-            {/* ---------- DESCRIPTION ---------- */}
+            {/* ================= DESCRIPTION ================= */}
 
             <Text style={styles.label}>
               Description
             </Text>
 
             <TextInput
-              style={[styles.textInput, { height: 100, textAlignVertical: "top" }]}
-              value={values.description}
+              style={[
+                styles.textInput,
+                {
+                  height: 100,
+                  textAlignVertical: "top",
+                },
+              ]}
+              placeholder="Describe your issue"
+              placeholderTextColor={COLORS.textMuted}
               multiline
               numberOfLines={4}
+              value={values.description}
               onChangeText={handleChange("description")}
               editable={!disableCoreFields}
             />
@@ -310,7 +330,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({
               </Text>
             )}
 
-            {/* ---------- RATING ---------- */}
+            {/* ================= RATING ================= */}
 
             <Text style={styles.label}>
               Rating (1–5)
@@ -318,6 +338,8 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({
 
             <TextInput
               style={styles.textInput}
+              placeholder="1-5"
+              placeholderTextColor={COLORS.textMuted}
               keyboardType="numeric"
               value={String(values.rating)}
               onChangeText={(v) =>
@@ -332,7 +354,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({
               </Text>
             )}
 
-            {/* ---------- STATUS ---------- */}
+            {/* ================= STATUS ================= */}
 
             <Text style={styles.label}>
               Status
@@ -373,7 +395,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({
               </Text>
             )}
 
-            {/* ---------- REPLY ---------- */}
+            {/* ================= REPLY ================= */}
 
             <Text style={styles.label}>
               Admin Reply
@@ -382,8 +404,13 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({
             <TextInput
               style={[
                 styles.textInput,
-                { height: 80, textAlignVertical: "top" },
+                {
+                  height: 80,
+                  textAlignVertical: "top",
+                },
               ]}
+              placeholder="Admin reply"
+              placeholderTextColor={COLORS.textMuted}
               multiline
               numberOfLines={3}
               value={values.reply ?? ""}
@@ -391,7 +418,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({
               editable={isSuperAdmin}
             />
 
-            {/* ---------- SUBMIT ---------- */}
+            {/* ================= SUBMIT ================= */}
 
             <Pressable
               style={[

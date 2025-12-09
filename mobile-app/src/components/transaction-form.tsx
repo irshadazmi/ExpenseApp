@@ -1,4 +1,6 @@
-import DateTimePicker from "@react-native-community/datetimepicker";
+// src/components/transaction-form.tsx
+
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -10,23 +12,22 @@ import {
   Alert,
 } from "react-native";
 
-import React, { useEffect, useState } from "react";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { Formik } from "formik";
 import * as Yup from "yup";
 
-import styles from "@/styles/styles";
-import { COLORS } from "@/constants/COLORS";
+import { useStyles } from "@/styles/styles";
+import { useAppColors } from "@/hooks/use-app-colors";
 
 import { TransactionCreate } from "@/types/transaction";
 import { categoryService } from "@/services/category-service";
 import { transactionService } from "@/services/transaction-service";
-
 import { useAuth } from "@/contexts/auth-context";
 
 import { CURRENCIES, EXPENSE_TYPES } from "@/constants/CONSTANTS";
 
 /* ======================================================
-    VALIDATION
+   VALIDATION
 ====================================================== */
 
 const TransactionSchema = Yup.object().shape({
@@ -55,7 +56,7 @@ const TransactionSchema = Yup.object().shape({
 });
 
 /* ======================================================
-    TYPES
+   TYPES
 ====================================================== */
 
 interface TransactionFormProps {
@@ -64,34 +65,30 @@ interface TransactionFormProps {
 }
 
 /* ======================================================
-    COMPONENT
+   COMPONENT
 ====================================================== */
 
 const TransactionForm: React.FC<
   TransactionFormProps
 > = ({ id, onSubmitSuccess }) => {
+  const styles = useStyles();
+  const COLORS = useAppColors();
   const { user } = useAuth();
 
   const [categories, setCategories] =
-    useState<{ id: number; name: string }[]>(
-      []
-    );
+    useState<{ id: number; name: string }[]>([]);
 
   const [showDatePicker, setShowDatePicker] =
     useState(false);
 
-  const [loading, setLoading] =
-    useState(false);
+  const [loading, setLoading] = useState(false);
 
   const [
     initialValues,
     setInitialValues,
-  ] = useState<TransactionCreate | null>(
-    null
-  );
+  ] = useState<TransactionCreate | null>(null);
 
-  const isEditing =
-    typeof id === "number";
+  const isEditing = typeof id === "number";
 
   /* ======================================================
       LOAD CATEGORIES
@@ -102,7 +99,6 @@ const TransactionForm: React.FC<
       try {
         const res = await categoryService.getAll();
 
-        // ✅ normalize + fix potential undefined ids
         const safeCategories = res
           .filter((c) => typeof c.id === "number")
           .map((c) => ({
@@ -120,7 +116,6 @@ const TransactionForm: React.FC<
     })();
   }, []);
 
-
   /* ======================================================
       LOAD TRANSACTION
   ====================================================== */
@@ -137,14 +132,11 @@ const TransactionForm: React.FC<
           if (!tx) return;
 
           setInitialValues({
-            description:
-              tx.description ?? "",
+            description: tx.description ?? "",
             amount: Number(tx.amount) ?? 0,
-            category_id:
-              Number(tx.category_id) ?? 0,
+            category_id: Number(tx.category_id) ?? 0,
             type: tx.type ?? "Expense",
-            currency:
-              tx.currency ?? "INR",
+            currency: tx.currency ?? "INR",
             transaction_date:
               tx.transaction_date ??
               new Date().toISOString(),
@@ -157,9 +149,7 @@ const TransactionForm: React.FC<
             "Failed to load transaction"
           )
         )
-        .finally(() =>
-          setLoading(false)
-        );
+        .finally(() => setLoading(false));
     } else {
       setInitialValues({
         description: "",
@@ -201,7 +191,8 @@ const TransactionForm: React.FC<
           size="large"
           color={COLORS.primary}
         />
-        <Text style={{ marginTop: 12 }}>
+
+        <Text style={{ marginTop: 12, color: COLORS.text }}>
           Loading transaction...
         </Text>
       </View>
@@ -218,25 +209,11 @@ const TransactionForm: React.FC<
   ) => {
     try {
       if (isEditing) {
-        await transactionService.update(
-          id!,
-          values
-        );
-
-        Alert.alert(
-          "Success",
-          "Transaction updated"
-        );
+        await transactionService.update(id!, values);
+        Alert.alert("Success", "Transaction updated");
       } else {
-        await transactionService.create(
-          values
-        );
-
-        Alert.alert(
-          "Success",
-          "Transaction created"
-        );
-
+        await transactionService.create(values);
+        Alert.alert("Success", "Transaction created");
         resetForm();
       }
 
@@ -252,11 +229,14 @@ const TransactionForm: React.FC<
   };
 
   /* ======================================================
-      RENDER
+      UI
   ====================================================== */
 
   return (
-    <ScrollView keyboardShouldPersistTaps="handled">
+    <ScrollView
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator
+    >
       <Formik
         initialValues={initialValues}
         enableReinitialize
@@ -273,13 +253,11 @@ const TransactionForm: React.FC<
           isSubmitting,
           isValid,
         }) => (
-          <View>
-            {/* ----------
-                CATEGORY
-            ---------- */}
-            <Text style={styles.label}>
-              Category
-            </Text>
+          <View style={styles.formContainer}>
+
+            {/* ================= CATEGORY ================= */}
+
+            <Text style={styles.label}>Category</Text>
 
             <View
               style={[
@@ -289,16 +267,14 @@ const TransactionForm: React.FC<
             >
               {categories.map((cat) => {
                 const active =
-                  values.category_id ===
-                  cat.id;
+                  values.category_id === cat.id;
 
                 return (
                   <Pressable
                     key={cat.id}
                     style={[
                       styles.chip,
-                      active &&
-                      styles.chipSelected,
+                      active && styles.chipSelected,
                     ]}
                     onPress={() =>
                       setFieldValue(
@@ -311,7 +287,7 @@ const TransactionForm: React.FC<
                       style={[
                         styles.chipText,
                         active &&
-                        styles.chipTextSelected,
+                          styles.chipTextSelected,
                       ]}
                     >
                       {cat.name}
@@ -328,12 +304,9 @@ const TransactionForm: React.FC<
                 </Text>
               )}
 
-            {/* ----------
-                TYPE
-            ---------- */}
-            <Text style={styles.label}>
-              Type
-            </Text>
+            {/* ================= TYPE ================= */}
+
+            <Text style={styles.label}>Type</Text>
 
             <View
               style={[
@@ -342,16 +315,14 @@ const TransactionForm: React.FC<
               ]}
             >
               {EXPENSE_TYPES.map((t) => {
-                const active =
-                  values.type === t;
+                const active = values.type === t;
 
                 return (
                   <Pressable
                     key={t}
                     style={[
                       styles.chip,
-                      active &&
-                      styles.chipSelected,
+                      active && styles.chipSelected,
                     ]}
                     onPress={() =>
                       setFieldValue("type", t)
@@ -361,7 +332,7 @@ const TransactionForm: React.FC<
                       style={[
                         styles.chipText,
                         active &&
-                        styles.chipTextSelected,
+                          styles.chipTextSelected,
                       ]}
                     >
                       {t}
@@ -371,19 +342,15 @@ const TransactionForm: React.FC<
               })}
             </View>
 
-            {touched.type &&
-              errors.type && (
-                <Text style={styles.errorText}>
-                  {errors.type}
-                </Text>
-              )}
+            {touched.type && errors.type && (
+              <Text style={styles.errorText}>
+                {errors.type}
+              </Text>
+            )}
 
-            {/* ----------
-                CURRENCY
-            ---------- */}
-            <Text style={styles.label}>
-              Currency
-            </Text>
+            {/* ================= CURRENCY ================= */}
+
+            <Text style={styles.label}>Currency</Text>
 
             <View
               style={[
@@ -400,8 +367,7 @@ const TransactionForm: React.FC<
                     key={cur}
                     style={[
                       styles.chip,
-                      active &&
-                      styles.chipSelected,
+                      active && styles.chipSelected,
                     ]}
                     onPress={() =>
                       setFieldValue(
@@ -414,7 +380,7 @@ const TransactionForm: React.FC<
                       style={[
                         styles.chipText,
                         active &&
-                        styles.chipTextSelected,
+                          styles.chipTextSelected,
                       ]}
                     >
                       {cur}
@@ -431,19 +397,16 @@ const TransactionForm: React.FC<
                 </Text>
               )}
 
-            {/* ----------
-              DESCRIPTION
-            ---------- */}
-            <Text style={styles.label}>
-              Description
-            </Text>
+            {/* ================= DESCRIPTION ================= */}
+
+            <Text style={styles.label}>Description</Text>
 
             <TextInput
-              value={values.description}
-              onChangeText={handleChange(
-                "description"
-              )}
               style={styles.textInput}
+              placeholder="Enter description"
+              placeholderTextColor={COLORS.textMuted}
+              value={values.description}
+              onChangeText={handleChange("description")}
             />
 
             {touched.description &&
@@ -453,25 +416,22 @@ const TransactionForm: React.FC<
                 </Text>
               )}
 
-            {/* ----------
-                AMOUNT
-            ---------- */}
-            <Text style={styles.label}>
-              Amount
-            </Text>
+            {/* ================= AMOUNT ================= */}
+
+            <Text style={styles.label}>Amount</Text>
 
             <TextInput
-              value={String(
-                values.amount ?? ""
-              )}
+              style={styles.textInput}
+              placeholder="Enter amount"
+              placeholderTextColor={COLORS.textMuted}
+              keyboardType="numeric"
+              value={String(values.amount ?? "")}
               onChangeText={(v) =>
                 setFieldValue(
                   "amount",
                   Number(v)
                 )
               }
-              keyboardType="numeric"
-              style={styles.textInput}
             />
 
             {touched.amount &&
@@ -481,27 +441,26 @@ const TransactionForm: React.FC<
                 </Text>
               )}
 
-            {/* ----------
-                DATE
-            ---------- */}
+            {/* ================= DATE ================= */}
+
             <Text style={styles.label}>
               Transaction Date
             </Text>
 
             <Pressable
-              onPress={() =>
-                setShowDatePicker(true)
-              }
               style={[
                 styles.textInput,
                 styles.dateInput,
               ]}
+              onPress={() =>
+                setShowDatePicker(true)
+              }
             >
               <Text style={styles.dateText}>
                 {values.transaction_date
                   ? new Date(
-                    values.transaction_date
-                  ).toLocaleDateString()
+                      values.transaction_date
+                    ).toLocaleDateString()
                   : "Select Date"}
               </Text>
             </Pressable>
@@ -517,10 +476,7 @@ const TransactionForm: React.FC<
                     ? "spinner"
                     : "default"
                 }
-                onChange={(
-                  _,
-                  selectedDate
-                ) => {
+                onChange={(_, selectedDate) => {
                   setShowDatePicker(false);
 
                   if (selectedDate) {
@@ -540,25 +496,19 @@ const TransactionForm: React.FC<
                 </Text>
               )}
 
-            {/* ----------
-              SUBMIT
-            ---------- */}
+            {/* ================= SUBMIT ================= */}
+
             <Pressable
               style={[
                 styles.button,
-                (!isValid ||
-                  isSubmitting) && {
+                (!isValid || isSubmitting) && {
                   opacity: 0.6,
                 },
               ]}
               onPress={() => handleSubmit()}
-              disabled={
-                !isValid || isSubmitting
-              }
+              disabled={!isValid || isSubmitting}
             >
-              <Text
-                style={styles.buttonText}
-              >
+              <Text style={styles.buttonText}>
                 {isSubmitting
                   ? "Saving..."
                   : isEditing
@@ -566,6 +516,7 @@ const TransactionForm: React.FC<
                     : "Save Transaction"}
               </Text>
             </Pressable>
+
           </View>
         )}
       </Formik>

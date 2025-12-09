@@ -1,95 +1,127 @@
-// src/components/TabBar.tsx
+// src/components/tab-bar.tsx
 
-import { View, Pressable, Text } from 'react-native';
-import { useRouter, useSegments, Route } from 'expo-router';
-import { TAB_ITEMS } from '@/constants/TAB_ITEMS';
-import { COLORS } from '@/constants/COLORS';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import styles from '@/styles/styles';
-import type { SFSymbol } from 'expo-symbols';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, Pressable, Text } from "react-native";
+import { useRouter, useSegments, Route } from "expo-router";
+import { TAB_ITEMS } from "@/constants/TAB_ITEMS";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useStyles } from "@/styles/styles";
+import type { SFSymbol } from "expo-symbols";
+import { LinearGradient } from "expo-linear-gradient";
+import { useAppColors } from "@/hooks/use-app-colors";
 
 type TabBarProps = {
-  onMenuPress?: () => void; // ✅ Callback for Menu tab
+  onMenuPress?: () => void;
 };
 
 export default function TabBar({ onMenuPress }: TabBarProps) {
-  const router = useRouter();
-  const segments = useSegments(); // gets [...segments] from the current path
+  const styles = useStyles();
+  const COLORS = useAppColors();
 
-  // Determine active tab
-  // Example:
-  // []                → dashboard
-  // ["(budget)"]      → (budget)
-  // ["(transaction)"] → (transaction)
-  let currentTabKey: string = segments[0] || 'dashboard';
+  const router = useRouter();
+  const segments = useSegments();
+
+  // Root segment -> selected tab
+  const currentTabKey: string = segments[0] || "dashboard";
 
   return (
+    // <LinearGradient
+    //   colors={[COLORS.tabBg, COLORS.primary]}
+    //   start={{ x: 0, y: 0 }}
+    //   end={{ x: 0, y: 1 }}
+    //   style={[
+    //     styles.tabBarContainer,
+    //     {
+    //       height: 64,
+    //       backgroundColor: COLORS.tabBg, // ✅ prevent content bleed
+    //     },
+    //   ]}
+    // >
     <LinearGradient
-      colors={['#2B123D', COLORS.tabBg]}
+      colors={[COLORS.tabBg, COLORS.primary]}
       start={{ x: 0, y: 0 }}
       end={{ x: 0, y: 1 }}
+      style={[
+        styles.tabBarContainer,
+        {
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: 64,
+          zIndex: 10,
+          backgroundColor: COLORS.tabBg, 
+        },
+      ]}
     >
-      <View style={styles.tabBarContainer}>
-        {TAB_ITEMS.map((item) => {
-          const routePath = `/${item.name}`;
-          const isActive = currentTabKey === item.name;
-          const badgeCount = item.badgeCount ?? 0;
+      {TAB_ITEMS.map((item) => {
+        const routePath = `/${item.name}`;
+        const isActive = currentTabKey === item.name;
+        const badgeCount = item.badgeCount ?? 0;
 
-          const handlePress = () => {
-            // ✅ Special behavior for Menu tab – open drawer instead of navigating
-            if (item.name === '(menu)') {
-              onMenuPress?.();
-              return;
-            }
+        const handlePress = () => {
+          if (item.name === "(menu)") {
+            onMenuPress?.();
+            return;
+          }
+          router.replace(routePath as Route);
+        };
 
-            // ✅ Normal navigation for other tabs
-            router.replace(routePath as Route);
-          };
+        return (
+          <Pressable
+            key={item.name}
+            onPress={handlePress}
+            style={styles.tabItem}
+          >
+            <View style={styles.tabIconWrapper}>
+              <IconSymbol
+                name={item.icon as SFSymbol}
+                size={22}
+                color={
+                  isActive
+                    ? COLORS.tabActive
+                    : COLORS.tabInactive
+                }
+              />
 
-          return (
-            <Pressable
-              key={item.name}
-              onPress={handlePress}
-              style={styles.tabItem}
+              {badgeCount > 0 && (
+                <View
+                  style={[
+                    styles.tabsBadgeContainer,
+                    {
+                      backgroundColor: COLORS.badgeBg,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.tabsBadgeText,
+                      {
+                        color: COLORS.badgeText,
+                      },
+                    ]}
+                  >
+                    {badgeCount > 99 ? "99+" : badgeCount}
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            <Text
+              style={[
+                styles.tabLabel,
+                {
+                  color: isActive
+                    ? COLORS.tabActive
+                    : COLORS.tabInactive,
+                  fontWeight: isActive ? "700" : "500",
+                },
+              ]}
             >
-              <View style={styles.tabIconWrapper}>
-                <IconSymbol
-                  name={item.icon as SFSymbol}
-                  size={22}
-                  color={
-                    isActive
-                      ? COLORS.tabActive
-                      : COLORS.tabInactive
-                  }
-                />
-
-                {badgeCount > 0 && (
-                  <View style={styles.tabsBadgeContainer}>
-                    <Text style={styles.tabsBadgeText}>
-                      {badgeCount > 99 ? '99+' : badgeCount}
-                    </Text>
-                  </View>
-                )}
-              </View>
-
-              <Text
-                style={[
-                  styles.tabLabel,
-                  {
-                    color: isActive
-                      ? COLORS.tabActive
-                      : COLORS.tabInactive,
-                    fontWeight: isActive ? '600' : '400',
-                  },
-                ]}
-              >
-                {item.title}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
+              {item.title}
+            </Text>
+          </Pressable>
+        );
+      })}
     </LinearGradient>
   );
 }

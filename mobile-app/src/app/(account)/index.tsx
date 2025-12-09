@@ -1,5 +1,4 @@
 // mobile-app/src/app/(account)/accounts.tsx
-
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -9,11 +8,10 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
-
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
-import styles from "@/styles/styles";
-import { COLORS } from "@/constants/COLORS";
+import { useStyles } from "@/styles/styles";
+import { useAppColors } from "@/hooks/use-app-colors";
 import { useAuth } from "@/contexts/auth-context";
 import { useRouter, RelativePathString } from "expo-router";
 import { accountService } from "@/services/account-service";
@@ -24,11 +22,15 @@ import { AccountResponse } from "@/types/account";
 ====================================================== */
 
 const Accounts = () => {
-  const [accounts, setAccounts] = useState<AccountResponse[]>([]);
-  const [loading, setLoading] = useState(false);
+  const styles = useStyles();
+  const COLORS = useAppColors();
 
   const router = useRouter();
   const { user } = useAuth();
+
+  const [accounts, setAccounts] =
+    useState<AccountResponse[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const isSuperAdmin = user?.role_id === 1;
   const currentUserId = user?.id;
@@ -48,7 +50,10 @@ const Accounts = () => {
       setAccounts(data || []);
     } catch (error) {
       console.error("Failed to load accounts", error);
-      Alert.alert("Error", "Failed to load accounts. Please try again.");
+      Alert.alert(
+        "Error",
+        "Failed to load accounts. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -67,12 +72,12 @@ const Accounts = () => {
   };
 
   const handleEdit = (acc: AccountResponse) => {
-    if (!acc.id) return;          // ✅ type guard
+    if (!acc.id) return;
     router.push(`/(account)/${acc.id}` as RelativePathString);
   };
 
   const handleDelete = async (acc: AccountResponse) => {
-    if (!acc.id) return;          // ✅ type guard
+    if (!acc.id) return;
 
     Alert.alert(
       "Delete Account",
@@ -83,13 +88,14 @@ const Accounts = () => {
           text: "Delete",
           style: "destructive",
           onPress: async () => {
-            if (acc.id !== undefined) {
-              try {
-                await accountService.delete(acc.id);
-                await loadAccounts();
-              } catch {
-                Alert.alert("Error", "Could not delete account.");
-              }
+            try {
+              await accountService.delete(acc.id!);
+              await loadAccounts();
+            } catch {
+              Alert.alert(
+                "Error",
+                "Could not delete account."
+              );
             }
           },
         },
@@ -105,101 +111,106 @@ const Accounts = () => {
     item,
   }: {
     item: AccountResponse;
-  }) => {
-    return (
-      <View style={styles.card}>
-        {/* HEADER ROW */}
-        <View style={styles.metaRow}>
-          <Text style={styles.cardTitle}>{item.name}</Text>
+  }) => (
+    <View style={styles.card}>
 
-          <Text
-            style={[
-              styles.txnAmt,
-              {
-                color:
-                  item.is_active === false
-                    ? COLORS.danger
-                    : COLORS.green,
-              },
-            ]}
-          >
-            ₹{Number(item.balance || 0).toLocaleString("en-IN")}
-          </Text>
-        </View>
+      {/* HEADER */}
+      <View style={styles.metaRow}>
+        <Text style={styles.cardTitle}>
+          {item.name}
+        </Text>
 
-        {/* META ROW */}
-        <View style={styles.metaRow}>
-          <Text style={styles.metaText}>
-            {item.type} · {item.currency}
-          </Text>
-
-          <Text
-            style={[
-              styles.metaText,
-              {
-                color:
-                  item.is_active === false
-                    ? COLORS.danger
-                    : COLORS.green,
-                fontWeight: "600",
-              },
-            ]}
-          >
-            {item.is_active ? "Active" : "Inactive"}
-          </Text>
-        </View>
-
-        {/* ACTION ROW */}
-        <View
+        <Text
           style={[
-            styles.metaRow,
+            styles.txnAmt,
             {
-              justifyContent: "flex-end",
-              gap: 18,
-              marginTop: 6,
+              color:
+                item.is_active === false
+                  ? COLORS.danger
+                  : COLORS.green,
             },
           ]}
         >
-          <Pressable
-            style={[
-              styles.actionButton,
-              styles.editButton,
-            ]}
-            onPress={() => handleEdit(item)}
-          >
-            <MaterialIcons
-              name="edit"
-              size={16}
-              color={COLORS.white}
-            />
-          </Pressable>
-
-          <Pressable
-            style={[
-              styles.actionButton,
-              styles.deleteButton,
-            ]}
-            onPress={() => handleDelete(item)}
-          >
-            <MaterialIcons
-              name="delete"
-              size={16}
-              color={COLORS.white}
-            />
-          </Pressable>
-        </View>
+          ₹{Number(item.balance || 0).toLocaleString("en-IN")}
+        </Text>
       </View>
-    );
-  };
+
+      {/* META */}
+      <View style={styles.metaRow}>
+        <Text style={styles.metaText}>
+          {item.type} · {item.currency}
+        </Text>
+
+        <Text
+          style={[
+            styles.metaText,
+            {
+              color:
+                item.is_active === false
+                  ? COLORS.danger
+                  : COLORS.green,
+              fontWeight: "600",
+            },
+          ]}
+        >
+          {item.is_active ? "Active" : "Inactive"}
+        </Text>
+      </View>
+
+      {/* ACTIONS */}
+      <View
+        style={[
+          styles.metaRow,
+          {
+            justifyContent: "flex-end",
+            gap: 18,
+            marginTop: 6,
+          },
+        ]}
+      >
+        <Pressable
+          style={[
+            styles.actionButton,
+            styles.editButton,
+          ]}
+          onPress={() => handleEdit(item)}
+        >
+          <MaterialIcons
+            name="edit"
+            size={16}
+            color={COLORS.white}
+          />
+        </Pressable>
+
+        <Pressable
+          style={[
+            styles.actionButton,
+            styles.deleteButton,
+          ]}
+          onPress={() => handleDelete(item)}
+        >
+          <MaterialIcons
+            name="delete"
+            size={16}
+            color={COLORS.white}
+          />
+        </Pressable>
+      </View>
+    </View>
+  );
 
   /* ======================================================
       MAIN RENDER
   ====================================================== */
 
   return (
-    <View style={[styles.container, { paddingHorizontal: 16 }]}>
-
-      {/* Header row: title + Add button */}
+    <View
+      style={[
+        styles.container,
+        { paddingHorizontal: 16 },
+      ]}
+    >
+      {/* HEADER */}
       <View
         style={{
           flexDirection: "row",
@@ -210,7 +221,7 @@ const Accounts = () => {
         <Text
           style={[
             styles.title,
-            { flex: 1, textAlign: "left", marginBottom: 0 },
+            { flex: 1, marginBottom: 0 },
           ]}
         >
           List Of Accounts
@@ -240,7 +251,8 @@ const Accounts = () => {
         <FlatList
           data={accounts}
           keyExtractor={(item) =>
-            item.id?.toString() ?? Math.random().toString()
+            item.id?.toString() ??
+            Math.random().toString()
           }
           renderItem={renderItem}
           refreshing={loading}

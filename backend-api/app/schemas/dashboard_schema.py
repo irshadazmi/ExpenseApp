@@ -1,13 +1,12 @@
+# backend-api/app/schemas/dashboard_schema.py
 from pydantic import BaseModel
 from typing import List, Optional
-
 
 class BudgetVsSpendSchema(BaseModel):
     total_budget: int
     total_spent: int
     remaining: int
     percent_used: float
-
 
 class CategorySpendSchema(BaseModel):
     category_id: int
@@ -16,7 +15,6 @@ class CategorySpendSchema(BaseModel):
     budget_amount: int
     spent_amount: int
     remaining: int
-
 
 class TransactionFeedSchema(BaseModel):
     id: int
@@ -27,12 +25,10 @@ class TransactionFeedSchema(BaseModel):
     short_name: str
     date: str
 
-
 class AccountSummarySchema(BaseModel):
     account_id: int
     balance: int
     currency: str
-
 
 class AlertSchema(BaseModel):
     category_id: int

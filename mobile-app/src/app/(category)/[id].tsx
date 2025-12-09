@@ -1,11 +1,13 @@
 import { View, Text, Pressable } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 
-import styles from "@/styles/styles";
-import { COLORS } from "@/constants/COLORS";
+import { useStyles } from "@/styles/styles";
 import CategoryForm from "@/components/category-form";
+import { useAppColors } from "@/hooks/use-app-colors";
 
 const EditCategory = () => {
+  const styles = useStyles();
+  const COLORS = useAppColors();  // ✅ central theme
   const router = useRouter();
   const { id } = useLocalSearchParams();
 
@@ -14,7 +16,6 @@ const EditCategory = () => {
 
   return (
     <View style={styles.container}>
-
       {/* Header: Title + Back */}
       <View
         style={{

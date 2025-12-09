@@ -1,4 +1,5 @@
 // mobile-app/src/contexts/theme-context.tsx
+
 import React, {
   createContext,
   useContext,
@@ -10,31 +11,21 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useColorScheme } from "react-native";
 import { getColors } from "@/constants/theme";
 
-/* ======================================================
-    TYPES
-====================================================== */
-
 export type ThemeMode = "light" | "dark" | "system";
 
 type ThemeContextType = {
   mode: ThemeMode;
   resolvedMode: "light" | "dark";
+  theme: "light" | "dark";
   colors: ReturnType<typeof getColors>;
+
   toggle: () => Promise<void>;
   setMode: (mode: ThemeMode) => Promise<void>;
 };
 
-/* ======================================================
-    CONTEXT
-====================================================== */
-
 const ThemeContext = createContext<ThemeContextType | null>(
   null
 );
-
-/* ======================================================
-    PROVIDER
-====================================================== */
 
 export const ThemeProvider = ({
   children,
@@ -42,7 +33,6 @@ export const ThemeProvider = ({
   children: React.ReactNode;
 }) => {
   const systemScheme = useColorScheme();
-
   const [mode, setModeState] =
     useState<ThemeMode>("system");
 
@@ -52,7 +42,6 @@ export const ThemeProvider = ({
       const saved = await AsyncStorage.getItem(
         "themeMode"
       );
-
       if (
         saved === "light" ||
         saved === "dark" ||
@@ -71,7 +60,7 @@ export const ThemeProvider = ({
         : "light"
       : mode;
 
-  /* ---------- TOGGLE (Header button) ---------- */
+  /* ---------- TOGGLE ---------- */
   const toggle = async () => {
     const next =
       mode === "light"
@@ -84,7 +73,7 @@ export const ThemeProvider = ({
     await AsyncStorage.setItem("themeMode", next);
   };
 
-  /* ---------- SET MODE (Settings screen) ---------- */
+  /* ---------- SET MODE ---------- */
   const setMode = async (next: ThemeMode) => {
     setModeState(next);
     await AsyncStorage.setItem("themeMode", next);
@@ -95,6 +84,7 @@ export const ThemeProvider = ({
       value={{
         mode,
         resolvedMode,
+        theme: resolvedMode,
         colors: getColors(resolvedMode),
         toggle,
         setMode,
@@ -104,10 +94,6 @@ export const ThemeProvider = ({
     </ThemeContext.Provider>
   );
 };
-
-/* ======================================================
-    HOOK
-====================================================== */
 
 export const useTheme = () => {
   const ctx = useContext(ThemeContext);

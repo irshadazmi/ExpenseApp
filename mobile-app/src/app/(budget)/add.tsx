@@ -1,17 +1,19 @@
 import { View, Text, Pressable } from "react-native";
 import { useRouter } from "expo-router";
 
-import styles from "@/styles/styles";
-import { COLORS } from "@/constants/COLORS";
+import { useStyles } from "@/styles/styles";
+import { useAppColors } from "@/hooks/use-app-colors";
 import BudgetForm from "@/components/budget-form";
 
 const AddBudget = () => {
+  const styles = useStyles();
+  const COLORS = useAppColors();
   const router = useRouter();
 
   return (
     <View style={styles.container}>
+      {/* ================= HEADER ================= */}
 
-      {/* Header: Title + Back */}
       <View
         style={{
           flexDirection: "row",
@@ -22,7 +24,11 @@ const AddBudget = () => {
         <Text
           style={[
             styles.title,
-            { flex: 1, textAlign: "left", marginBottom: 0 },
+            {
+              flex: 1,
+              textAlign: "left",
+              marginBottom: 0,
+            },
           ]}
         >
           Add Budget
@@ -40,6 +46,8 @@ const AddBudget = () => {
           </Text>
         </Pressable>
       </View>
+
+      {/* ================= FORM ================= */}
 
       <BudgetForm />
     </View>

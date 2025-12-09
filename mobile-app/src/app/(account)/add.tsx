@@ -1,16 +1,19 @@
 import { View, Text, Pressable } from "react-native";
 import { useRouter } from "expo-router";
 
-import styles from "@/styles/styles";
-import { COLORS } from "@/constants/COLORS";
+import { useStyles } from "@/styles/styles";
+import { useAppColors } from "@/hooks/use-app-colors";
+
 import AccountForm from "@/components/account-form";
 
 const AddAccount = () => {
+  const styles = useStyles();
+  const COLORS = useAppColors();
   const router = useRouter();
 
   return (
     <View style={styles.container}>
-
+      
       {/* Header: Title + Back */}
       <View
         style={{
@@ -22,7 +25,11 @@ const AddAccount = () => {
         <Text
           style={[
             styles.title,
-            { flex: 1, textAlign: "left", marginBottom: 0 },
+            {
+              flex: 1,
+              textAlign: "left",
+              marginBottom: 0,
+            },
           ]}
         >
           Add Account
@@ -33,7 +40,7 @@ const AddAccount = () => {
             style={{
               color: COLORS.primary,
               fontSize: 14,
-              fontWeight: "600",
+              fontWeight: "700",
             }}
           >
             Back to List

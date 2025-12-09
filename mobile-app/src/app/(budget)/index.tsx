@@ -8,9 +8,9 @@ import {
   Alert,
 } from "react-native";
 
-import styles from "@/styles/styles";
+import { useStyles } from "@/styles/styles";
+import { useAppColors } from "@/hooks/use-app-colors";
 import { budgetService } from "@/services/budget-service";
-import { COLORS } from "@/constants/COLORS";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 import { BudgetResponse } from "@/types/budget";
@@ -22,6 +22,9 @@ import { useAuth } from "@/contexts/auth-context";
 ====================================================== */
 
 const Budgets = () => {
+  const styles = useStyles();
+  const COLORS = useAppColors();
+
   const [budgets, setBudgets] = useState<BudgetResponse[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -43,7 +46,7 @@ const Budgets = () => {
         ? await budgetService.getAll()
         : await budgetService.getByUser(currentUserId!);
 
-      setBudgets(data);
+      setBudgets(data || []);
     } catch (error) {
       console.error("Failed to load budgets", error);
       Alert.alert("Error", "Failed to load budgets. Please try again.");
@@ -84,93 +87,90 @@ const Budgets = () => {
       RENDER ITEM
   ====================================================== */
 
-  const renderItem = ({ item }: { item: BudgetResponse }) => {
-    const isActive = item.is_active;
+  const renderItem = ({ item }: { item: BudgetResponse }) => (
+    <View style={styles.card}>
+      {/* HEADER ROW */}
+      <View style={styles.metaRow}>
+        <Text style={styles.cardTitle}>
+          {item.name}
+        </Text>
 
-    return (
-      <View style={styles.card}>
-        {/* HEADER ROW */}
-        <View style={styles.cardHeader}>
-          <Text style={styles.cardTitle}>
-            {item.name}
-          </Text>
-
-          <View style={styles.statusBadge}>
-            <Text
-              style={[
-                styles.statusText,
-                {
-                  color: isActive
-                    ? COLORS.success
-                    : COLORS.danger,
-                },
-              ]}
-            >
-              {isActive ? "ACTIVE" : "INACTIVE"}
-            </Text>
-          </View>
-        </View>
-
-        {/* META INFO */}
-        <View style={styles.metaRow}>
-          <Text style={styles.metaText}>
-            💰 {item.currency} {Number(item.amount).toLocaleString("en-IN")}
-          </Text>
-
-          <Text style={styles.metaText}>
-            ⏱ {item.period}
-          </Text>
-        </View>
-
-        <View style={styles.metaRow}>
-          <Text style={styles.metaText}>
-            📅 {new Date(item.start_date).toLocaleDateString()} →{" "}
-            {new Date(item.end_date).toLocaleDateString()}
-          </Text>
-
-          <Text style={styles.metaText}>
-            🏷 Cat ID: {item.category_id}
-          </Text>
-        </View>
-
-        {/* ACTIONS */}
-        <View
+        <Text
           style={[
-            styles.actionsRow,
-            { marginTop: 6 },
+            styles.metaText,
+            {
+              color: item.is_active
+                ? COLORS.green
+                : COLORS.danger,
+              fontWeight: "600",
+            },
           ]}
         >
-          <Pressable
-            style={[
-              styles.actionButton,
-              styles.editButton,
-            ]}
-            onPress={() => handleEdit(item)}
-          >
-            <MaterialIcons
-              name="edit"
-              size={16}
-              color={COLORS.white}
-            />
-          </Pressable>
-
-          <Pressable
-            style={[
-              styles.actionButton,
-              styles.deleteButton,
-            ]}
-            onPress={() => handleDelete(item)}
-          >
-            <MaterialIcons
-              name="delete"
-              size={16}
-              color={COLORS.white}
-            />
-          </Pressable>
-        </View>
+          {item.is_active ? "Active" : "Inactive"}
+        </Text>
       </View>
-    );
-  };
+
+      {/* META INFO */}
+      <View style={styles.metaRow}>
+        <Text style={styles.metaText}>
+          💰 {item.currency}{" "}
+          {Number(item.amount).toLocaleString("en-IN")}
+        </Text>
+
+        <Text style={styles.metaText}>
+          ⏱ {item.period}
+        </Text>
+      </View>
+
+      <View style={styles.metaRow}>
+        <Text style={styles.metaText}>
+          📅{" "}
+          {new Date(item.start_date).toLocaleDateString()} →{" "}
+          {new Date(item.end_date).toLocaleDateString()}
+        </Text>
+
+        <Text style={styles.metaText}>
+          🏷 Cat ID: {item.category_id}
+        </Text>
+      </View>
+
+      {/* ACTIONS */}
+      <View
+        style={[
+          styles.metaRow,
+          { justifyContent: "flex-end", gap: 18, marginTop: 6 },
+        ]}
+      >
+        <Pressable
+          style={[
+            styles.actionButton,
+            styles.editButton,
+          ]}
+          onPress={() => handleEdit(item)}
+        >
+          <MaterialIcons
+            name="edit"
+            size={16}
+            color={COLORS.white}
+          />
+        </Pressable>
+
+        <Pressable
+          style={[
+            styles.actionButton,
+            styles.deleteButton,
+          ]}
+          onPress={() => handleDelete(item)}
+        >
+          <MaterialIcons
+            name="delete"
+            size={16}
+            color={COLORS.white}
+          />
+        </Pressable>
+      </View>
+    </View>
+  );
 
   /* ======================================================
       UI
@@ -178,7 +178,7 @@ const Budgets = () => {
 
   return (
     <View style={styles.container}>
-      {/* Header row: title + Add button */}
+      {/* Header */}
       <View
         style={{
           flexDirection: "row",
@@ -189,7 +189,11 @@ const Budgets = () => {
         <Text
           style={[
             styles.title,
-            { flex: 1, textAlign: "left", marginBottom: 0 },
+            {
+              flex: 1,
+              textAlign: "left",
+              marginBottom: 0,
+            },
           ]}
         >
           List Of Budgets
@@ -208,23 +212,26 @@ const Budgets = () => {
         </Pressable>
       </View>
 
-      {/* LOADING */}
+      {/* DATA */}
       {loading ? (
         <ActivityIndicator
-          style={{ marginTop: 20 }}
           size="large"
           color={COLORS.primary}
+          style={{ marginTop: 20 }}
         />
       ) : (
         <FlatList
           data={budgets}
           keyExtractor={(item) =>
-            item.id?.toString() ?? Math.random().toString()
+            item.id?.toString() ??
+            Math.random().toString()
           }
           renderItem={renderItem}
-          contentContainerStyle={{ paddingBottom: 50 }}
           refreshing={loading}
           onRefresh={loadBudgets}
+          contentContainerStyle={{
+            paddingBottom: 50,
+          }}
         />
       )}
     </View>

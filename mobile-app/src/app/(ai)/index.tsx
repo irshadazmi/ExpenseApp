@@ -1,20 +1,49 @@
 import { useState } from "react";
-import { View, Text, TextInput, Pressable, FlatList } from "react-native";
-import styles from "@/styles/styles";
-import { COLORS } from "@/constants/COLORS";
+import {
+  View,
+  Text,
+  TextInput,
+  Pressable,
+  FlatList,
+} from "react-native";
+
+import { useStyles } from "@/styles/styles";
+import { useAppColors } from "@/hooks/use-app-colors";
+
 import axios from "axios";
 
+/* ======================================================
+    TYPES
+====================================================== */
+
+type Message = {
+  role: "user" | "assistant";
+  text: string;
+};
+
+/* ======================================================
+    COMPONENT
+====================================================== */
+
 export default function AiAssistant() {
+  const styles = useStyles();
+  const COLORS = useAppColors(); // ✅ unified theme colors
+
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<
-    { role: "user" | "assistant"; text: string }[]
-  >([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
+
+  /* ======================================================
+      SEND MESSAGE
+====================================================== */
 
   const sendMessage = async () => {
     if (!input.trim()) return;
 
-    const userMessage = { role: "user", text: input };
+    const userMessage: Message = {
+      role: "user",
+      text: input.trim(),
+    };
 
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
@@ -27,28 +56,44 @@ export default function AiAssistant() {
 
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", text: res.data.reply },
+        {
+          role: "assistant",
+          text: res?.data?.reply ?? "No response from AI.",
+        },
       ]);
     } catch {
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", text: "AI is unavailable right now." },
+        {
+          role: "assistant",
+          text: "AI is unavailable right now.",
+        },
       ]);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
+  /* ======================================================
+      RENDER
+====================================================== */
+
   return (
-    <View style={styles.container}>
+    <View style={styles.formContainer}>
+      {/* ================= CHAT LIST ================= */}
       <FlatList
         data={messages}
         keyExtractor={(_, i) => i.toString()}
+        contentContainerStyle={{
+          paddingVertical: 8,
+          paddingHorizontal: 6,
+        }}
         renderItem={({ item }) => (
           <View
             style={{
               alignSelf:
                 item.role === "user" ? "flex-end" : "flex-start",
+              maxWidth: "85%",
             }}
           >
             <Text
@@ -56,14 +101,16 @@ export default function AiAssistant() {
                 backgroundColor:
                   item.role === "user"
                     ? COLORS.primary
-                    : "#EFEFEF",
+                    : COLORS.surface,
                 color:
                   item.role === "user"
-                    ? "white"
+                    ? COLORS.textInverse
                     : COLORS.text,
-                padding: 12,
+                paddingHorizontal: 12,
+                paddingVertical: 8,
                 borderRadius: 10,
                 marginVertical: 4,
+                lineHeight: 20,
               }}
             >
               {item.text}
@@ -72,15 +119,41 @@ export default function AiAssistant() {
         )}
       />
 
-      <View style={{ flexDirection: "row" }}>
+      {/* ================= INPUT BAR ================= */}
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 8,
+          marginTop: 6,
+        }}
+      >
         <TextInput
           value={input}
           onChangeText={setInput}
           placeholder="Ask about your spending..."
-          style={styles.textInput}
+          placeholderTextColor={COLORS.textMuted}
+          style={[
+            styles.textInput,
+            {
+              flex: 1,
+              marginBottom: 0,
+            },
+          ]}
         />
 
-        <Pressable onPress={sendMessage} style={styles.button}>
+        <Pressable
+          onPress={sendMessage}
+          style={[
+            styles.button,
+            {
+              paddingHorizontal: 14,
+              paddingVertical: 10,
+            },
+            loading && { opacity: 0.6 },
+          ]}
+          disabled={loading}
+        >
           <Text style={styles.buttonText}>
             {loading ? "..." : "Send"}
           </Text>

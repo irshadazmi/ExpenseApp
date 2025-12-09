@@ -1,3 +1,4 @@
+import { RelativePathString } from "expo-router";
 import IntroTemplate from "./intro-template";
 
 const SecondScreen = () => {
@@ -6,7 +7,7 @@ const SecondScreen = () => {
       image={require('@/assets/images/intro2.png')}
       title="Analyze Spending Patterns"
       description="Visualize your expenses with detailed charts and reports."
-      next="/intro/third_screen"
+      next={"/intro/third_screen" as RelativePathString} 
     />
   );
 };

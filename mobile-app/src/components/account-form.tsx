@@ -15,8 +15,8 @@ import { Formik } from "formik";
 import * as Yup from "yup";
 import { useRouter } from "expo-router";
 
-import styles from "@/styles/styles";
-import { COLORS } from "@/constants/COLORS";
+import { useStyles } from "@/styles/styles";
+import { useAppColors } from "@/hooks/use-app-colors";
 
 import { accountService } from "@/services/account-service";
 import {
@@ -67,9 +67,11 @@ const AccountForm: React.FC<AccountFormProps> = ({
   id,
   onSubmitSuccess,
 }) => {
+  const styles = useStyles();
+  const COLORS = useAppColors(); // ✅ central theme colors
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
 
+  const [loading, setLoading] = useState(false);
   const isEditing = typeof id === "number";
 
   const [initialValues, setInitialValues] =
@@ -83,7 +85,7 @@ const AccountForm: React.FC<AccountFormProps> = ({
 
   /* ======================================================
       LOAD EXISTING ACCOUNT
-  ====================================================== */
+====================================================== */
 
   useEffect(() => {
     if (!isEditing) return;
@@ -111,7 +113,7 @@ const AccountForm: React.FC<AccountFormProps> = ({
 
   /* ======================================================
       SUBMIT HANDLER
-  ====================================================== */
+====================================================== */
 
   const handleSubmit = async (
     values: AccountCreate,
@@ -130,7 +132,7 @@ const AccountForm: React.FC<AccountFormProps> = ({
       }
 
       onSubmitSuccess?.();
-      router.back(); // ✅ auto return after submit
+      router.back();
     } catch {
       Alert.alert("Error", "Failed to save account.");
     } finally {
@@ -140,18 +142,21 @@ const AccountForm: React.FC<AccountFormProps> = ({
 
   /* ======================================================
       LOADING STATE
-  ====================================================== */
+====================================================== */
 
   if (loading && isEditing) {
     return (
       <View
         style={[
           styles.container,
-          { justifyContent: "center", alignItems: "center" },
+          {
+            justifyContent: "center",
+            alignItems: "center",
+          },
         ]}
       >
         <ActivityIndicator size="large" color={COLORS.primary} />
-        <Text style={{ marginTop: 12 }}>
+        <Text style={{ marginTop: 12, color: COLORS.text }}>
           Loading account data...
         </Text>
       </View>
@@ -160,10 +165,10 @@ const AccountForm: React.FC<AccountFormProps> = ({
 
   /* ======================================================
       UI
-  ====================================================== */
+====================================================== */
 
   return (
-    <ScrollView>
+    <ScrollView showsVerticalScrollIndicator={true}> 
       <Formik
         initialValues={initialValues}
         enableReinitialize
@@ -180,15 +185,12 @@ const AccountForm: React.FC<AccountFormProps> = ({
           isValid,
           setFieldValue,
         }) => (
-          <View>
-
-            {/* ----------------- NAME ----------------- */}
-
+          <View style={styles.formContainer}>
             <Text style={styles.label}>Account Name</Text>
-
             <TextInput
               style={styles.textInput}
               placeholder="Enter account name"
+              placeholderTextColor={COLORS.textMuted}
               value={values.name}
               onChangeText={handleChange("name")}
               editable={!isSubmitting}
@@ -200,16 +202,9 @@ const AccountForm: React.FC<AccountFormProps> = ({
               </Text>
             )}
 
-            {/* ---------------- ACCOUNT TYPE (WRAPPED CHIPS) ---------------- */}
-
             <Text style={styles.label}>Account Type</Text>
 
-            <View
-              style={[
-                styles.chipsContainer,
-                { flexWrap: "wrap" },
-              ]}
-            >
+            <View style={[styles.chipsContainer, { flexWrap: "wrap" }]}>
               {ACCOUNT_TYPES.map((type) => {
                 const active = values.type === type;
 
@@ -244,13 +239,12 @@ const AccountForm: React.FC<AccountFormProps> = ({
               </Text>
             )}
 
-            {/* ----------------- BALANCE ----------------- */}
-
             <Text style={styles.label}>Balance</Text>
 
             <TextInput
               style={styles.textInput}
               placeholder="Enter balance"
+              placeholderTextColor={COLORS.textMuted}
               value={String(values.balance ?? "")}
               onChangeText={(v) =>
                 setFieldValue("balance", Number(v))
@@ -265,16 +259,9 @@ const AccountForm: React.FC<AccountFormProps> = ({
               </Text>
             )}
 
-            {/* ---------------- CURRENCY (WRAPPED CHIPS) ---------------- */}
-
             <Text style={styles.label}>Currency</Text>
 
-            <View
-              style={[
-                styles.chipsContainer,
-                { flexWrap: "wrap" },
-              ]}
-            >
+            <View style={[styles.chipsContainer, { flexWrap: "wrap" }]}>
               {CURRENCIES.map((cur) => {
                 const active = values.currency === cur;
 
@@ -309,8 +296,6 @@ const AccountForm: React.FC<AccountFormProps> = ({
               </Text>
             )}
 
-            {/* ---------------- ACTIVE ---------------- */}
-
             <View
               style={{
                 flexDirection: "row",
@@ -318,7 +303,7 @@ const AccountForm: React.FC<AccountFormProps> = ({
                 marginVertical: 12,
               }}
             >
-              <Text style={{ fontSize: 16 }}>
+              <Text style={{ fontSize: 16, color: COLORS.text }}>
                 Active
               </Text>
 
@@ -347,8 +332,6 @@ const AccountForm: React.FC<AccountFormProps> = ({
               </Pressable>
             </View>
 
-            {/* ---------------- SUBMIT ---------------- */}
-
             <Pressable
               style={[
                 styles.button,
@@ -363,8 +346,8 @@ const AccountForm: React.FC<AccountFormProps> = ({
                 {isSubmitting
                   ? "Saving..."
                   : isEditing
-                  ? "Update Account"
-                  : "Save Account"}
+                    ? "Update Account"
+                    : "Save Account"}
               </Text>
             </Pressable>
 

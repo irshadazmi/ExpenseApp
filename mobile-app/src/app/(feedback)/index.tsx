@@ -1,451 +1,364 @@
-// src/app/(feedback)/index.tsx
+import { getColors } from "@/constants/theme";
+import { StyleSheet } from "react-native";
+import { useTheme } from "@/contexts/theme-context";
 
-import React, { useEffect, useMemo, useState } from "react";
-import {
-	View,
-	Text,
-	TextInput,
-	ActivityIndicator,
-	FlatList,
-	Pressable,
-	Alert,
-} from "react-native";
+export const useStyles = () => {
+  const { resolvedMode } = useTheme();
+  const COLORS = getColors(resolvedMode);
 
-import { RelativePathString, useRouter } from "expo-router";
-import { useAuth } from "@/contexts/auth-context";
+  const SURFACE = COLORS.surface;
+  const SURFACE_SOFT = COLORS.secondary;
 
-import styles from "@/styles/styles";
-import { COLORS } from "@/constants/COLORS";
+  const OVERLAY = COLORS.cardShadow;
+  const SKELETON = COLORS.lightGray;
 
-import { feedbackService } from "@/services/feedback-service";
-import { FeedbackResponse } from "@/types/feedback";
+  const CHIP_BG = COLORS.card;
+  const BAR_BG = COLORS.disabled;
 
-import { FEEDBACK_TYPES, STATUS_CODES } from "@/constants/CONSTANTS";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+  // ===================================================
+  // BULLET-PROOF INPUT BASE ✅
+  // ===================================================
+  const INPUT_BASE = {
+    backgroundColor: COLORS.card,
+    color: COLORS.text,               // ✅ Always visible in dark mode
+    borderColor: COLORS.primary,
+    borderWidth: 1.5,
+    shadowColor: COLORS.cardShadow,
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 2,
+    elevation: 1,
+  };
 
-/* ======================================================
-		FEEDBACK LIST
-====================================================== */
+  return StyleSheet.create({
+    // ===================================================
+    // LAYOUT
+    // ===================================================
+    container: {
+      flex: 1,
+      padding: 10,
+      backgroundColor: SURFACE_SOFT,
+      justifyContent: "center",
+    },
+    contentContainer: {
+      paddingVertical: 0,
+      paddingHorizontal: 0,
+    },
+    formContainer: {
+      flex: 1,
+      padding: 10,
+      paddingBottom: 120,
+      backgroundColor: SURFACE_SOFT,
+    },
 
-const Feedbacks = () => {
-	const router = useRouter();
-	const { user } = useAuth();
+    // ===================================================
+    // TEXT
+    // ===================================================
+    welcome: {
+      fontSize: 26,
+      fontWeight: "700",
+      color: COLORS.primary,
+      marginBottom: 12,
+      letterSpacing: 0.5,
+    },
+    title: {
+      fontSize: 22,
+      fontWeight: "700",
+      color: COLORS.text,
+      marginBottom: 10,
+      textAlign: "center",
+    },
+    description: {
+      fontSize: 16,
+      marginBottom: 8,
+      color: COLORS.lightGray,
+    },
+    text: {
+      fontSize: 16,
+      color: COLORS.textSecondary,
+      marginVertical: 8,
+      lineHeight: 24,
+    },
+    link: {
+      color: COLORS.primary,
+      textDecorationLine: "underline",
+      textAlign: "center",
+    },
+    label: {
+      fontSize: 14,
+      marginHorizontal: 0,
+      marginTop: 8,
+      paddingBottom: 10,
+      color: COLORS.text,
+    },
+    errorText: {
+      fontSize: 12,
+      fontWeight: "500",
+      color: COLORS.danger,
+      marginBottom: 4,
+    },
 
-	const [loading, setLoading] = useState(false);
-	const [feedbacks, setFeedbacks] =
-		useState<FeedbackResponse[]>([]);
+    // ===================================================
+    // MEDIA
+    // ===================================================
+    image: {
+      width: 240,
+      height: 240,
+      marginBottom: 32,
+      alignSelf: "center",
+    },
+    logo: {
+      width: 280,
+      height: 280,
+    },
 
-	const [search, setSearch] = useState("");
-	const [selectedType, setSelectedType] =
-		useState<string | null>(null);
-	const [selectedStatus, setSelectedStatus] =
-		useState<string | null>(null);
+    // ===================================================
+    // INPUTS ✅ BULLETPROOF
+    // ===================================================
+    textInput: {
+      ...INPUT_BASE,
+      height: 46,
+      borderRadius: 5,
+      paddingHorizontal: 10,
+      fontSize: 16,
+      marginTop: 0,
+      marginBottom: 10,
+    },
 
-	const isSuperAdmin = user?.role_id === 1;
-	const currentUserId = user?.id;
+    dateInput: {
+      ...INPUT_BASE,
+      height: 46,
+      borderRadius: 0,
+      paddingVertical: 10,
+      paddingHorizontal: 10,
+      justifyContent: "center",
+      fontSize: 16,
+      marginVertical: 10,
+      marginBottom: 10,
+    },
 
-	/* ======================================================
-			LOAD DATA
-	====================================================== */
+    dateText: {
+      color: COLORS.text,
+      fontSize: 16,
+    },
 
-	const loadFeedbacks = async () => {
-		if (!user) return;
+    searchInput: {
+      backgroundColor: COLORS.card,
+      color: COLORS.text,
+      borderColor: COLORS.border,
+      borderWidth: 1,
+      borderRadius: 8,
+      paddingHorizontal: 10,
+      paddingVertical: 8,
+      marginBottom: 12,
+    },
 
-		setLoading(true);
+    // ===================================================
+    // BUTTONS
+    // ===================================================
+    button: {
+      backgroundColor: COLORS.primary,
+      paddingVertical: 10,
+      paddingHorizontal: 10,
+      borderRadius: 5,
+      marginVertical: 10,
+      marginBottom: 10,
+      alignItems: "center",
+      shadowColor: COLORS.cardShadow,
+      shadowOpacity: 0.15,
+      shadowOffset: { width: 0, height: 2 },
+      shadowRadius: 6,
+      elevation: 2,
+    },
+    buttonText: {
+      color: COLORS.badgeText,
+      fontSize: 17,
+      fontWeight: "600",
+      letterSpacing: 0.5,
+    },
+    disabledButton: {
+      backgroundColor: COLORS.disabled,
+      paddingVertical: 10,
+      paddingHorizontal: 10,
+      borderRadius: 0,
+      marginVertical: 10,
+      marginBottom: 10,
+      alignItems: "center",
+      shadowColor: COLORS.cardShadow,
+      shadowOpacity: 0.15,
+      shadowOffset: { width: 0, height: 2 },
+      shadowRadius: 6,
+      elevation: 2,
+    },
+    disabledButtonText: {
+      color: COLORS.badgeText,
+      fontSize: 17,
+      fontWeight: "600",
+      letterSpacing: 0.5,
+    },
+    smallButton: {
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 8,
+      backgroundColor: COLORS.primary,
+    },
+    smallButtonText: {
+      fontSize: 12,
+      color: COLORS.badgeText,
+      fontWeight: "600",
+    },
 
-		try {
-			const data = isSuperAdmin
-				? await feedbackService.getAll()
-				: await feedbackService.getByUser(currentUserId!);
+    // ===================================================
+    // DROPDOWN / PICKER
+    // ===================================================
+    dropdownWrapper: {
+      ...INPUT_BASE,
+      height: 46,
+      borderRadius: 0,
+      paddingHorizontal: 10,
+      justifyContent: "center",
+      marginVertical: 10,
+      marginBottom: 10,
+    },
+    dropdown: {
+      borderWidth: 0,
+      margin: 0,
+      padding: 0,
+      backgroundColor: "transparent",
+    },
+    dropdownText: {
+      fontSize: 12,
+      color: COLORS.text,
+    },
+    picker: {
+      height: 48,
+      width: "100%",
+      color: COLORS.text,
+    },
 
-			setFeedbacks(data || []);
-		} catch (error) {
-			console.error("Failed to load feedbacks", error);
-			Alert.alert(
-				"Error",
-				"Failed to load feedbacks. Please try again."
-			);
-		} finally {
-			setLoading(false);
-		}
-	};
+    // ===================================================
+    // HEADER
+    // ===================================================
+    headerContainer: {
+      width: "100%",
+      height: 56,
+      backgroundColor: COLORS.primary,
+      justifyContent: "center",
+      alignItems: "center",
+      elevation: 5,
+      shadowColor: COLORS.cardShadow,
+      shadowOpacity: 0.15,
+      shadowOffset: { width: 0, height: 2 },
+      shadowRadius: 6,
+    },
+    headerText: {
+      color: COLORS.badgeText,
+      fontSize: 20,
+      fontWeight: "700",
+      letterSpacing: 1,
+    },
 
-	useEffect(() => {
-		loadFeedbacks();
-	}, [user]);
+    // ===================================================
+    // LISTS
+    // ===================================================
+    listHeader: {
+      height: 46,
+      flexDirection: "row",
+      paddingVertical: 8,
+      paddingHorizontal: 4,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: COLORS.primary,
+      borderBottomWidth: 1,
+      borderBottomColor: COLORS.border,
+    },
+    listHeaderText: {
+      fontSize: 16,
+      fontWeight: "bold",
+      textAlign: "right",
+      color: COLORS.badgeText,
+    },
+    listRow: {
+      flexDirection: "row",
+      paddingVertical: 10,
+      paddingHorizontal: 4,
+      alignItems: "center",
+      borderBottomWidth: 1,
+      borderBottomColor: COLORS.border,
+      backgroundColor: SURFACE,
+    },
+    listRowAlt: {
+      backgroundColor: COLORS.lightGray,
+    },
 
-	/* ======================================================
-			SEARCH + FILTER
-	====================================================== */
+    // ===================================================
+    // GENERIC CARD
+    // ===================================================
+    card: {
+      backgroundColor: SURFACE,
+      borderRadius: 10,
+      padding: 12,
+      marginBottom: 10,
+      elevation: 2,
+      shadowColor: OVERLAY,
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      shadowOffset: { width: 0, height: 2 },
+    },
 
-	const filteredFeedbacks = useMemo(() => {
-		let data = [...feedbacks];
+    // ===================================================
+    // TAB BAR
+    // ===================================================
+    tabBarContainer: {
+      flexDirection: "row",
+      justifyContent: "space-around",
+      height: 64,
+      backgroundColor: COLORS.tabBg,
+      borderTopWidth: 1,
+      borderTopColor: COLORS.tabBorderTop,
+      shadowColor: COLORS.cardShadow,
+      shadowOffset: { width: 0, height: -4 },
+      shadowOpacity: 0.25,
+      shadowRadius: 12,
+      elevation: 10,
+    },
+    tabItem: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: 6,
+    },
+    tabLabel: {
+      fontSize: 12,
+      marginTop: 2,
+    },
+    tabBarTab: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    tabBarText: {
+      color: COLORS.badgeText,
+      fontWeight: "600",
+      fontSize: 14,
+      letterSpacing: 0.5,
+    },
 
-		const q = search.trim().toLowerCase();
-
-		if (q) {
-			data = data.filter(
-				(f) =>
-					f.subject.toLowerCase().includes(q) ||
-					f.description.toLowerCase().includes(q) ||
-					f.issue_type.toLowerCase().includes(q)
-			);
-		}
-
-		if (selectedType)
-			data = data.filter(
-				(f) => f.issue_type === selectedType
-			);
-
-		if (selectedStatus)
-			data = data.filter(
-				(f) => f.status === selectedStatus
-			);
-
-		// newest first
-		data.sort(
-			(a, b) =>
-				new Date(b.created_at).getTime() -
-				new Date(a.created_at).getTime()
-		);
-
-		return data;
-	}, [feedbacks, search, selectedType, selectedStatus]);
-
-	/* ======================================================
-			NAVIGATION
-	====================================================== */
-
-	const handleAdd = () => {
-		router.push("/(feedback)/add" as RelativePathString);
-	};
-
-	const handleEdit = (fb: FeedbackResponse) => {
-		if (!fb.id) return;
-
-		router.push(
-			`/(feedback)/${fb.id}` as RelativePathString
-		);
-	};
-
-	const handleReply = (fb: FeedbackResponse) => {
-		if (!fb.id) return;
-
-		router.push({
-			pathname: `/(feedback)/${fb.id}` as RelativePathString,
-			params: { id: String(fb.id), mode: "reply" },
-		});
-	};
-
-	const handleDelete = async (
-		fb: FeedbackResponse
-	) => {
-		if (!fb.id) return;
-
-		Alert.alert(
-			"Confirm Delete",
-			"Are you sure you want to delete this feedback?",
-			[
-				{ text: "Cancel", style: "cancel" },
-				{
-					text: "Delete",
-					style: "destructive",
-					onPress: async () => {
-						try {
-							await feedbackService.delete(fb.id!);
-							loadFeedbacks();
-						} catch {
-							Alert.alert(
-								"Error",
-								"Failed to delete feedback."
-							);
-						}
-					},
-				},
-			]
-		);
-	};
-
-	/* ======================================================
-			FILTER CHIPS
-	====================================================== */
-
-	const renderChip = (
-		label: string,
-		isActive: boolean,
-		onPress: () => void
-	) => (
-		<Pressable
-			key={label}
-			style={[
-				styles.chip,
-				isActive && styles.chipSelected,
-			]}
-			onPress={onPress}
-		>
-			<Text
-				style={[
-					styles.chipText,
-					isActive &&
-					styles.chipTextSelected,
-				]}
-			>
-				{label}
-			</Text>
-		</Pressable>
-	);
-
-	/* ======================================================
-			FEEDBACK CARD
-	====================================================== */
-
-	const renderItem = ({
-		item,
-	}: {
-		item: FeedbackResponse;
-	}) => {
-		const isOwner =
-			currentUserId === item.user_id;
-
-		const createdAt = new Date(
-			item.created_at
-		).toLocaleDateString();
-
-		return (
-			<View style={styles.card}>
-				<View style={styles.cardHeader}>
-					<Text style={styles.cardTitle}>
-						{item.subject}
-					</Text>
-
-					<View style={styles.statusBadge}>
-						<Text style={styles.statusText}>
-							{item.status}
-						</Text>
-					</View>
-				</View>
-
-				<Text style={styles.issueType}>
-					{item.issue_type}
-				</Text>
-
-				<Text style={styles.text}>
-					{item.description}
-				</Text>
-
-				<View style={styles.metaRow}>
-					<Text style={styles.metaText}>
-						Rating: {item.rating} / 5
-					</Text>
-					<Text style={styles.metaText}>
-						{createdAt}
-					</Text>
-				</View>
-
-				{item.reply && (
-					<View style={styles.replyBox}>
-						<Text style={styles.replyLabel}>
-							Admin Reply:
-						</Text>
-						<Text style={styles.replyText}>
-							{item.reply}
-						</Text>
-					</View>
-				)}
-
-				<View style={styles.actionsRow}>
-					{isOwner && (
-						<>
-							<Pressable
-								style={[
-									styles.actionButton,
-									styles.editButton,
-								]}
-								onPress={() =>
-									handleEdit(item)
-								}
-							>
-								<MaterialIcons
-									name="edit"
-									size={16}
-									color={COLORS.white}
-								/>
-							</Pressable>
-
-							<Pressable
-								style={[
-									styles.actionButton,
-									styles.deleteButton,
-								]}
-								onPress={() =>
-									handleDelete(item)
-								}
-							>
-								<MaterialIcons
-									name="delete"
-									size={16}
-									color={COLORS.white}
-								/>
-							</Pressable>
-						</>
-					)}
-
-					{isSuperAdmin &&
-						!item.reply && (
-							<Pressable
-								style={[
-									styles.actionButton,
-									styles.replyButton,
-								]}
-								onPress={() =>
-									handleReply(item)
-								}
-							>
-								<MaterialIcons
-									name="reply"
-									size={16}
-									color={COLORS.white}
-								/>
-							</Pressable>
-						)}
-				</View>
-			</View>
-		);
-	};
-
-	/* ======================================================
-			RENDER
-	====================================================== */
-
-	return (
-		<View
-			style={[
-				styles.container,
-				{ paddingHorizontal: 16 },
-			]}
-		>
-			{/* Header row: title + Add button */}
-			<View
-				style={{
-					flexDirection: "row",
-					alignItems: "center",
-					marginBottom: 16,
-				}}
-			>
-				<Text
-					style={[
-						styles.title,
-						{ flex: 1, textAlign: "left", marginBottom: 0 },
-					]}
-				>
-					List Of Feedbacks
-				</Text>
-
-				<Pressable onPress={handleAdd}>
-					<Text
-						style={{
-							color: COLORS.primary,
-							fontSize: 14,
-							fontWeight: "600",
-						}}
-					>
-						+ Add
-					</Text>
-				</Pressable>
-			</View>
-
-			{/* ---------- SEARCH ---------- */}
-
-			<TextInput
-				style={styles.searchInput}
-				placeholder="Search feedback..."
-				value={search}
-				onChangeText={setSearch}
-			/>
-
-			{/* ---------- FILTER CHIPS ---------- */}
-
-			<Text style={styles.sectionLabel}>
-				Filter by Type
-			</Text>
-
-			<View style={[styles.chipsContainer, { flexWrap: "wrap" }]}>
-				{renderChip(
-					"All",
-					selectedType === null,
-					() => setSelectedType(null)
-				)}
-
-				{FEEDBACK_TYPES.map((t) =>
-					renderChip(
-						t,
-						selectedType === t,
-						() =>
-							setSelectedType(
-								selectedType === t
-									? null
-									: t
-							)
-					)
-				)}
-			</View>
-
-			<Text style={styles.sectionLabel}>
-				Filter by Status
-			</Text>
-			<View style={styles.chipsContainer}>
-				{renderChip(
-					"All",
-					selectedStatus === null,
-					() => setSelectedStatus(null)
-				)}
-
-				{STATUS_CODES.map((s) =>
-					renderChip(
-						s,
-						selectedStatus === s,
-						() =>
-							setSelectedStatus(
-								selectedStatus === s
-									? null
-									: s
-							)
-					)
-				)}
-			</View>
-
-			{/* ---------- LIST ---------- */}
-
-			{loading ? (
-				<ActivityIndicator
-					style={{ marginTop: 24 }}
-					size="small"
-					color={COLORS.primary}
-				/>
-			) : filteredFeedbacks.length === 0 ? (
-				<Text
-					style={{
-						marginTop: 24,
-						textAlign: "center",
-					}}
-				>
-					No feedbacks found.
-				</Text>
-			) : (
-				<FlatList
-					data={filteredFeedbacks}
-					keyExtractor={(item) =>
-						item.id?.toString() ?? ""
-					}
-					renderItem={renderItem}
-					contentContainerStyle={{
-						paddingBottom: 24,
-					}}
-					showsVerticalScrollIndicator={false}
-				/>
-			)}
-		</View>
-	);
+    // ===================================================
+    // HELPERS
+    // ===================================================
+    skeleton: {
+      borderRadius: 12,
+      backgroundColor: SKELETON,
+      marginVertical: 8,
+      opacity: 0.4,
+    },
+    chartSurface: {
+      backgroundColor: SURFACE,
+    },
+    usageLabelRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
+  });
 };
-
-export default Feedbacks;

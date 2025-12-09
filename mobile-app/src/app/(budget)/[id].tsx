@@ -1,21 +1,24 @@
 import { View, Text, Pressable } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 
-import styles from "@/styles/styles";
-import { COLORS } from "@/constants/COLORS";
+import { useStyles } from "@/styles/styles";
+import { useAppColors } from "@/hooks/use-app-colors";
 import BudgetForm from "@/components/budget-form";
 
 const EditBudget = () => {
+  const styles = useStyles();
+  const COLORS = useAppColors();
   const router = useRouter();
+
   const { id } = useLocalSearchParams();
 
-  // Ensure proper number conversion for BudgetForm
+  // ✅ Ensure proper number conversion for BudgetForm
   const budgetId = id ? Number(id) : undefined;
 
   return (
     <View style={styles.container}>
+      {/* ================= HEADER ================= */}
 
-      {/* Header: Title + Back */}
       <View
         style={{
           flexDirection: "row",
@@ -26,7 +29,11 @@ const EditBudget = () => {
         <Text
           style={[
             styles.title,
-            { flex: 1, textAlign: "left", marginBottom: 0 },
+            {
+              flex: 1,
+              textAlign: "left",
+              marginBottom: 0,
+            },
           ]}
         >
           Edit Budget
@@ -44,6 +51,8 @@ const EditBudget = () => {
           </Text>
         </Pressable>
       </View>
+
+      {/* ================= FORM ================= */}
 
       <BudgetForm id={budgetId} />
     </View>

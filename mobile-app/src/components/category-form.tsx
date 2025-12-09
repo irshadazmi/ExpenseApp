@@ -14,12 +14,13 @@ import {
 import { Formik } from "formik";
 import * as Yup from "yup";
 
-import styles from "@/styles/styles";
-import { COLORS } from "@/constants/COLORS";
+import { useStyles } from "@/styles/styles";
+import { useAppColors } from "@/hooks/use-app-colors";
+
 import { categoryService } from "@/services/category-service";
 
 /* ======================================================
-    TYPES
+   TYPES
 ====================================================== */
 
 export interface CategoryCreate {
@@ -33,7 +34,7 @@ interface CategoryFormProps {
 }
 
 /* ======================================================
-    VALIDATION
+   VALIDATION
 ====================================================== */
 
 const CategorySchema = Yup.object().shape({
@@ -45,13 +46,16 @@ const CategorySchema = Yup.object().shape({
 });
 
 /* ======================================================
-    COMPONENT
+   COMPONENT
 ====================================================== */
 
 const CategoryForm: React.FC<CategoryFormProps> = ({
   id,
   onSubmitSuccess,
 }) => {
+  const styles = useStyles();
+  const COLORS = useAppColors(); // ✅ Central dynamic theme colors
+
   const [loading, setLoading] = useState(false);
 
   const [initialValues, setInitialValues] =
@@ -63,8 +67,8 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
   const isEditing = typeof id === "number";
 
   /* ======================================================
-      LOAD CATEGORY (EDIT MODE)
-  ====================================================== */
+     LOAD CATEGORY (EDIT MODE)
+====================================================== */
 
   useEffect(() => {
     if (!isEditing) return;
@@ -77,7 +81,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
         if (!category) return;
 
         setInitialValues({
-          name: category.name,
+          name: category.name ?? "",
           is_active:
             typeof category.is_active === "boolean"
               ? category.is_active
@@ -96,8 +100,8 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
   }, [id, isEditing]);
 
   /* ======================================================
-      SUBMIT HANDLER
-  ====================================================== */
+     SUBMIT HANDLER
+====================================================== */
 
   const handleSubmit = async (
     values: CategoryCreate,
@@ -130,10 +134,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
       onSubmitSuccess?.();
 
     } catch (error) {
-      console.error(
-        "Failed to save category",
-        error
-      );
+      console.error("Failed to save category", error);
 
       Alert.alert(
         "Error",
@@ -145,8 +146,8 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
   };
 
   /* ======================================================
-      LOADING STATE
-  ====================================================== */
+     LOADING STATE
+====================================================== */
 
   if (loading && isEditing) {
     return (
@@ -154,8 +155,8 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
         style={[
           styles.container,
           {
-            alignItems: "center",
             justifyContent: "center",
+            alignItems: "center",
           },
         ]}
       >
@@ -163,19 +164,23 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
           size="large"
           color={COLORS.primary}
         />
-        <Text style={{ marginTop: 12 }}>
-          Loading category data...
+
+        <Text style={{ marginTop: 12, color: COLORS.text }}>
+          Loading category data…
         </Text>
       </View>
     );
   }
 
   /* ======================================================
-      RENDER
-  ====================================================== */
+     UI
+====================================================== */
 
   return (
-    <ScrollView keyboardShouldPersistTaps="handled">
+    <ScrollView
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator
+    >
       <Formik
         initialValues={initialValues}
         enableReinitialize
@@ -192,9 +197,9 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
           isValid,
           setFieldValue,
         }) => (
-          <View>
+          <View style={styles.formContainer}>
 
-            {/* ---------- NAME ---------- */}
+            {/* ================= NAME ================= */}
 
             <Text style={styles.label}>
               Category Name
@@ -203,6 +208,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
             <TextInput
               style={styles.textInput}
               placeholder="Enter category name"
+              placeholderTextColor={COLORS.textMuted}
               value={values.name}
               onChangeText={handleChange("name")}
               editable={!isSubmitting}
@@ -214,7 +220,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
               </Text>
             )}
 
-            {/* ---------- ACTIVE TOGGLE ---------- */}
+            {/* ================= ACTIVE ================= */}
 
             <View
               style={{
@@ -223,18 +229,18 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
                 marginVertical: 12,
               }}
             >
-              <Text style={{ fontSize: 16 }}>
+              <Text style={{ fontSize: 16, color: COLORS.text }}>
                 Active
               </Text>
 
               <Pressable
+                style={{ marginLeft: 10 }}
                 onPress={() =>
                   setFieldValue(
                     "is_active",
                     !values.is_active
                   )
                 }
-                style={{ marginLeft: 10 }}
                 disabled={isSubmitting}
               >
                 <View
@@ -244,27 +250,25 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
                     borderRadius: 12,
                     borderWidth: 2,
                     borderColor: COLORS.primary,
-                    backgroundColor:
-                      values.is_active
-                        ? COLORS.primary
-                        : "transparent",
+                    backgroundColor: values.is_active
+                      ? COLORS.primary
+                      : "transparent",
                   }}
                 />
               </Pressable>
             </View>
 
-            {/* ---------- SUBMIT ---------- */}
+            {/* ================= SUBMIT ================= */}
 
             <Pressable
               style={[
                 styles.button,
-                (!isValid ||
-                  isSubmitting) && {
+                (!isValid || isSubmitting) && {
                   opacity: 0.6,
                 },
               ]}
-              onPress={() => handleSubmit()}
               disabled={!isValid || isSubmitting}
+              onPress={() => handleSubmit()}
             >
               <Text style={styles.buttonText}>
                 {isSubmitting

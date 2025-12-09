@@ -1,4 +1,3 @@
-// src/app/(auth)/forgot-password.tsx
 import React, { useState } from "react";
 import {
   View,
@@ -8,14 +7,24 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
+
 import { useRouter } from "expo-router";
-import styles from "@/styles/styles";
-import * as Yup from "yup";
 import { Formik } from "formik";
+import * as Yup from "yup";
 import Constants from "expo-constants";
-import { COLORS } from "@/constants/COLORS";
+
+import { useStyles } from "@/styles/styles";
+import { useAppColors } from "@/hooks/use-app-colors";
+
+/* ======================================================
+    CONFIG
+====================================================== */
 
 const API_BASE_URL = Constants.expoConfig?.extra?.API_BASE_URL;
+
+/* ======================================================
+    VALIDATION
+====================================================== */
 
 const ForgotPasswordSchema = Yup.object().shape({
   email: Yup.string()
@@ -23,13 +32,24 @@ const ForgotPasswordSchema = Yup.object().shape({
     .required("Email is required"),
 });
 
+/* ======================================================
+    COMPONENT
+====================================================== */
+
 const ForgotPassword = () => {
+  const styles = useStyles();
+  const COLORS = useAppColors(); // ✅ unified theme colors
+
   const router = useRouter();
-  const [submitting, setSubmittingFlag] = useState(false);
+  const [submittingFlag, setSubmittingFlag] = useState(false);
 
   const initialValues = {
     email: "",
   };
+
+  /* ======================================================
+      SUBMIT HANDLER
+====================================================== */
 
   const handleSubmit = async (
     values: typeof initialValues,
@@ -37,12 +57,20 @@ const ForgotPassword = () => {
   ) => {
     setStatus(null);
     setSubmittingFlag(true);
+
     try {
-      const res = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: values.email }),
-      });
+      const res = await fetch(
+        `${API_BASE_URL}/auth/forgot-password`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: values.email,
+          }),
+        }
+      );
 
       if (!res.ok) {
         const errorText = await res.text().catch(() => "");
@@ -54,21 +82,42 @@ const ForgotPassword = () => {
         "Email sent",
         "If this email is registered, you will receive password reset instructions shortly."
       );
-      router.back(); // take user back to login
-    } catch (error) {
-      console.error(error);
-      setStatus("Unable to process request. Please try again.");
+
+      router.back();
+    } catch (err) {
+      console.error(err);
+      setStatus(
+        "Unable to process request. Please try again."
+      );
     } finally {
       setSubmitting(false);
       setSubmittingFlag(false);
     }
   };
 
+  /* ======================================================
+      UI
+====================================================== */
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Forgot Password</Text>
-      <Text style={[styles.text, { textAlign: "center", marginBottom: 16 }]}>
-        Enter your registered email address and we’ll send you instructions to reset your password.
+      {/* ---------- TITLE ---------- */}
+      <Text style={styles.title}>
+        Forgot Password
+      </Text>
+
+      <Text
+        style={[
+          styles.text,
+          {
+            textAlign: "center",
+            marginBottom: 16,
+            color: COLORS.text,
+          },
+        ]}
+      >
+        Enter your registered email address and we’ll send
+        you instructions to reset your password.
       </Text>
 
       <Formik
@@ -86,41 +135,66 @@ const ForgotPassword = () => {
           status,
         }) => (
           <View style={{ width: "100%" }}>
-            {/* Global status message */}
+            {/* ---------- STATUS ---------- */}
             {status && (
-              <Text style={[styles.errorText, { marginBottom: 8 }]}>{status}</Text>
+              <Text
+                style={[
+                  styles.errorText,
+                  { marginBottom: 8 },
+                ]}
+              >
+                {status}
+              </Text>
             )}
 
-            {/* Email */}
+            {/* ---------- EMAIL ---------- */}
             <TextInput
               style={styles.textInput}
               placeholder="Email"
+              placeholderTextColor={
+                COLORS.textMuted
+              }
               value={values.email}
-              onChangeText={handleChange("email")}
+              onChangeText={handleChange(
+                "email"
+              )}
               keyboardType="email-address"
               autoCapitalize="none"
             />
+
             {touched.email && errors.email && (
-              <Text style={styles.errorText}>{errors.email}</Text>
+              <Text style={styles.errorText}>
+                {errors.email}
+              </Text>
             )}
 
-            {/* Submit button / loader */}
-            {isSubmitting || submitting ? (
-              <ActivityIndicator size="small" color={COLORS.primary} />
+            {/* ---------- SUBMIT ---------- */}
+            {isSubmitting || submittingFlag ? (
+              <ActivityIndicator
+                size="small"
+                color={COLORS.primary}
+              />
             ) : (
               <Pressable
                 style={styles.button}
                 onPress={() => handleSubmit()}
-                disabled={isSubmitting || submitting}
+                disabled={
+                  isSubmitting || submittingFlag
+                }
               >
-                <Text style={styles.buttonText}>Send reset link</Text>
+                <Text style={styles.buttonText}>
+                  Send reset link
+                </Text>
               </Pressable>
             )}
 
-            {/* Back to login */}
+            {/* ---------- BACK ---------- */}
             <Pressable
               onPress={() => router.back()}
-              style={{ marginTop: 12, alignSelf: "center" }}
+              style={{
+                marginTop: 12,
+                alignSelf: "center",
+              }}
             >
               <Text
                 style={{

@@ -1,16 +1,17 @@
 import { View, Text, Pressable } from "react-native";
 import { useRouter } from "expo-router";
 
-import styles from "@/styles/styles";
-import { COLORS } from "@/constants/COLORS";
+import { useStyles } from "@/styles/styles";
+import { useAppColors } from "@/hooks/use-app-colors";
 import CategoryForm from "@/components/category-form";
 
 const AddCategory = () => {
+  const styles = useStyles();
+  const COLORS = useAppColors();    // ✅ central theme
   const router = useRouter();
 
   return (
     <View style={styles.container}>
-
       {/* Header: Title + Back */}
       <View
         style={{

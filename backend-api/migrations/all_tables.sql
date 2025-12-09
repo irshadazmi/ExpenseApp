@@ -1,228 +1,256 @@
-You already know my ExpenseApp codebase, folder structure, backend (FastAPI), frontend (Expo + expo-router), services, styles, components, and app flow because I have previously described all of that in this project session.
+--- This table stores information about roles, such as their name and description.
+CREATE TABLE roles (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(20) NOT NULL UNIQUE, 
+    description VARCHAR(255)
+);
 
-Now create a FULLY FUNCTIONAL, PRODUCTION-READY "Dashboard" for the ExpenseApp.
+-- This table stores information about users, such as their name, contact details, and employment status.
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    full_name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    phone VARCHAR(20) UNIQUE NOT NULL,
+    role_id INTEGER NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_role FOREIGN KEY (role_id) REFERENCES roles (id)
+);
 
-==============================
-## 1. CONTEXT & TECHNOLOGY
-==============================
-ExpenseApp stack:
-- React Native Expo (TypeScript)
-- expo-router
-- Axios client at src/config/api.ts
-- Global auth context at src/contexts/AuthContext.tsx
-- Shared styling at src/styles/styles.ts and src/constants/COLORS.ts
-- Components use IconSymbol and SFSymbol icons
-- Android, iOS, Web support
+INSERT INTO users (full_name, email, password, phone, role_id, is_active)
+VALUES
+    ('Irshad Ahmad', 'irshad_ahmad@hotmail.com', 'password123', '9090909090', 1, TRUE),
+    ('Umair Ahmed', 'umair_ahmed@hotmail.com', 'password123', '8989898989', 2, TRUE),
+    ('Rifa Ahmed', 'rifa_ahmed@hotmail.com', 'password123', '8888888888', 2, TRUE),
+    ('John Doe', 'john.doe@example.com', 'password123', '1234567890', 1, TRUE),
+    ('Jane Doe', 'jane.doe@example.com', 'password123', '1234567891', 2, TRUE),
+    ('Bob Smith', 'bob.smith@example.com', 'password123', '1234567892', 3, TRUE),
+    ('Alice Johnson', 'alice.johnson@example.com', 'password123', '1234567893', 1, TRUE),
+    ('Charlie Brown', 'charlie.brown@example.com', 'password123', '1234567894', 2, TRUE),
+    ('David Jones', 'david.jones@example.com', 'password123', '1234567895', 3, TRUE),
+    ('Emily Williams', 'emily.williams@example.com', 'password123', '1234567896', 1, TRUE),
+    ('Frank Lee', 'frank.lee@example.com', 'password123', '1234567897', 2, TRUE),
+    ('George Miller', 'george.miller@example.com', 'password123', '1234567898', 3, TRUE),
+    ('Harry White', 'harry.white@example.com', 'password123', '1234567899', 1, TRUE),
+    ('Karen Johnson', 'karen.johnson@example.com', 'password123', '1234567900', 2, TRUE),
+    ('Lisa Brown', 'lisa.brown@example.com', 'password123', '1234567901', 3, TRUE),
+    ('Mike Davis', 'mike.davis@example.com', 'password123', '1234567902', 1, TRUE),
+    ('Nancy Smith', 'nancy.smith@example.com', 'password123', '1234567903', 2, TRUE),
+    ('Oliver Jones', 'oliver.jones@example.com', 'password123', '1234567904', 3, TRUE),
+    ('Peter Johnson', 'peter.johnson@example.com', 'password123', '1234567905', 1, TRUE),
+    ('Sarah Lee', 'sarah.lee@example.com', 'password123', '1234567906', 2, TRUE),
+    ('Thomas Brown', 'thomas.brown@example.com', 'password123', '1234567907', 3, TRUE),
+    ('Victoria Smith', 'victoria.smith@example.com', 'password123', '1234567908', 1, TRUE),
+    ('William Jones', 'william.jones@example.com', 'password123', '1234567909', 2, TRUE),
+    ('Zachary White', 'zachary.white@example.com', 'password123', '1234567910', 3, TRUE),
+    ('Amy Johnson', 'amy.johnson@example.com', 'password123', '1234567911', 1, TRUE),
+    ('Brian Brown', 'brian.brown@example.com', 'password123', '1234567912', 2, TRUE),
+    ('Carol Jones', 'carol.jones@example.com', 'password123', '1234567913', 3, TRUE),
+    ('Daniel Smith', 'daniel.smith@example.com', 'password123', '1234567914', 1, TRUE),
+    ('Elizabeth Lee', 'elizabeth.lee@example.com', 'password123', '1234567915', 2, TRUE),
+    ('Franklin Jones', 'franklin.jones@example.com', 'password123', '1234567916', 3, TRUE),
+    ('George Williams', 'george.williams@example.com', 'password123', '1234567917', 1, TRUE),
+    ('Helen Brown', 'helen.brown@example.com', 'password123', '1234567918', 2, TRUE),
+    ('Isaac Johnson', 'isaac.johnson@example.com', 'password123', '1234567919', 3, TRUE),
+    ('James Smith', 'james.smith@example.com', 'password123', '1234567920', 1, TRUE),
+    ('Julie Jones', 'julie.jones@example.com', 'password123', '1234567921', 2, TRUE),
+    ('Katherine Lee', 'katherine.lee@example.com', 'password123', '1234567922', 3, TRUE),
+    ('Linda Johnson', 'linda.johnson@example.com', 'password123', '1234567923', 1, TRUE),
+    ('Margaret Brown', 'margaret.brown@example.com', 'password123', '1234567924', 2, TRUE),
+    ('Matthew Smith', 'matthew.smith@example.com', 'password123', '1234567925', 3, TRUE),
+    ('Nicholas Jones', 'nicholas.jones@example.com', 'password123', '1234567926', 1, TRUE),
+    ('Olivia Lee', 'olivia.lee@example.com', 'password123', '1234567927', 2, TRUE),
+    ('Patrick Johnson', 'patrick.johnson@example.com', 'password123', '1234567928', 3, TRUE),
+    ('Rachel Smith', 'rachel.smith@example.com', 'password123', '1234567929', 1, TRUE),
+    ('Robert Jones', 'robert.jones@example.com', 'password123', '1234567930', 2, TRUE),
+    ('Samuel Brown', 'samuel.brown@example.com', 'password123', '1234567931', 3, TRUE),
+    ('Sophia Johnson', 'sophia.johnson@example.com', 'password123', '1234567932', 1, TRUE),
+    ('Thomas Smith', 'thomas.smith@example.com', 'password123', '1234567933', 2, TRUE),
+    ('Victoria Jones', 'victoria.jones@example.com', 'password123', '1234567934', 3, TRUE),
+    ('William Brown', 'william.brown@example.com', 'password123', '1234567935', 1, TRUE),
+    ('Zachary Johnson', 'zachary.johnson@example.com', 'password123', '1234567936', 2, TRUE);
 
-Backend stack:
-- FastAPI
-- SQLAlchemy (AsyncSession)
-- PostgreSQL
-- Routers like /api/accounts, /api/budgets, /api/categories, /api/expenses, /api/feedbacks
-- Auth using JWT Bearer token
+--- This table stores information about categories, such as their name and description.
+CREATE TABLE categories (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) UNIQUE NOT NULL,
+    short_name VARCHAR(5) UNIQUE NOT NULL,
+    description VARCHAR(255),   
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
-User model fields:
-(id, email, phone, role_id, is_active)
+-- TRUNCATE TABLE categories RESTART IDENTITY;
 
-Category model fields:
-(id, name)
+INSERT INTO categories (name, short_name, description) VALUES
+('Food & Dining', 'FDNG', 'Meals, groceries, cafes, restaurants, and takeout orders'),
+('Transportation', 'TRAN', 'Fuel, public transit, ride-hailing, parking, and vehicle expenses'),
+('Housing', 'HOUS', 'Rent, mortgage payments, property maintenance, and household utilities'),
+('Healthcare', 'HLTH', 'Doctor visits, pharmacy purchases, medical insurance, and hospital bills'),
+('Entertainment', 'ENTR', 'Movies, streaming subscriptions, concerts, gaming, and leisure activities'),
+('Travel', 'TRVL', 'Flights, hotels, vacation packages, and related travel costs'),
+('Shopping', 'SHOP', 'Clothing, electronics, household goods, and personal purchases'),
+('Education', 'EDUC', 'Tuition fees, online courses, books, and professional training'),
+('Bills & Utilities', 'BILS', 'Recurring service bills like internet, phone, cable, and electricity'),
+('Miscellaneous', 'MISC', 'Catch-all for irregular or uncategorized expenses');
 
-Account model fields:
-(id, name, type, balance, currency, is_active, user_id)
+--- This table stores information about budgets, such as their name, amount, duration, and associated user.
+CREATE TABLE budgets (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    amount INTEGER NOT NULL,
+    currency VARCHAR(10) DEFAULT 'INR', --'INR' or 'USD' or 'EUR' or 'GBP' etc.
+    period VARCHAR(50) NOT NULL, -- e.g., 'Monthly'- for now let us consider only monthly
+    effective_from TIMESTAMP NOT NULL, -- Current date when the first budget is created
+    effective_to TIMESTAMP NULL,       -- Current date of the a new budget, when it is created
+    version INTEGER DEFAULT 1,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    category_id INTEGER NULL REFERENCES categories(id),
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
-Budget model fields:
-(id, category_id, amount, currency, start_date, end_date, user_id)
+--- This table stores information about accounts, such as their name, type, balance, currency, and associated user.
+CREATE TABLE accounts (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    type VARCHAR(50) NOT NULL, -- e.g., 'Savings', 'Checking', 'Credit', 'Wallet' etc.
+    balance FLOAT DEFAULT 0,
+    currency VARCHAR(10) DEFAULT 'INR', --'INR' or 'USD' or 'EUR' or 'GBP' etc.
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
-Transactions (Expense) model fields:
-(id, user_id, category_id, account_id, date, type, amount, currency, transaction_date)
+--- This table stores information about transactions, such as their description, amount, category, and user.
+CREATE TABLE transactions (
+    id SERIAL PRIMARY KEY,
+    description VARCHAR(255) NOT NULL,
+    amount INTEGER NOT NULL,
+    type VARCHAR(50) DEFAULT 'Expense', -- 'Expense' or 'Encome' or 'Transfer'
+    currency VARCHAR(10) DEFAULT 'INR', --'INR' or 'USD' or 'EUR' or 'GBP' etc.
+    category_id INTEGER NOT NULL REFERENCES categories(id),
+    account_id INTEGER NOT NULL REFERENCES accounts(id),
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    transaction_date TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
-APIs:
-GET/POST/PUT/DELETE for users, accounts, budgets, categories, transactions.
+--- This table stores information about recurring transactions, such as their description, amount, category, recurrence pattern, and associated user.
+CREATE TABLE recurring_transactions (
+    id SERIAL PRIMARY KEY,
+    description VARCHAR(255) NOT NULL,
+    amount INTEGER NOT NULL,
+    type VARCHAR(50) DEFAULT 'Expense', -- 'Expense' or 'Income' or 'Transfer'
+    currency VARCHAR(10) DEFAULT 'INR', --'INR' or 'USD' or 'EUR' or 'GBP' etc.
+    category_id INTEGER NOT NULL REFERENCES categories(id),
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    recurrence_pattern VARCHAR(50) NOT NULL, -- e.g., 'daily', 'weekly', 'monthly', 'yearly'
+    next_occurrence TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)
 
-==============================
-## 2. GOAL — CREATE A COMPLETE DASHBOARD
-==============================
+-- This table stores information about feedbacks, such as their issue type, subject, description, rating, status, and associated user.
+CREATE TABLE feedbacks (
+    id SERIAL PRIMARY KEY,
+    issue_type VARCHAR(255) NOT NULL,
+    subject VARCHAR(255) NOT NULL,
+    description VARCHAR(255) NOT NULL,
+    rating INTEGER NOT NULL,
+    status VARCHAR(255) NOT NULL,   -- 'Open', 'In Progress', 'Resolved', 'Closed',
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    reply VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)
 
-The dashboard must give users a full financial picture using Categories, Accounts, Budgets, and Transactions.
+-- TRUNCATE TABLE feedbacks RESTART IDENTITY;
 
-### The Dashboard UI must include:
+INSERT INTO feedbacks (issue_type, subject, description, rating, status, user_id, created_at) VALUES
+('Bug / Error', 'App crashes on adding expense', 'The app crashes whenever I try to add a new expense above 10,000.', 2, 'Open', 1, '2025-01-05 10:15:00'),
+('Feature Request', 'Add dark mode', 'It would be great to have a dark mode for using the app at night.', 5, 'Open', 2, '2025-01-06 09:20:00'),
+('Bug / Error', 'Incorrect total in dashboard', 'The total expense in dashboard does not match the sum of listed expenses.', 3, 'In Progress', 3, '2025-01-07 14:32:00'),
+('UI / UX Suggestion', 'Improve category icons', 'Category icons are too similar and confusing at a glance.', 4, 'Open', 4, '2025-01-08 18:45:00'),
+('Performance Issue', 'Slow loading of reports', 'Reports page takes more than 10 seconds to load with many records.', 3, 'Open', 5, '2025-01-09 08:10:00'),
+('Bug / Error', 'Date filter not working', 'Filtering expenses by date range returns incomplete results.', 2, 'Open', 6, '2025-01-10 11:05:00'),
+('Feature Request', 'Support multiple currencies', 'Please allow tracking expenses in different currencies per account.', 5, 'Open', 7, '2025-01-11 16:50:00'),
+('Bug / Error', 'Cannot delete category', 'Deleting an unused category shows an unknown error.', 3, 'Open', 8, '2025-01-12 19:25:00'),
+('UI / UX Suggestion', 'Larger fonts on small devices', 'The font size is too small on my phone, hard to read.', 4, 'Open', 9, '2025-01-13 07:40:00'),
+('Performance Issue', 'Lag when scrolling expense list', 'The expense list becomes laggy when more than 500 records exist.', 3, 'Open', 10, '2025-01-14 12:30:00'),
+('Feature Request', 'Export to Excel', 'Kindly add an option to export expenses and budgets to Excel.', 5, 'Open', 1, '2025-01-15 09:15:00'),
+('Bug / Error', 'Duplicate expenses after sync', 'After syncing, some expenses appear twice in the list.', 2, 'Open', 2, '2025-01-16 13:05:00'),
+('UI / UX Suggestion', 'Show account name in expense list', 'Please show account name beside each expense for clarity.', 4, 'Open', 3, '2025-01-17 17:45:00'),
+('Feature Request', 'Add reminders for bills', 'Would like reminders for recurring bills like rent and utilities.', 5, 'Open', 4, '2025-01-18 20:00:00'),
+('Bug / Error', 'Cannot login after password reset', 'After resetting my password, the app shows invalid credentials.', 1, 'Open', 5, '2025-01-19 10:25:00'),
+('Performance Issue', 'High battery usage', 'The app drains battery quickly when left open on dashboard.', 2, 'Open', 6, '2025-01-20 08:55:00'),
+('Feature Request', 'Family sharing', 'Please add ability to share budgets and expenses with family members.', 5, 'Open', 7, '2025-01-21 15:20:00'),
+('Bug / Error', 'Wrong currency symbol in reports', 'Reports show INR symbol even when account currency is USD.', 3, 'Open', 8, '2025-01-22 18:40:00'),
+('UI / UX Suggestion', 'Better color coding', 'Use clearer colors to differentiate income, expense and transfer.', 4, 'Open', 9, '2025-01-23 07:35:00'),
+('Feature Request', 'Attach receipts to expenses', 'I want to upload photo of bill/receipt with each expense.', 5, 'Open', 10, '2025-01-24 11:50:00'),
+('Bug / Error', 'Categories not saving', 'Newly added categories disappear after app restart.', 2, 'In Progress', 1, '2025-01-25 09:45:00'),
+('Performance Issue', 'Slow first-time startup', 'The app takes too long to open the first time after install.', 3, 'Open', 2, '2025-01-26 13:30:00'),
+('UI / UX Suggestion', 'Show monthly summary chart', 'A simple bar chart on dashboard for monthly totals would help.', 5, 'Open', 3, '2025-01-27 16:05:00'),
+('Feature Request', 'Biometric login', 'Allow fingerprint or face ID login for faster access.', 5, 'Open', 4, '2025-01-28 19:55:00'),
+('Bug / Error', 'Incorrect sorting by date', 'Sorting by date puts some older entries at the top.', 2, 'Open', 5, '2025-01-29 08:20:00'),
+('Feature Request', 'Custom categories per user', 'Each family member should be able to maintain their own categories.', 4, 'Open', 6, '2025-01-30 14:15:00'),
+('UI / UX Suggestion', 'Highlight today’s expenses', 'Highlight entries for today with a subtle background color.', 4, 'Open', 7, '2025-01-31 18:10:00'),
+('Bug / Error', 'Report filters reset randomly', 'Report filters reset when navigating back from details.', 3, 'Open', 8, '2025-02-01 09:05:00'),
+('Feature Request', 'Offline mode', 'Allow adding expenses offline and sync when internet is back.', 5, 'Open', 9, '2025-02-02 12:40:00'),
+('Performance Issue', 'Search is very slow', 'Searching for text in expenses takes several seconds.', 2, 'Open', 10, '2025-02-03 10:10:00'),
+('Bug / Error', 'Negative balance not allowed', 'Transfers between accounts sometimes create negative balances.', 2, 'In Progress', 1, '2025-02-04 15:55:00'),
+('Feature Request', 'Multi-language support', 'Please add support for Hindi and Arabic languages.', 5, 'Open', 2, '2025-02-05 19:30:00'),
+('UI / UX Suggestion', 'More compact list view', 'Allow a dense mode to see more rows on one screen.', 4, 'Open', 3, '2025-02-06 07:50:00'),
+('Bug / Error', 'Export CSV encoding issue', 'Exported CSV opens with garbled characters in Excel.', 3, 'Open', 4, '2025-02-07 11:25:00'),
+('Feature Request', 'Goal-based saving', 'Feature to set savings goals and track progress.', 5, 'Open', 5, '2025-02-08 16:45:00'),
+('Performance Issue', 'Charts take time to render', 'Analytics charts take too long to load with big datasets.', 3, 'Open', 6, '2025-02-09 20:05:00'),
+('Bug / Error', 'Notification toggle not working', 'Disabling notifications has no effect, still getting alerts.', 2, 'Open', 7, '2025-02-10 09:35:00'),
+('UI / UX Suggestion', 'Clearer error messages', 'Error messages should be more specific instead of generic.', 4, 'Open', 8, '2025-02-11 13:15:00'),
+('Feature Request', 'Tag-based filtering', 'Allow adding tags to expenses and filter by multiple tags.', 5, 'Open', 9, '2025-02-12 17:50:00'),
+('Bug / Error', 'Duplicated notifications', 'Getting the same reminder notification multiple times.', 2, 'Open', 10, '2025-02-13 08:05:00'),
+('Performance Issue', 'Slow sync on mobile data', 'Sync is very slow when using mobile data compared to Wi-Fi.', 3, 'Open', 1, '2025-02-14 10:45:00'),
+('Feature Request', 'Archive old accounts', 'Ability to archive accounts that are no longer used.', 4, 'Open', 2, '2025-02-15 14:25:00'),
+('UI / UX Suggestion', 'Better empty state screens', 'Show tips and help text when there is no data yet.', 4, 'Open', 3, '2025-02-16 18:30:00'),
 
-### (A) SUMMARY CARDS (top row)
-- **Total Spent this Month**
-- **Remaining Budget**
-- **Total Budget**
-- **Savings (Income - Expenses)** OR Surplus
-- **Upcoming Bills (Expenses tagged as recurring or future date)**
+--- This table stores information about audit logs, such as the action, user, target table, and target ID.
+CREATE TABLE audit_logs (
+    id SERIAL PRIMARY KEY,
+    action VARCHAR(255) NOT NULL,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    target_table VARCHAR(255) NOT NULL,
+    target_id INTEGER NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
-### (B) CATEGORY-WISE SPENDING DONUT CHART
-- Renders current month totals per category
-- Tapping a category filters transactions screen to that category
+--- 6️⃣ `tokens`
+CREATE TABLE tokens (
+    id SERIAL PRIMARY KEY,
+    token VARCHAR(255) NOT NULL,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
-### (C) MONTHLY TREND SPARKLINE (Last 6 months)
-- Sum of expenses per month
-- Show a small sparkline chart
 
-### (D) BUDGET UTILIZATION LIST
-For each budget:
-- Category name
-- Budget amount
-- Used amount (sum of expenses in same category + month range)
-- Progress bar:
-  - Green (<70%)
-  - Orange (70–90%)
-  - Red (>90%)
-
-### (E) RECENT TRANSACTIONS
-- Last 5 expenses (date, category badge, account, amount)
-- Tap → open transaction edit page
-- Delete allowed
-
-==============================
-## 3. DATA SOURCES
-==============================
-
-### Use existing APIs:
-- /api/categories
-- /api/accounts
-- /api/budgets
-- /api/expenses
-
-### Compute:
-- Month Start = first day of current month
-- Month End = today
-- For budgets: match category_id and date range
-- For category spending: sum per category
-- For upcoming bills: expenses with date > today
-
-==============================
-## 4. BACKEND ENHANCEMENT — CREATE NEW AGGREGATED DASHBOARD API (REQUIRED)
-==============================
-
-Create a new endpoint:
-
-### **GET /api/dashboard/{user_id}**
-Returns:
-
-```json
-{
-  "summary": {
-    "month_spent": 0,
-    "total_budget": 0,
-    "remaining_budget": 0,
-    "savings": 0,
-    "upcoming_bills": 0
-  },
-  "category_totals": [
-    {"category_id": 1, "category_name": "Food", "total": 4000}
-  ],
-  "budget_utilization": [
-    {"category_name":"Food","budget":6000,"used":4000,"percent":66}
-  ],
-  "monthly_series": [
-    {"month":"2024-01","total":12000},
-    ...
-  ],
-  "recent_transactions": [
-    {"id":1,"date":"2024-02-10","amount":500,"category":"Food"}
-  ]
-}
-You must generate:
-Router
-
-Repository functions
-
-Service class
-
-Schema
-
-Logic to aggregate using SQL queries
-
-==============================
-
-5. FRONTEND IMPLEMENTATION REQUIRED
-==============================
-
-Create files:
-
-(A) Dashboard screen:
-src/app/(drawer)/dashboard/index.tsx
-
-(B) Dashboard hook:
-src/hooks/useDashboard.ts
-
-(C) Components:
-bash
-Copy code
-src/components/dashboard/SummaryCards.tsx
-src/components/dashboard/DonutChart.tsx
-src/components/dashboard/Sparkline.tsx
-src/components/dashboard/BudgetList.tsx
-src/components/dashboard/RecentTransactions.tsx
-Each must be fully coded:
-
-Responsive layout
-
-Uses styles from src/styles/styles.ts
-
-Uses COLORS consistency
-
-Uses IconSymbol from expo-symbols
-
-Uses ScrollView inside SafeAreaView
-
-Shows loading state
-
-Handles errors with retry button
-
-==============================
-
-6. ROUTING BEHAVIOR REQUIRED
-==============================
-
-Dashboard appears in drawer menu under name "Dashboard".
-
-On category click in donut → navigate to /(drawer)/(transactions)?category=X
-
-On transaction click → navigate to /(drawer)/(transactions)/[id]
-
-On upcoming bills count click → navigate to filtered list
-
-==============================
-
-7. OUTPUT FORMAT
-==============================
-You must output:
-
-1. New backend code:
-Full FastAPI router file
-
-Repository and service functions
-
-DTO/schemas
-
-2. New frontend code:
-All components + screens + hooks
-
-Imports and proper routes
-
-Axios service for dashboard API
-
-Charts using react-native-svg or lightweight SVG paths
-
-3. Steps for integration:
-How to register dashboard router in backend
-
-How to add Dashboard screen in drawer
-
-How to test everything
-
-4. OPTIONAL:
-If you see flaws in my current structure (ex: budgets needing monthly scoping), propose improvements.
-
-==============================
-
-IMPORTANT
-==============================
-Write COMPLETE working code for every file.
-DO NOT leave TODO sections.
-Make sure everything compiles without errors.
+-- For now let us cosnider only Monthly budget with current date as start date and end day of current month as end date. Only one budget  per month per user, so please update the create table script for budget here:
+-- CREATE TABLE budgets (
+--     id SERIAL PRIMARY KEY,
+--     name VARCHAR(255) NOT NULL,
+--     amount INTEGER NOT NULL,
+--     currency VARCHAR(10) DEFAULT 'INR', --'INR' or 'USD' or 'EUR' or 'GBP' etc.
+--     period VARCHAR(50) NOT NULL, -- e.g., 'monthly'- for now let us consider only monthly
+--     start_date TIMESTAMP NOT NULL,
+--     end_date TIMESTAMP NOT NULL,
+--     user_id INTEGER NOT NULL REFERENCES users(id),
+--     category_id INTEGER NOT NULL REFERENCES categories(id),
+--     is_active BOOLEAN DEFAULT TRUE,
+--     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+--     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+-- );
+-- Also provide about 10 most common categories, which cover all types of expenses and income (mainly salary) based on the new table design.

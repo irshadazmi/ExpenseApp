@@ -11,7 +11,7 @@ from app.routers.transaction_router import transaction_router
 from app.routers.feedback_router import feedback_router
 from app.routers.dashboard_router import dashboard_router
 from app.routers.seed_router import seed_router
-
+from app.routers.ai_router import ai_router
 
 app = FastAPI()
 
@@ -22,6 +22,7 @@ app.add_middleware(auth_middleware.AuthMiddleware)
 add_cors_middleware(app)
 
 # Include routers
+app.include_router(ai_router, prefix="/api/ai", tags=["AIAssistant"])
 app.include_router(dashboard_router, prefix="/api/dashboard", tags=["Dashboard"])
 app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(user_router, prefix="/api/users", tags=["User"])

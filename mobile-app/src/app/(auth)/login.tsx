@@ -1,4 +1,5 @@
-// src/app/(auth)/login.tsx
+// mobile-app/src/app/(auth)/login.tsx
+
 import React from "react";
 import {
   View,
@@ -8,22 +9,35 @@ import {
   ActivityIndicator,
   Image,
 } from "react-native";
-import { useAuth } from "@/contexts/auth-context";
-import { Link, useRouter } from "expo-router";
-import styles from "@/styles/styles";
+import { useRouter, Link } from "expo-router";
 import { Formik } from "formik";
 import * as Yup from "yup";
-import { COLORS } from "@/constants/COLORS";
+
+import { useAuth } from "@/contexts/auth-context";
+import { useStyles } from "@/styles/styles";
+import { useAppColors } from "@/hooks/use-app-colors";
+
+/* ======================================================
+    VALIDATION
+====================================================== */
 
 const LoginSchema = Yup.object().shape({
   email: Yup.string()
     .email("Please enter a valid email")
     .required("Email is required"),
+
   password: Yup.string().required("Password is required"),
 });
 
+/* ======================================================
+    COMPONENT
+====================================================== */
+
 const Login = () => {
+  const styles = useStyles();
+  const COLORS = useAppColors();
   const router = useRouter();
+
   const { login: authLogin, loading } = useAuth();
 
   const initialValues = {
@@ -31,13 +45,18 @@ const Login = () => {
     password: "",
   };
 
+  /* ======================================================
+      SUBMIT HANDLER
+  ====================================================== */
+
   const handleSubmit = async (
     values: typeof initialValues,
     { setSubmitting, setStatus }: any
   ) => {
     setStatus(null);
+
     try {
-      await authLogin({ email: values.email, password: values.password });
+      await authLogin(values);
       router.replace("/dashboard");
     } catch (error) {
       console.error(error);
@@ -47,20 +66,34 @@ const Login = () => {
     }
   };
 
+  /* ======================================================
+      UI
+  ====================================================== */
+
   return (
     <View style={styles.container}>
+
+      {/* ---------- LOGO ---------- */}
+
       <Image
         source={require("@/assets/images/expense-logo.png")}
+        resizeMode="contain"
         style={{
-          width: "40%",
-          height: "20%",
+          width: 120,
+          height: 120,
           alignSelf: "center",
           marginTop: -300,
-          marginBottom: 0,
+          marginBottom: 16,
         }}
       />
 
-      <Text style={styles.title}>Login</Text>
+      {/* ---------- TITLE ---------- */}
+
+      <Text style={[styles.title, { marginBottom: 10 }]}>
+        Login
+      </Text>
+
+      {/* ---------- FORM ---------- */}
 
       <Formik
         initialValues={initialValues}
@@ -77,40 +110,66 @@ const Login = () => {
           status,
         }) => (
           <View style={{ width: "100%" }}>
-            {/* Global error (API / auth) */}
+
+            {/* ---------- API / AUTH ERROR ---------- */}
+
             {status && (
-              <Text style={[styles.errorText, { marginBottom: 8 }]}>{status}</Text>
+              <Text
+                style={[
+                  styles.errorText,
+                  { marginBottom: 8 },
+                ]}
+              >
+                {status}
+              </Text>
             )}
 
-            {/* Email */}
+            {/* ---------- EMAIL ---------- */}
+
             <TextInput
               style={styles.textInput}
               placeholder="Email"
+              placeholderTextColor={COLORS.textMuted}
               value={values.email}
               onChangeText={handleChange("email")}
               keyboardType="email-address"
               autoCapitalize="none"
             />
+
             {touched.email && errors.email && (
-              <Text style={styles.errorText}>{errors.email}</Text>
+              <Text style={styles.errorText}>
+                {errors.email}
+              </Text>
             )}
 
-            {/* Password */}
+            {/* ---------- PASSWORD ---------- */}
+
             <TextInput
               style={styles.textInput}
               placeholder="Password"
+              placeholderTextColor={COLORS.textMuted}
               value={values.password}
               onChangeText={handleChange("password")}
               secureTextEntry
             />
+
             {touched.password && errors.password && (
-              <Text style={styles.errorText}>{errors.password}</Text>
+              <Text style={styles.errorText}>
+                {errors.password}
+              </Text>
             )}
 
-            {/* Forgot password */}
+            {/* ---------- FORGOT PASSWORD ---------- */}
+
             <Pressable
-              onPress={() => router.push("/(auth)/forgot-password")}
-              style={{ alignSelf: "flex-end", marginTop: 4, marginBottom: 12 }}
+              onPress={() =>
+                router.push("/(auth)/forgot-password")
+              }
+              style={{
+                alignSelf: "flex-end",
+                marginTop: 4,
+                marginBottom: 12,
+              }}
             >
               <Text
                 style={{
@@ -123,21 +182,31 @@ const Login = () => {
               </Text>
             </Pressable>
 
-            {/* Button / loader */}
+            {/* ---------- SUBMIT ---------- */}
+
             {loading || isSubmitting ? (
-              <ActivityIndicator size="small" color={COLORS.primary} />
+              <ActivityIndicator
+                size="small"
+                color={COLORS.primary}
+              />
             ) : (
               <Pressable
                 style={styles.button}
                 onPress={() => handleSubmit()}
                 disabled={loading || isSubmitting}
               >
-                <Text style={styles.buttonText}>Login</Text>
+                <Text style={styles.buttonText}>
+                  Login
+                </Text>
               </Pressable>
             )}
 
+            {/* ---------- REGISTER LINK ---------- */}
+
             <Link href="./register" style={styles.link}>
-              <Text>Not registered? Create an account</Text>
+              <Text>
+                Not registered? Create an account
+              </Text>
             </Link>
           </View>
         )}

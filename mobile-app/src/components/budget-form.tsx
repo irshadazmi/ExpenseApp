@@ -1,5 +1,4 @@
-// src/components/budget-form.tsx
-import DateTimePicker from "@react-native-community/datetimepicker";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -11,22 +10,22 @@ import {
   Alert,
 } from "react-native";
 
-import React, { useEffect, useState } from "react";
-import styles from "@/styles/styles";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { Formik } from "formik";
+import * as Yup from "yup";
+
+import { useStyles } from "@/styles/styles";
+import { useAppColors } from "@/hooks/use-app-colors";
 
 import { BudgetCreate } from "@/types/budget";
 import { categoryService } from "@/services/category-service";
 import { budgetService } from "@/services/budget-service";
 import { useAuth } from "@/contexts/auth-context";
 
-import { COLORS } from "@/constants/COLORS";
 import { CURRENCIES, PERIODS } from "@/constants/CONSTANTS";
 
-import { Formik } from "formik";
-import * as Yup from "yup";
-
 /* ======================================================
-    VALIDATION
+   VALIDATION
 ====================================================== */
 
 const BudgetSchema = Yup.object().shape({
@@ -34,9 +33,7 @@ const BudgetSchema = Yup.object().shape({
     .moreThan(0, "Category is required")
     .required("Category is required"),
 
-  name: Yup.string()
-    .trim()
-    .required("Budget name is required"),
+  name: Yup.string().trim().required("Budget name is required"),
 
   amount: Yup.number()
     .typeError("Amount must be a number")
@@ -59,7 +56,7 @@ const BudgetSchema = Yup.object().shape({
 });
 
 /* ======================================================
-    PROPS
+   PROPS
 ====================================================== */
 
 interface BudgetFormProps {
@@ -68,29 +65,33 @@ interface BudgetFormProps {
 }
 
 /* ======================================================
-    COMPONENT
+   COMPONENT
 ====================================================== */
 
 const BudgetForm: React.FC<BudgetFormProps> = ({
   id,
   onSubmitSuccess,
 }) => {
+  const styles = useStyles();
+  const COLORS = useAppColors();
   const { user } = useAuth();
 
   const [categories, setCategories] = useState<any[]>([]);
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [activeDateField, setActiveDateField] = useState<
-    "start_date" | "end_date" | null
-  >(null);
+  const [showDatePicker, setShowDatePicker] =
+    useState(false);
+
+  const [activeDateField, setActiveDateField] =
+    useState<"start_date" | "end_date" | null>(null);
 
   const [loading, setLoading] = useState(false);
+
   const [initialValues, setInitialValues] =
     useState<BudgetCreate | null>(null);
 
   const isEditing = typeof id === "number";
 
   /* ======================================================
-      LOAD CATEGORIES
+     LOAD CATEGORIES
   ====================================================== */
 
   useEffect(() => {
@@ -103,7 +104,7 @@ const BudgetForm: React.FC<BudgetFormProps> = ({
   }, []);
 
   /* ======================================================
-      LOAD BUDGET FOR EDIT MODE
+     LOAD BUDGET FOR EDIT MODE
   ====================================================== */
 
   useEffect(() => {
@@ -149,41 +150,50 @@ const BudgetForm: React.FC<BudgetFormProps> = ({
         Alert.alert("Error", "Failed to load budget.")
       )
       .finally(() => setLoading(false));
+
   }, [id, user, isEditing]);
 
   /* ======================================================
-      NOT LOGGED IN
+     LOGGED OUT GUARD
   ====================================================== */
 
   if (!user) {
     return (
       <Text style={{ color: COLORS.danger }}>
-        Please login again.
+        Please log in again.
       </Text>
     );
   }
+
+  /* ======================================================
+     LOADING
+  ====================================================== */
 
   if (!initialValues || (loading && isEditing)) {
     return (
       <View
         style={[
           styles.container,
-          { justifyContent: "center", alignItems: "center" },
+          {
+            justifyContent: "center",
+            alignItems: "center",
+          },
         ]}
       >
         <ActivityIndicator
           size="large"
           color={COLORS.primary}
         />
-        <Text style={{ marginTop: 12 }}>
-          Loading budget...
+
+        <Text style={{ marginTop: 12, color: COLORS.text }}>
+          Loading budget…
         </Text>
       </View>
     );
   }
 
   /* ======================================================
-      SUBMIT HANDLER
+     SUBMIT HANDLER
   ====================================================== */
 
   const handleSubmit = async (
@@ -209,11 +219,11 @@ const BudgetForm: React.FC<BudgetFormProps> = ({
   };
 
   /* ======================================================
-      UI
+     UI
   ====================================================== */
 
   return (
-    <ScrollView keyboardShouldPersistTaps="handled">
+    <ScrollView showsVerticalScrollIndicator={true}> 
       <Formik
         initialValues={initialValues}
         enableReinitialize
@@ -230,10 +240,7 @@ const BudgetForm: React.FC<BudgetFormProps> = ({
           isValid,
           isSubmitting,
         }) => (
-          <View>
-
-            {/* CATEGORY */}
-
+          <View style={styles.formContainer}>
             <Text style={styles.label}>Category</Text>
 
             <View
@@ -255,14 +262,17 @@ const BudgetForm: React.FC<BudgetFormProps> = ({
                     ]}
                     disabled={isSubmitting}
                     onPress={() =>
-                      setFieldValue("category_id", c.id)
+                      setFieldValue(
+                        "category_id",
+                        c.id
+                      )
                     }
                   >
                     <Text
                       style={[
                         styles.chipText,
                         active &&
-                          styles.chipTextSelected,
+                        styles.chipTextSelected,
                       ]}
                     >
                       {c.name}
@@ -279,12 +289,12 @@ const BudgetForm: React.FC<BudgetFormProps> = ({
                 </Text>
               )}
 
-            {/* NAME */}
-
             <Text style={styles.label}>Name</Text>
 
             <TextInput
               style={styles.textInput}
+              placeholder="Enter budget name"
+              placeholderTextColor={COLORS.textMuted}
               value={values.name}
               onChangeText={handleChange("name")}
             />
@@ -295,12 +305,12 @@ const BudgetForm: React.FC<BudgetFormProps> = ({
               </Text>
             )}
 
-            {/* AMOUNT */}
-
             <Text style={styles.label}>Amount</Text>
 
             <TextInput
               style={styles.textInput}
+              placeholder="Enter amount"
+              placeholderTextColor={COLORS.textMuted}
               keyboardType="numeric"
               value={String(values.amount ?? "")}
               onChangeText={(v) =>
@@ -313,8 +323,6 @@ const BudgetForm: React.FC<BudgetFormProps> = ({
                 {errors.amount}
               </Text>
             )}
-
-            {/* CURRENCY */}
 
             <Text style={styles.label}>Currency</Text>
 
@@ -344,7 +352,7 @@ const BudgetForm: React.FC<BudgetFormProps> = ({
                       style={[
                         styles.chipText,
                         active &&
-                          styles.chipTextSelected,
+                        styles.chipTextSelected,
                       ]}
                     >
                       {cur}
@@ -361,8 +369,6 @@ const BudgetForm: React.FC<BudgetFormProps> = ({
                 </Text>
               )}
 
-            {/* PERIOD */}
-
             <Text style={styles.label}>Period</Text>
 
             <View
@@ -372,8 +378,7 @@ const BudgetForm: React.FC<BudgetFormProps> = ({
               ]}
             >
               {PERIODS.map((p) => {
-                const active =
-                  values.period === p;
+                const active = values.period === p;
 
                 return (
                   <Pressable
@@ -391,7 +396,7 @@ const BudgetForm: React.FC<BudgetFormProps> = ({
                       style={[
                         styles.chipText,
                         active &&
-                          styles.chipTextSelected,
+                        styles.chipTextSelected,
                       ]}
                     >
                       {p}
@@ -407,39 +412,36 @@ const BudgetForm: React.FC<BudgetFormProps> = ({
               </Text>
             )}
 
-            {/* START DATE */}
+            {(["start_date", "end_date"] as const).map(
+              (field) => (
+                <View key={field}>
+                  <Text style={styles.label}>
+                    {field === "start_date"
+                      ? "Start Date"
+                      : "End Date"}
+                  </Text>
 
-            <Text style={styles.label}>Start Date</Text>
-            <Pressable
-              style={[styles.textInput, styles.dateInput]}
-              onPress={() => {
-                setActiveDateField("start_date");
-                setShowDatePicker(true);
-              }}
-            >
-              <Text style={styles.dateText}>
-                {new Date(
-                  values.start_date
-                ).toISOString().split("T")[0]}
-              </Text>
-            </Pressable>
-
-            {/* END DATE */}
-
-            <Text style={styles.label}>End Date</Text>
-            <Pressable
-              style={[styles.textInput, styles.dateInput]}
-              onPress={() => {
-                setActiveDateField("end_date");
-                setShowDatePicker(true);
-              }}
-            >
-              <Text style={styles.dateText}>
-                {new Date(
-                  values.end_date
-                ).toISOString().split("T")[0]}
-              </Text>
-            </Pressable>
+                  <Pressable
+                    style={[
+                      styles.textInput,
+                      styles.dateInput,
+                    ]}
+                    onPress={() => {
+                      setActiveDateField(field);
+                      setShowDatePicker(true);
+                    }}
+                  >
+                    <Text style={styles.dateText}>
+                      {new Date(
+                        values[field]
+                      )
+                        .toISOString()
+                        .split("T")[0]}
+                    </Text>
+                  </Pressable>
+                </View>
+              )
+            )}
 
             {showDatePicker && activeDateField && (
               <DateTimePicker
@@ -465,8 +467,6 @@ const BudgetForm: React.FC<BudgetFormProps> = ({
               />
             )}
 
-            {/* ACTIVE */}
-
             <View
               style={{
                 flexDirection: "row",
@@ -474,9 +474,12 @@ const BudgetForm: React.FC<BudgetFormProps> = ({
                 marginVertical: 12,
               }}
             >
-              <Text style={{ fontSize: 16 }}>
+              <Text
+                style={{ fontSize: 16, color: COLORS.text }}
+              >
                 Active
               </Text>
+
               <Pressable
                 style={{ marginLeft: 10 }}
                 onPress={() =>
@@ -493,16 +496,13 @@ const BudgetForm: React.FC<BudgetFormProps> = ({
                     borderRadius: 12,
                     borderWidth: 2,
                     borderColor: COLORS.primary,
-                    backgroundColor:
-                      values.is_active
-                        ? COLORS.primary
-                        : "transparent",
+                    backgroundColor: values.is_active
+                      ? COLORS.primary
+                      : "transparent",
                   }}
                 />
               </Pressable>
             </View>
-
-            {/* SUBMIT */}
 
             <Pressable
               style={[
@@ -518,8 +518,8 @@ const BudgetForm: React.FC<BudgetFormProps> = ({
                 {isSubmitting
                   ? "Saving..."
                   : isEditing
-                  ? "Update Budget"
-                  : "Save Budget"}
+                    ? "Update Budget"
+                    : "Save Budget"}
               </Text>
             </Pressable>
 
