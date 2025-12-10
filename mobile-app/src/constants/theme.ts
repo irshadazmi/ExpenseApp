@@ -43,7 +43,7 @@ export const lightColors = {
   blue: "#007AFF",
   yellow: "#FFCC00",
 
-  tabBg: "#1A1A1A",
+  tabBg: "#181920",
   tabBorderTop: "#5A00B5",
   tabActive: "#44E4FF",
   tabActiveAlt: "#4CAF50",
@@ -91,7 +91,7 @@ export const darkColors = {
   blue: "#0A84FF",
   yellow: "#FFD60A",
 
-  tabBg: "#181920",
+  tabBg: "#1A1A1A",
   tabBorderTop: "#0F061B",
   tabActive: "#44E4FF",
   tabActiveAlt: "#FF3FBF",

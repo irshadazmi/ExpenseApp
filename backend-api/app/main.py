@@ -16,13 +16,13 @@ from app.routers.ai_router import ai_router
 app = FastAPI()
 
 # Add authentication middleware
-app.add_middleware(auth_middleware.AuthMiddleware)
+# app.add_middleware(auth_middleware.AuthMiddleware)
 
 # Add CORS middleware
 add_cors_middleware(app)
 
 # Include routers
-app.include_router(ai_router, prefix="/api/ai", tags=["AIAssistant"])
+app.include_router(ai_router, prefix="/api/ai", tags=["AI Assistant"])
 app.include_router(dashboard_router, prefix="/api/dashboard", tags=["Dashboard"])
 app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(user_router, prefix="/api/users", tags=["User"])

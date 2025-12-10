@@ -1,3 +1,4 @@
+// mobile-app/src/app/(budget)/index.tsx
 import React, { useEffect, useState } from "react";
 import {
   View,

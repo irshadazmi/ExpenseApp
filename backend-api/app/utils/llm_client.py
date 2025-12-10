@@ -1,18 +1,32 @@
-import os
-from openai import AsyncOpenAI
+# backend-api/app/utils/llm_client.py
+
+import httpx
+import re
 from app.core.config import settings
 
-client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+BASE_URL = settings.OLLAMA_BASE_URL or "http://localhost:11434"
+MODEL = settings.OLLAMA_MODEL
+TIMEOUT = 60
+
+
+def clean_sql(text: str) -> str:
+    text = re.sub(r"```sql", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"```", "", text)
+    return text.strip()
+
 
 async def ask_llm(prompt: str) -> str:
+    async with httpx.AsyncClient(timeout=TIMEOUT) as client:
+        resp = await client.post(
+            f"{BASE_URL}/api/generate",
+            json={
+                "model": MODEL,
+                "prompt": prompt,
+                "stream": False,
+            },
+        )
 
-    resp = await client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": "You translate user questions into safe SQL queries over PostgreSQL"},
-            {"role": "user", "content": prompt}
-        ],
-        temperature=0
-    )
+    resp.raise_for_status()
 
-    return resp.choices[0].message.content.strip()
+    data = resp.json()
+    return clean_sql(data.get("response", ""))

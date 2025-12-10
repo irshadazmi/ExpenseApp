@@ -101,6 +101,7 @@ const MAPPING = {
 
   // ✅ AI Assistant
   'robotic.vacuum.fill': 'smart-toy',
+  'brain.head.profile': 'insights',
 
   // ✅ Hamberger Menu
   'line.3.horizontal': 'menu',

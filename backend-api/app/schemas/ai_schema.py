@@ -1,6 +1,6 @@
 # backend-api/app/schemas/ai_schema.py
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Literal, Optional, List
 
 
 # =============================
@@ -39,3 +39,8 @@ class AICategorizeRequest(BaseModel):
 class AICategorizeResponse(BaseModel):
     category_id: int
     confidence: float
+
+class AIInsight(BaseModel):
+    title: str
+    severity: Literal["low", "medium", "high"]
+    message: str

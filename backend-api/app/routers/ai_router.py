@@ -4,11 +4,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.repositories.ai_repository import AIRepository
 from app.services.ai_service import AIService
-from app.repositories.dashboard_repository import DashboardRepository
-from app.services.dashboard_service import DashboardService
-
-from app.schemas.ai_schema import *
-
+from app.schemas.ai_schema import (
+    AIChatRequest,
+    AIChatResponse,
+    AICategorizeRequest,
+    AICategorizeResponse,
+)
 
 ai_router = APIRouter()
 
@@ -17,14 +18,9 @@ ai_router = APIRouter()
 # Dependency
 # ============================================================
 
-def get_ai_service(db: AsyncSession = Depends(get_db)):
-
-    ai_repo = AIRepository(db)
-
-    dash_repo = DashboardRepository(db)
-    dash_service = DashboardService(dash_repo)
-
-    return AIService(ai_repo, dash_service)
+def get_ai_service(db: AsyncSession = Depends(get_db)) -> AIService:
+    repo = AIRepository(db)
+    return AIService(repo)
 
 
 # ============================================================
@@ -43,24 +39,6 @@ async def chat(
 
 
 # ============================================================
-# INSIGHTS
-# ============================================================
-
-@ai_router.get("/insights")
-async def insights(
-    user_id: int = Query(...),
-    year: int | None = Query(None),
-    month: int | None = Query(None),
-    service: AIService = Depends(get_ai_service),
-):
-    return await service.insights(
-        user_id=user_id,
-        year=year,
-        month=month,
-    )
-
-
-# ============================================================
 # CATEGORIZE
 # ============================================================
 
@@ -70,3 +48,14 @@ async def categorize(
     service: AIService = Depends(get_ai_service),
 ):
     return await service.categorize(payload.description)
+
+# ============================================================
+# INSIGHTS
+# ============================================================
+
+@ai_router.get("/insights")
+async def insights(
+    user_id: int = Query(...),
+    service: AIService = Depends(get_ai_service),
+):
+    return await service.generate_insights(user_id)

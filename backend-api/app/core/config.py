@@ -20,15 +20,10 @@ class Settings(BaseSettings):
     # ==================================================
     # AI / LLM CONFIG
     # ==================================================
-    USE_OLLAMA: bool = False        # true = primary LLM via Ollama
+    USE_OLLAMA: bool = False 
     OLLAMA_BASE_URL: str | None = None
-    OLLAMA_MODEL: str = "llama3"
-
-    OPENAI_API_KEY: str | None = None
-    OPENAI_MODEL: str = "gpt-4o-mini"
-
-    LLM_TIMEOUT_SECONDS: int = 60
-
+    OLLAMA_MODEL: str
+    LLM_TIMEOUT_SECONDS: int
 
     # ==================================================
     class Config:
