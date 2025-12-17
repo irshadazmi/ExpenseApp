@@ -1,0 +1,39 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: ankane/pgvector:latest
+    container_name: expense_pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "786$Germany"
+      POSTGRES_DB: expensedb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db-init:/docker-entrypoint-initdb.d
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: expense_ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    entrypoint: >
+      /bin/sh -c "
+      ollama serve &
+      sleep 5 &&
+      echo '>>> Pulling Qwen model...' &&
+      ollama pull qwen &&
+      echo '>>> Pulling embedding model...' &&
+      ollama pull nomic-embed-text &&
+      wait
+      "
+
+volumes:
+  pgdata:
+  ollama_data:
