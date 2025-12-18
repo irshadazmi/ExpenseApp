@@ -1,156 +1,345 @@
+# 🤖 ExpenseApp AI System Documentation
 
-# ExpenseApp AI System Documentation  
-Advanced AI + Embedding + Voice Architecture
-
-## 1. Overview
-ExpenseApp includes a full **on-device AI architecture** that provides:
-- Natural language querying  
-- Safe SQL generation  
-- Semantic memory (vector search)  
-- Whisper-based voice recognition  
-- Transaction auto-categorization  
-
-The AI system is designed to be:
-- **Modular**
-- **Offline-capable**
-- **Secure**
-- **Extendable** (RAG, agents, workflows)
+**LLM · pgvector · Whisper · Semantic Intelligence**
 
 ---
 
-## 2. High-Level Architecture
+## 1. Overview
+
+The **ExpenseApp AI System** is a **production-grade, modular AI engine** that enables natural, conversational interaction with financial data.
+
+It powers:
+
+* 💬 Conversational AI (chat)
+* 🎤 Voice-based interaction
+* 🧠 Semantic memory & caching
+* 📊 AI-generated insights & explanations
+* 🏷️ Automatic transaction categorization
+
+The system is designed to be:
+
+* **Mobile-first**
+* **Secure by design**
+* **Offline-capable (local LLMs)**
+* **Cloud-deployable**
+* **Incrementally extensible** (RAG, agents, workflows)
+
+---
+
+## 2. AI Engine – High-Level Architecture
 
 ```mermaid
 flowchart TD
-    User --> Voice[Voice → Whisper]
-    User --> Text[Natural Language Query]
+    User -->|Voice| VoiceAPI[/ai/voice-chat]
+    User -->|Text| ChatAPI[/ai/chat]
 
-    Voice --> STT[Speech-to-Text Engine]
-    Text --> Intent[Intent Classifier]
+    VoiceAPI --> Whisper[Whisper STT]
+    Whisper --> TextQuery
 
-    Intent --> CacheLookup[Semantic Cache Search]
-    CacheLookup -->|Match Found| ReturnCache[Return Cached AI Response]
+    ChatAPI --> TextQuery
 
-    CacheLookup -->|Low Match| LLM[Local LLM]
+    TextQuery --> Intent[Intent & Query Analysis]
+
+    Intent --> VectorSearch[Semantic Cache Lookup\npgvector]
+
+    VectorSearch -->|High Similarity| Cached[Reuse Cached Result]
+    VectorSearch -->|Low Similarity| LLM[Local LLM (Ollama)]
+
     LLM --> SQLGen[Safe SQL Generator]
     SQLGen --> Guard[SQL Guardrails]
-    Guard --> Execute[Database Query]
-    Execute --> Summary[Narrative Summary Generator]
+    Guard --> DB[(PostgreSQL)]
 
-    Summary --> CacheStore[Store Embedding + Response]
-    CacheStore --> Final[Send to User]
+    DB --> Result[Query Result]
+    Result --> Summary[Natural Language Summary]
+
+    Summary --> Store[Store Embedding + Response]
+    Cached --> Final[Send Response]
+    Store --> Final
 ```
 
 ---
 
-## 3. Modules
+## 3. AI Router & API Surface
 
-### **3.1 Intent Classification Layer**
-Identifies:
-- Transaction summary queries  
-- Budget analytics  
-- Category-level insights  
-- Aggregations (“total”, “highest”, “average”)  
-- Time ranges (Y/Q/M)
+All AI functionality is exposed via the **AI Router**:
+
+```
+/ai/chat
+/ai/voice-chat
+/ai/categorize
+/ai/insights
+```
+
+These APIs are **stateless**, **JWT-protected**, and optimized for **mobile consumption**.
+
+---
+
+## 4. Core AI Modules
+
+---
+
+### 4.1 Intent & Query Analysis
+
+**Purpose:**
+Convert user language into a structured, executable intent.
+
+Handles:
+
+* Aggregations (`total`, `average`, `highest`)
+* Entities (categories, accounts)
+* Time ranges (month, quarter, year)
+* Contextual follow-ups
 
 Techniques:
-- Keyword rules  
-- LLM-based disambiguation  
-- Time parser  
+
+* Lightweight rule-based parsing
+* LLM-assisted disambiguation
+* Time & numeric normalization
 
 ---
 
-### **3.2 Safe SQL Generator**
-Steps:
-1. Extract structured query requirements  
-2. Generate SELECT-only SQL  
-3. Validate SQL using guardrails:
-   - No `UPDATE`, `DELETE`, `INSERT`
-   - Only whitelisted tables  
-   - Limited joins  
-4. Execute via repository layer
+### 4.2 Semantic Cache (pgvector)
 
----
+To reduce latency and LLM cost, ExpenseApp uses a **semantic cache**.
 
-### **3.3 Embedding System**
-- Uses **pgvector** (768 dim)  
-- Every user query stored as embedding + response  
-- ANN search via HNSW index  
+**How it works:**
 
-Hit conditions:
+* Each AI query → embedding (768-d)
+* Stored in PostgreSQL using `pgvector`
+* ANN search via HNSW index
+
+**Cache Hit Rule:**
+
 ```
-cosine_distance < 0.15 → Reuse cached result
+cosine_distance < 0.15 → reuse response
 ```
 
+Benefits:
+
+* ⚡ Faster responses
+* 💸 Lower inference cost
+* 🔁 Consistent answers
+
 ---
 
-### **3.4 LLM Integration**
-Default:
-- **Ollama models** (Llama 3 / Qwen 2.5 / Mistral)
+### 4.3 Local LLM Integration (Ollama)
+
+The AI engine uses **local LLMs** by default.
+
+Supported models:
+
+* Llama 3
+* Qwen 2.5
+* Mistral
 
 Used for:
-- SQL generation  
-- Summaries  
-- Auto categorization  
+
+* SQL generation
+* Natural-language summaries
+* Categorization logic
+* Insight explanations
+
+This ensures:
+
+* Privacy-first processing
+* Offline capability
+* Predictable latency
 
 ---
 
-### **3.5 Voice System (Whisper)**
-Supports:
-- Hindi  
-- English  
-- Marathi  
+### 4.4 Safe SQL Generator & Guardrails
+
+To prevent unsafe execution, **strict SQL guardrails** are enforced.
+
+Rules:
+
+* ✅ `SELECT` only
+* ❌ No `INSERT`, `UPDATE`, `DELETE`
+* ✅ Whitelisted tables only
+* ❌ No dynamic joins
+* ❌ No subqueries beyond limits
+
+Execution flow:
+
+```
+LLM → SQL draft → validation → execution
+```
+
+This protects the database while enabling powerful analytics.
+
+---
+
+### 4.5 Voice AI (Whisper)
+
+**Endpoint:**
+
+```
+POST /ai/voice-chat
+```
 
 Flow:
+
 ```
-microphone → .wav → Whisper.cpp → text → AI pipeline
+Mobile mic → audio (.wav) → Whisper → text → AI pipeline
 ```
+
+Supported languages:
+
+* English
+* Hindi
+* Marathi
+
+Optimized for:
+
+* Low-bandwidth uploads
+* Mobile latency constraints
 
 ---
 
-### **3.6 Auto Categorizer**
-Model input:
-- Transaction description  
-- Merchant  
-- Amount  
+### 4.6 AI Categorization Engine
 
-Output:
-- Predicted category  
-- Confidence value  
+**Endpoint:**
+
+```
+POST /ai/categorize
+```
+
+Inputs:
+
+* Transaction description
+* Merchant info (if any)
+
+Outputs:
+
+* Predicted category
+* Confidence score
 
 Fallback:
-- Category = “Uncategorized” if confidence < threshold
+
+* Category defaults to **“Uncategorized”** if confidence is low
+
+Used by:
+
+* Transaction creation
+* Expense imports
+* Corrections learning loop (future)
 
 ---
 
-## 4. Extensibility
+### 4.7 AI Insights Engine
 
-### Future Additions:
-- Multi-hop LLM agents  
-- Financial RAG (bank PDFs → embeddings)  
-- Invoice OCR ingestion  
-- Smart budgets  
-- Personalized recommendations  
+**Endpoint:**
+
+```
+GET /ai/insights?user_id=...
+```
+
+Generates:
+
+* Spending trends
+* Anomaly detection
+* Budget overshoot warnings
+* Plain-language explanations
+
+Used in:
+
+* Dashboard “Insights” cards
+* Monthly summaries
+* Notifications (future)
 
 ---
 
-## 5. Debugging AI
+## 5. Database & Embeddings
 
-### Check embeddings:
-```
-SELECT * FROM embedding_cache ORDER BY created_at DESC;
+### Embedding Table
+
+* 768-d vector column
+* Indexed using HNSW
+* Stores:
+
+  * Query embedding
+  * Response text
+  * Metadata (user, timestamp)
+
+Example debug query:
+
+```sql
+SELECT * FROM embedding_cache
+ORDER BY created_at DESC;
 ```
 
-### Log SQL generation:
-Enable debug mode in:
+---
+
+## 6. Mobile App Integration Notes
+
+Best practices for mobile developers:
+
+* Prefer **/ai/insights** for dashboards (not raw queries)
+* Use **/ai/chat** for conversational UI
+* Use **/ai/voice-chat** asynchronously
+* Do not block UI on AI calls
+* Cache AI responses client-side where possible
+
+---
+
+## 7. Debugging & Observability
+
+### Enable AI Debug Logs
+
 ```
 APP_AI_DEBUG=true
 ```
 
-### Whisper troubleshooting:
-- Verify model path  
-- Test using: `whisper-cli test.wav`
+Logs include:
+
+* Intent classification output
+* SQL generated
+* Cache hit/miss
+* Execution timing
+
+### Whisper Debugging
+
+* Verify model path
+* Test standalone:
+
+```
+whisper-cli test.wav
+```
 
 ---
 
-# End of README_AI.md
+## 8. Extensibility Roadmap
+
+Planned enhancements:
+
+* RAG over financial documents
+* Multi-step agent workflows
+* Personalized recommendations
+* Learning from user corrections
+* Predictive budgeting
+
+The AI engine is designed to evolve **without breaking mobile APIs**.
+
+---
+
+## 9. Key Design Guarantees
+
+✔ No destructive SQL
+✔ Deterministic execution
+✔ Privacy-first AI
+✔ Mobile-optimized latency
+✔ Cloud & on-device compatible
+
+---
+
+## ✅ Summary
+
+The ExpenseApp AI system transforms financial data into:
+
+* **Conversations**
+* **Insights**
+* **Voice-driven actions**
+
+while remaining **secure, explainable, and extensible**.
+
+---

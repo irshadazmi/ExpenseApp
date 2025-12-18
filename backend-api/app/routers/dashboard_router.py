@@ -1,18 +1,13 @@
 # backend-api/app/routers/dashboard_router.py
-
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.database import get_db
-
 from app.repositories.dashboard_repository import DashboardRepository
 from app.repositories.budget_repository import BudgetRepository
-
 from app.services.dashboard_service import DashboardService
 from app.services.budget_service import BudgetService
 
 dashboard_router = APIRouter()
-
 
 # ============================================================
 # Dependency (CORRECT)

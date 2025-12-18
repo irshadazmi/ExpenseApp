@@ -1,276 +1,309 @@
-# ExpenseApp — Intelligent Personal Finance & AI Assistant
+# Intelligent Personal Finance & AI Assistant
 
-**ExpenseApp** is an enterprise-grade, AI-enhanced personal finance platform built as a reusable template for rapid extension.
-It combines a cross-platform React Native (Expo) mobile frontend with a FastAPI + PostgreSQL backend and on-prem AI capabilities (local LLMs, embeddings, and Whisper). This README consolidates the project goals, architecture, features, developer instructions, and roadmap into a single, professional, ready-to-use reference.     
-
----
-
-## Table of contents
-
-1. [Project Summary](#project-summary)
-2. [Key Features](#key-features)
-3. [Architecture & Folder Layout](#architecture--folder-layout)
-4. [Tech Stack](#tech-stack)
-5. [API Endpoints (overview)](#api-endpoints-overview)
-6. [AI Capabilities](#ai-capabilities)
-7. [Security & Privacy](#security--privacy)
-8. [Local Development — Quick Start](#local-development---quick-start)
-9. [Docker & Database Setup](#docker--database-setup)
-10. [Testing & Debugging](#testing--debugging)
-11. [Configuration & Environment Variables](#configuration--environment-variables)
-12. [Contribution Guidelines](#contribution-guidelines)
-13. [Roadmap & Future Work](#roadmap--future-work)
-14. [License](#license)
+**FastAPI · PostgreSQL · React Native · Local AI**
 
 ---
 
-## Project summary
+## Introduction
 
-ExpenseApp focuses on usability and extensibility: a modular mobile UI (Drawer + Tabs + stacked CRUD), robust FastAPI backend (async SQLAlchemy repositories), and an AI layer for conversational analytics, safe SQL generation, and semantic memory via embeddings. The repository is intentionally structured to be a template for adding advanced AI features (RAG, local LLMs, semantic caching).  
+**ExpenseApp** is a modern, AI-powered personal finance application built for individuals and small teams who want **clear visibility into spending, budgets, and financial behavior**, without sacrificing **data privacy or control**.
 
----
+Unlike typical finance apps that rely heavily on cloud-based AI services, ExpenseApp adopts a **privacy-first, local AI approach**, where intelligent insights are generated **on-device or within your own infrastructure**.
 
-## Key features
+The platform combines:
 
-* **Expense & Income Management** — Add/edit/delete transactions; multi-currency support; category assignment. 
-* **Budgets & Alerts** — Per-category budgets, near-limit notifications, usage vs. limit. 
-* **Accounts & Master Data** — CRUD for accounts, categories, budgets with search + active toggles. 
-* **Analytics Dashboard** — Pie, line, and bar charts; Year→Quarter→Month filters & KPIs. 
-* **AI Chat / Insights** — Natural-language queries converted to safe SQL + formatted summaries; local LLMs (Ollama/Qwen) & embeddings. 
-* **AI Categorization** — Auto-categorize transactions from descriptions with confidence scoring. 
-* **Semantic Cache** — Persistent embedding store (pgvector) to reuse past answers and reduce latency. 
-* **Voice Input** — Whisper integration for offline speech→text (supports multiple languages). 
-* **Feedback System** — User feedback submission + admin replies and status management. 
+* 📱 **React Native (Expo)** mobile application for cross-platform UX
+* ⚙️ **FastAPI + PostgreSQL** backend for scalable, secure APIs
+* 🧠 **Local AI** for insights, forecasting, anomaly detection, and voice interaction
+
+ExpenseApp is designed as a **production-ready reference architecture** for teams building **finance + AI applications**, not just a demo or prototype.
 
 ---
 
-## Architecture & folder layout
+## Key Features
 
-High level:
+### Core Finance
 
-```
-mobile-app/                 # Expo React Native app (TypeScript)
-├── src/
-│   ├── app/                # Screens (auth, drawer, tabs, CRUD modules, intro)
-│   ├── components/         # Shared UI components (chips, cards, charts)
-│   ├── contexts/           # Auth / Theme contexts
-│   ├── services/           # API wrapper services (transaction, account, ai, ...)
-│   └── styles/             # Theming and global styles
-backend-api/
-├── app/
-│   ├── routers/            # FastAPI routers per module (auth, transactions, ai, ...)
-│   ├── services/           # Business logic & AI services
-│   ├── repositories/       # DB access layer (SQLAlchemy async)
-│   ├── ai/                 # LLM + embedding utilities
-│   └── main.py
-docker/                     # DB init scripts, Docker Compose for PostgreSQL + pgvector
-```
+#### **Expense & Income Management**
 
-See the `src` and `backend-api` trees for the detailed module breakdown (services & files).  
+Create, edit, and manage income and expense transactions with support for multiple accounts and categories.
+The data model is optimized for analytics, forecasting, and AI-driven insights.
+
+#### **Budgets & Alerts**
+
+Define **monthly category budgets** with automatic detection of:
+
+* Near-limit usage
+* Over-budget conditions
+
+Alerts are generated early to help users adjust behavior before overspending.
+
+#### **Accounts & Master Data**
+
+Manage accounts, categories, and budgets with:
+
+* Enable/disable toggles
+* Clean separation between master data and transactions
+* Simple CRUD APIs designed for mobile workflows
+
+#### **Analytics Dashboard**
+
+An interactive dashboard providing:
+
+* Pie, bar, and line charts
+* **Year → Quarter → Month** drill-downs
+* Key financial KPIs at a glance
+
+All dashboard data is served via optimized backend aggregation APIs.
 
 ---
 
-## Tech stack
+## AI Features
+
+### Conversational AI (Text + Voice)
+
+Natural-language queries such as:
+
+> “How much did I spend on Food last month?”
+
+Supported via text and offline **Whisper** voice input, translated into **safe, read-only SQL**.
+
+### Forecasting, Anomaly Detection & Explainability
+
+* Forecast overlays on charts
+* Budget overshoot detection
+* Transparent, human-readable AI explanations
+
+### Semantic Cache (pgvector)
+
+* Stores embeddings of past AI queries
+* Reuses semantically similar results
+* Improves latency and reduces LLM calls
+
+---
+
+## Technology Stack
 
 **Frontend**
 
-* React Native (Expo), TypeScript
-* Expo Router (Drawer + Tabs)
-* Formik + Yup for forms, React Native Paper for components (optional)
+* React Native (Expo), TypeScript, Expo Router
 
 **Backend**
 
 * FastAPI (async)
-* Python 3.10+ (recommend 3.11/3.12)
-* SQLAlchemy (async), Pydantic schemas
-* PostgreSQL (pgvector for embeddings), Dockerized DB option
+* PostgreSQL + pgvector
+* SQLAlchemy (async)
 
-**AI / Infra**
+**AI**
 
-* Local Ollama for LLMs + embeddings (offline-first)
-* Whisper.cpp for local STT (voice input)
-* pgvector + HNSW indexing for ANN vector search (semantic cache). 
+* Ollama (local LLMs & embeddings)
+* Whisper.cpp
+* Custom forecasting & anomaly engines
+
+**Infrastructure**
+
+* Docker & Docker Compose
+* APScheduler
+* Cloud-ready (Kubernetes compatible)
 
 ---
 
-## API endpoints (overview)
-
-Common endpoints provided by the backend template:
+## Architecture Overview
 
 ```
-/auth/login
-/auth/register
-/auth/forgot-password
-
-/transactions (GET, POST, PUT, DELETE)
-/accounts (GET, POST, PUT, DELETE)
-/categories (GET, POST, PUT, DELETE)
-/budgets (GET, POST, PUT, DELETE)
-/feedback (GET, POST, reply)
-/settings
-/ai/ask        # conversational & analytic queries
+mobile-app/        → React Native (Expo)
+backend-api/       → FastAPI services
+postgres (pgvector)→ Core + AI semantic storage
+ollama             → Local LLM runtime
 ```
 
-Each service exposes a concise repository + router contract; refer to `backend-api/app/routers/*` for exact route definitions. 
-
 ---
 
-## AI capabilities (detailed)
-
-* **Natural-language Q&A → SQL**: Multi-stage pipeline — keyword rules, intent classification, safe LLM-generated SQL (SELECT-only sandbox), then human-friendly formatting. 
-* **Embeddings + Semantic Cache**: Each query can be vectorized and stored (768-dim embeddings). On new queries, system runs ANN similarity; high similarity returns cached AI output without re-running LLM. Great for latency and cost reduction. 
-* **Auto Categorization**: Description → category prediction with confidence; safe fallback to default category. 
-* **Whisper Voice Integration**: Local STT engine for voice queries (Hindi / English / Marathi supported) → text → intent pipeline. 
-* **Guardrails & Safety**: SQL sandboxing, SELECT-only enforcement, and validation layers prevent unsafe DB writes from freeform LLM output. 
-
----
-
-## Security & privacy
-
-* JWT-based authentication with role-based access (User / SuperAdmin). Tokens stored securely (AsyncStorage + secure storage options recommended). 
-* TLS for API endpoints in production; local dev can use HTTP.
-* Local AI stack ensures user data stays on-premise (no cloud LLM calls unless explicitly configured). 
-* Semantic cache stores user query context — treat as sensitive; apply appropriate DB encryption and access controls for production.
-
----
-
-## Local development — quick start
+## Getting Started
 
 ### Prerequisites
 
-* Node.js (16+ recommended)
+* Node.js 16+
 * Python 3.11+
-* Docker & Docker Compose (for DB) or local PostgreSQL
-* `expo-cli` (optional) / `npx expo`
+* Docker & Docker Compose
+* PostgreSQL client (`psql`)
+* Expo CLI (optional)
 
-### 1. Clone & install
+---
 
-```bash
-git clone <repo-url>
-cd <repo-root>
-```
-
-#### Frontend
+### 1️⃣ Clone Repository
 
 ```bash
-cd mobile-app
-npm install
-# Run Expo dev server:
-npx expo start
-# or
-npm run ios   # / android, if configured
+git clone <your-repo-url>
+cd ExpenseApp
 ```
 
-#### Backend
+---
+
+### 2️⃣ Start Database (Docker)
+
+```bash
+docker compose up -d
+```
+
+This starts PostgreSQL (with pgvector) and supporting services.
+
+---
+
+### 3️⃣ Restore Database Backup (Optional but Recommended)
+
+> **Important (Windows users):**
+> Always use `-i` (stdin) and **do not use `-t`** when restoring.
+
+#### ✅ Restore a standard `.sql` dump (COPY or INSERT based)
+
+```powershell
+docker exec -i expense_pg psql -U postgres -d expensedb < expensedb_backup.sql
+```
+
+This command works for:
+
+* COPY-based dumps (default `pg_dump`)
+* INSERT-based dumps (`--inserts`, `--column-inserts`)
+
+#### What gets restored
+
+* Users & roles
+* Categories & accounts
+* Budgets & transactions
+* Feedbacks & tokens
+* Semantic cache (pgvector embeddings)
+* User financial profiles
+
+---
+
+### ⚠️ pgvector Requirement (Important)
+
+If restoring into a **fresh database**, ensure the pgvector extension exists **before** restore:
+
+```powershell
+docker exec -i expense_pg `
+psql -U postgres -d expensedb -c "CREATE EXTENSION IF NOT EXISTS vector;"
+```
+
+---
+
+### 🔁 Restoring a Custom / Compressed Dump (`.backup`)
+
+If the backup was created using:
+
+```bash
+pg_dump -Fc
+```
+
+Then **do NOT use `psql`**. Use `pg_restore` instead:
+
+```powershell
+docker exec -i expense_pg `
+pg_restore -U postgres -d expensedb < expensedb.backup
+```
+
+---
+
+### 4️⃣ Backend Setup
 
 ```bash
 cd backend-api
 python -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
+
+uvicorn app.main:app --host 0.0.0.0 --port 80 --reload
 ```
 
-Set `API_BASE_URL` in `/mobile-app/src/config/api.ts` (or `.env`) to point at the backend. 
+API docs (Swagger):
+
+```
+http://localhost/docs
+```
 
 ---
 
-## Docker & database setup
-
-A dockerized PostgreSQL with `pgvector` extension is provided in `docker/`:
+### 5️⃣ Mobile App Setup
 
 ```bash
-# from repo root (if docker-compose.yml present)
-docker compose up -d
-# then run migrations / init scripts
+cd mobile-app
+npm install
+npx expo start
 ```
 
-Make sure DB env vars (host, port, user, pass, database) are aligned between backend `.env` and Docker compose. The project includes SQL init scripts to create tables: `transactions`, `categories`, `budgets`, `feedback`, `users`, and the embedding vector column. 
-
 ---
 
-## Testing & debugging
+### 📌 Mobile App Runtime Configuration (Expo `app.json`)
 
-* Frontend: Expo DevTools and device logs
-* Backend: run FastAPI with `--reload` and inspect interactive docs at `http://localhost:8000/docs` (OpenAPI).
-* AI layer: Use the `/ai/ask` endpoint to validate intent parsing, safe SQL generation, and cache lookup. Log embedding distances and guardrail rejections during development. 
+ExpenseApp uses Expo’s `extra` configuration for runtime values.
 
----
-
-## Configuration & environment variables
-
-Typical variables (example):
-
-```
-# backend .env
-DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5432/expenseapp
-SECRET_KEY=replace-with-secure-key
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=60
-PGVECTOR_DIM=768
-OLLAMA_URL=http://localhost:11434
-WHISPER_PATH=/path/to/whisper-cli
+```json
+{
+  "expo": {
+    "extra": {
+      "API_BASE_URL": "http://192.168.29.62/api",
+      "TOKEN_EXPIRY_MINUTES": 60
+    }
+  }
+}
 ```
 
-Frontend:
+#### Access in code
 
+```ts
+import Constants from "expo-constants";
+
+export const API_BASE_URL =
+  Constants.expoConfig?.extra?.API_BASE_URL;
 ```
-API_BASE_URL=http://localhost:8000
+
+> Restart Expo after changing `app.json`.
+
+---
+
+## Configuration (Backend)
+
+```env
+DB_USER=postgres
+DB_PASSWORD=your-password
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=expensedb
+
+SECRET_KEY=your-secret
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_EMBED_MODEL=nomic-embed-text
 ```
 
-Store production secrets in a secure vault or environment configuration and **never** commit `.env` to source control.
+---
+
+## Security & Privacy
+
+* JWT-based authentication
+* Role-based access control
+* Local AI by default
+* No AI-initiated DB writes
+* Strict SELECT-only SQL guardrails
 
 ---
 
-## Contribution guidelines
+## Roadmap
 
-* Fork → feature branch → PR.
-* Follow existing folder and component patterns (services layer, context, reusable UI components). 
-* Write unit tests for backend logic (services & repositories) and component tests / E2E for critical flows.
-* For AI changes, add evaluation scripts and safety tests for SQL generation and guardrails.
-
----
-
-## Roadmap & future work
-
-**Phase 2**
-
-* Improve intent classification & richer NLP rules. 
-
-**Phase 3**
-
-* Persistent semantic store with full LangChain retriever + pgvector production tuning (HNSW / M-ANN). 
-
-**Phase 4**
-
-* OCR bill scanning, offline-first sync, multi-device household sharing, export to Excel/PDF, push notifications. 
-
----
-
-## Example queries for `/ai/ask`
-
-* “How much did I spend on Food in November?”
-* “Show last 5 transactions.”
-* “Which categories exceeded budget this month?”
-* Voice: “इस महीने मैंने कितना खर्च किया?”
-  The AI pipeline will attempt cached semantic matches first and fall back to LLM SQL generation when necessary. 
-
----
-
-## Troubleshooting tips
-
-* If API responses fail, check `API_BASE_URL` and CORS settings. 
-* For embedding/pgvector issues, verify the pgvector extension is installed and the DB connection env var points to the correct DB. 
-* If local Ollama or Whisper aren't reachable, confirm their local services are running and `OLLAMA_URL` / `WHISPER_PATH` are correct.
+* OCR bill scanning
+* PDF / Excel exports
+* Push notifications
+* Advanced forecasting (ARIMA / Prophet)
+* Admin analytics dashboard
 
 ---
 
 ## License
 
-MIT License — see `LICENSE` file.
+MIT License
 
 ---
 
-## Final notes
+## Final Note
 
-This consolidated README pulls together the UX, backend, and AI design decisions from the mobile and API templates to provide a clear developer and maintainer onboarding reference. Use this as the single source of truth while you extend ExpenseApp with advanced AI features, RAG flows, or enterprise deployments.
+**ExpenseApp is not just an expense tracker — it is an AI-assisted financial decision platform**, designed for transparency, extensibility, and privacy-first intelligence.

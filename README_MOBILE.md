@@ -1,9 +1,21 @@
+# 📱 ExpenseApp Mobile Application
 
-# ExpenseApp Mobile App – React Native + Expo  
-Comprehensive Mobile Documentation
+**React Native · Expo · TypeScript**
+
+---
 
 ## 1. Overview
-The mobile application is built using **Expo**, **React Native**, and **TypeScript**. It provides a modern UI for expense tracking, analytics, budgeting, accounts, and AI-powered conversational finance capabilities.
+
+The **ExpenseApp mobile application** is built using **React Native**, **Expo**, and **TypeScript**, providing a fast, responsive, and maintainable user experience for:
+
+* Expense & income tracking
+* Budgeting and analytics
+* AI-powered insights
+* Conversational finance (text + voice)
+
+The app is designed to work seamlessly with the **FastAPI backend** and **local AI engine**, following a **mobile-first, API-driven architecture**.
+
+Navigation is handled using **Expo Router**, combining **Tabs + Drawer** layouts with **route-driven headers** (no manual title state management).
 
 ---
 
@@ -11,135 +23,280 @@ The mobile application is built using **Expo**, **React Native**, and **TypeScri
 
 ```
 mobile-app/
-├── src/
-│   ├── app/               # Screens (Auth, Tabs, Drawer, CRUD modules)
-│   ├── components/        # Buttons, Cards, Chips, Charts
-│   ├── contexts/          # AuthContext, ThemeContext
-│   ├── services/          # API Service wrappers
-│   ├── utils/             # Formatters, helpers
-│   ├── styles/            # Global theme + styles
-│   └── assets/            # Images, icons, fonts
+ └─ src/
+    ├─ app/             # Screens (Auth, Tabs, Drawer, CRUD, AI)
+    ├─ assets/          # Images, icons, fonts
+    ├─ components/      # Cards, Chips, Alerts, Charts
+    ├─ config/          # Axios API configuration
+    ├─ constants/       # DRAWER_ITEMS, TAB_ITEMS, months, labels
+    ├─ contexts/        # AuthContext, ThemeContext
+    ├─ hooks/           # useAppColors, voice helpers, utilities
+    ├─ services/        # Backend API wrappers
+    ├─ styles/          # Global theme & shared styles
+    ├─ types/           # TypeScript models & DTOs
+    └─ utils/           # Formatters, helpers, validators
 ```
 
 ---
 
-## 3. Navigation
+## 3. Navigation Architecture
 
-Using **Expo Router**:
+### Expo Router (File-Based Routing)
 
-### **Drawer**
-- Dashboard  
-- Transactions  
-- Categories  
-- Accounts  
-- Budgets  
-- AI Chat  
-- Settings  
+The app uses **Expo Router**, which maps files directly to navigation routes.
 
-### **Tabs**
-Used in dashboards & transaction analytics.
+Navigation model:
+
+* **Tabs**
+  Primary navigation (Dashboard, Transactions, AI, etc.)
+
+* **Drawer**
+  Secondary and management screens (Categories, Budgets, Settings)
+
+* **Header titles**
+  Automatically derived from route metadata
+  ✔ No manual state mutation
+  ✔ No global header hacks
+
+This results in predictable navigation and minimal boilerplate.
 
 ---
 
-## 4. Core Screens
+## 4. Core Screens & Features
 
-### **4.1 Authentication**
-- Login  
-- Register  
-- Splash → Auto redirect based on JWT
+### 4.1 Authentication
 
-### **4.2 Dashboard**
-Includes:
-- Monthly spend/income charts  
-- Category pie chart  
-- Quick KPIs  
+* Login
+* Register
+* Splash screen with automatic session restore via JWT
+* Secure token storage via context
 
-### **4.3 Transactions**
-Features:
-- Add/Edit/Delete  
-- AI auto-categorization  
-- Voice input for descriptions  
-- Filters: Year → Quarter → Month
+---
 
-### **4.4 Categories**
-- CRUD categories  
-- Active/Inactive toggles  
+### 4.2 Dashboard
 
-### **4.5 Budgets**
-- Create category budgets  
-- Alerts when exceeding limits  
-- Budget health UI  
+* Monthly expense & income charts
+* Category-wise distribution
+* Key financial KPIs
+* Embedded **AI insights & alerts**
+* Forecast overlays and severity indicators
 
-### **4.6 AI Chat**
-- Text + Voice input  
-- Ask questions like:
-  - “How much did I spend on food last month?”
-  - “Show last 10 transactions.”
+---
+
+### 4.3 Transactions
+
+* Add / Edit / Delete transactions
+* AI-assisted auto-categorization
+* Optional **voice input** for descriptions
+* Filters: **Year → Quarter → Month**
+
+---
+
+### 4.4 Categories
+
+* Create, update, delete categories
+* Active / inactive toggles
+* Used across transactions, budgets, and AI insights
+
+---
+
+### 4.5 Budgets
+
+* Category-based monthly budgets
+* Visual budget health indicators
+* AI-driven early warnings and overshoot detection
+
+---
+
+### 4.6 AI Chat & Voice Assistant
+
+* Text-based AI chat
+* Voice-based interaction using Whisper
+* Natural-language finance queries
+
+Examples:
+
+* “How much did I spend on food last month?”
+* “Which categories are over budget?”
+* “Show last 5 transactions.”
 
 ---
 
 ## 5. State Management
-Lightweight:  
-- **AuthContext** → user/login/token  
-- **Local component state** for forms  
-- Network data fetched using API services
+
+The app uses **simple, predictable state management**:
+
+* **AuthContext**
+
+  * User profile
+  * JWT token
+  * Session restore logic
+
+* **ThemeContext**
+
+  * Light / Dark mode
+  * Dynamic color resolution
+
+* **Local component state**
+
+  * Forms
+  * Filters
+  * UI interactions
+
+No Redux or heavy global stores are used — intentionally.
 
 ---
 
 ## 6. Theming & Styling
-Dynamic themes:
-- Light / Dark mode based on OS appearance  
-- Color tokens stored in `/constants/theme.ts`
+
+* Light & Dark mode support
+* Centralized color tokens
+* Theme-aware components
+* Styles resolved dynamically via context
+
+This ensures consistent visuals across the app and easy theming changes.
 
 ---
 
 ## 7. API Integration
 
-All APIs wrapped in:
+All backend communication is centralized in:
 
 ```
-src/services/api.ts
+src/services/
 ```
 
-Example Service File:
-```
-transactions.service.ts
-categories.service.ts
-ai.service.ts
-```
+Each domain has a dedicated service wrapper:
+
+* `account-service.ts`
+* `ai-service.ts`
+* `budget-service.ts`
+* `category-service.ts`
+* `dashboard-service.ts`
+* `feedbackai-service.ts`
+* `settings-service.ts`
+* `transaction-service.ts`
+
+Benefits:
+
+* Clean separation of concerns
+* No API logic inside screens
+* Easier mocking & testing
 
 ---
 
-## 8. Environment Variables
-Create `.env`:
+## 8. Runtime Configuration (Expo `app.json`)
+
+ExpenseApp does **not** rely on `.env` files at runtime.
+Instead, it uses **Expo’s `extra` configuration** in `app.json`.
+
+### Example (`mobile-app/app.json`)
+
+```json
+{
+  "expo": {
+    "extra": {
+      "API_BASE_URL": "http://192.168.29.62/api",
+      "TOKEN_EXPIRY_MINUTES": 60
+    }
+  }
+}
 ```
-API_BASE_URL=http://localhost:8000
+
+### Explanation
+
+* **`API_BASE_URL`**
+  Base URL of the backend API.
+  All mobile API requests are built on top of this value.
+
+  Typical values:
+
+  * Emulator: `http://localhost/api`
+  * Physical device (LAN): `http://<your-ip>/api`
+  * Production: `https://api.yourdomain.com`
+
+* **`TOKEN_EXPIRY_MINUTES`**
+  Client-side token validity window before re-authentication or refresh logic is triggered.
+
+### Accessing in code
+
+```ts
+import Constants from "expo-constants";
+
+export const API_BASE_URL =
+  Constants.expoConfig?.extra?.API_BASE_URL;
+
+export const TOKEN_EXPIRY_MINUTES =
+  Constants.expoConfig?.extra?.TOKEN_EXPIRY_MINUTES;
 ```
+
+> ⚠️ After modifying `app.json`, **restart Expo** (`npx expo start`) for changes to take effect.
+
+This approach:
+
+* Avoids hardcoded URLs
+* Supports dev / staging / prod environments
+* Aligns with Expo best practices
 
 ---
 
-## 9. Running the Mobile App
+## 9. Running the App
 
-```
+```bash
 cd mobile-app
 npm install
 npx expo start
 ```
 
-To run on Android Studio:
-```
+### Run on Android Emulator
+
+```bash
 npm run android
 ```
+
+### Run on Physical Device
+
+* Install **Expo Go**
+* Scan QR code from terminal
+* Ensure device is on the same network as backend
 
 ---
 
 ## 10. Build & Release
-Expo EAS recommended:
-```
+
+Recommended approach: **Expo EAS**
+
+```bash
 eas build --platform android
 eas build --platform ios
 ```
 
+Supports:
+
+* CI/CD pipelines
+* Internal testing
+* App Store / Play Store releases
+
 ---
 
-# End of README_MOBILE.md
+## 11. Best Practices & Notes
+
+* Prefer dashboard APIs over composing multiple calls
+* Cache master data (categories, accounts) locally
+* Keep AI calls asynchronous (non-blocking UI)
+* Do not hardcode environment values
+* Always restart Expo after config changes
+
+---
+
+## ✅ Summary
+
+The ExpenseApp mobile app is:
+
+* **Cleanly architected**
+* **AI-integrated**
+* **Mobile-first**
+* **Environment-configurable**
+* **Production-ready**
+
+Designed to scale from personal use to enterprise-grade finance applications.
