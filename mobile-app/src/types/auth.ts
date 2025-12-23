@@ -1,33 +1,54 @@
 // src/types/auth.ts
-export type UserResponse = {
+
+/* ======================================================
+   AUTH TYPES – aligned with FastAPI models & responses
+====================================================== */
+
+export type AuthUser = {
   id: number;
-  full_name: string;
   email: string;
-  phone: string;
+  phone: string | null;
   role_id: number;
   is_active: boolean;
 };
 
-export type Token = {
-  access_token: string;
-  token_type: string;
-
-  // Optional – you can start populating these from backend later
-  expires_at?: string;  // ISO string, e.g. "2025-11-21T10:20:00Z"
-  expires_in?: number;  // seconds (if you prefer this on backend)
-};
-
-export type AuthResponse = {
-  user: UserResponse;
-  token: Token;
-};
-
-export interface AuthRegisterSchema {
-  full_name: string;
+/**
+ * Payload sent from mobile app → FastAPI when registering a new user.
+ * Matches backend RegisterSchema.
+ */
+export type RegisterRequest = {
   email: string;
   password: string;
-  confirm_password: string;
+  confirm_password: string; // ✅ added
   phone: string;
   role_id: number;
-  is_active: boolean;
-}
+};
+
+/**
+ * Shape of the user object FastAPI returns after successful registration.
+ */
+export type RegisterResponseUser = AuthUser;
+
+/**
+ * Auth token returned by FastAPI.
+ */
+export type AuthToken = {
+  access_token: string;
+  token_type: "bearer";
+};
+
+/**
+ * Login response from FastAPI.
+ */
+export type LoginResponse = {
+  user: AuthUser;
+  token: AuthToken;
+};
+
+/**
+ * Register response (token optional if backend auto-logins).
+ */
+export type RegisterResponse = {
+  user: RegisterResponseUser;
+  token?: AuthToken;
+};

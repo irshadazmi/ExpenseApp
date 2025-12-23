@@ -1,79 +1,127 @@
-// src/components/custom-drawer.tsx
+// mobile-app/src/components/custom-drawer.tsx
+import React from "react";
+import { View, Text, Pressable, ScrollView } from "react-native";
+import { RelativePathString, useRouter, useSegments } from "expo-router";
 
-import { View, Text, Pressable, Modal } from "react-native";
 import { DRAWER_ITEMS } from "@/constants/DRAWER_ITEMS";
-import { Route, useRouter, useSegments } from "expo-router";
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import type { SFSymbol } from "expo-symbols";
 import { useStyles } from "@/styles/styles";
+import { useAuth } from "@/contexts/auth-context";
 import { useAppColors } from "@/hooks/use-app-colors";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { authService } from "@/services/auth-service";
 
 type Props = {
-  visible: boolean;
-  onClose: () => void;
-  setTitle: (title: string) => void;
+  onClose?: () => void;
 };
 
-export default function CustomDrawer({ visible, onClose, setTitle }: Props) {
-  const COLORS = useAppColors();
+const CustomDrawer: React.FC<Props> = ({ onClose }) => {
   const styles = useStyles();
+  const COLORS = useAppColors();
   const router = useRouter();
   const segments = useSegments();
+  const { logout } = useAuth();
 
-  const currentDrawerKey: string = segments[0] || "(dashboard)";
+  /** ✅ SINGLE SOURCE OF TRUTH */
+  const activeGroup = React.useMemo(() => {
+    const seg0 = segments[0]; // "(dashboard)"
+    return seg0 ? seg0.replace(/[()]/g, "") : "dashboard";
+  }, [segments]);
+
+  const handleNavigate = async (name: string) => {
+    if (name === "logout") {
+      await logout();
+      router.replace("/(auth)/login");
+      onClose?.();
+      return;
+    }
+
+    if (name === "(auth)/register") {
+      try {
+        const me = await authService.getCurrentUser() as any;
+
+        // 🔴 IMPORTANT: log once to verify shape
+        console.log("UserID:", me.user.id);
+
+        router.push({
+          pathname: "/(auth)/register",
+          params: {
+            user_id: me.user, // <-- important
+          },
+        });
+
+        onClose?.(); // ✅ close only after navigation
+      } catch (e) {
+        console.error("Failed to load user profile", e);
+        // ❌ do NOT close drawer here
+      }
+      return;
+    }
+
+    router.push(`/${name}` as RelativePathString);
+    onClose?.();
+  };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
-      {/* Backdrop */}
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        {/* POSITION WRAPPER – does not change existing styles */}
-        <View
-          style={{
-            width: "80%",
-            position: "absolute",
-            right: 0,
-            bottom: 64,        // aligns above bottom tab bar
-          }}
-        >
-          <View style={styles.drawerContainer}>
-            {DRAWER_ITEMS.map((item) => {
-              const routePath = `/${item.name}`;
-              const isActive = currentDrawerKey === item.name;
+    <View style={styles.drawer}>
+      {/* BACKDROP */}
+      <Pressable style={styles.backdrop} onPress={onClose} />
 
+      {/* DRAWER */}
+      <View style={styles.drawerContainer}>
+        <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
+          {DRAWER_ITEMS.map((item) => {
+            if (item.name === "logout") {
               return (
                 <Pressable
-                  key={item.name}
-                  onPress={() => {
-                    onClose();
-                    setTitle(item.title.toUpperCase());
-                    router.replace(routePath as Route);
-                  }}
-                  style={[
-                    styles.drawerItem,
-                    isActive && styles.drawerItemActive,
-                  ]}
+                  key="logout"
+                  style={styles.drawerItem}
+                  onPress={() => handleNavigate("logout")}
                 >
                   <IconSymbol
-                    name={item.icon as SFSymbol}
-                    size={22}
-                    color={
-                      isActive ? COLORS.tabActive : COLORS.tabInactive
-                    }
+                    name={item.icon as any}
+                    size={20}
+                    color={COLORS.textMuted}
                   />
-                  <Text
-                    style={[
-                      styles.drawerItemText,
-                      isActive && styles.drawerItemTextActive,
-                    ]}
-                  >
+                  <Text style={styles.drawerItemText}>
                     {item.title}
                   </Text>
                 </Pressable>
               );
-            })}
-          </View>
-        </View>
-      </Pressable>
-    </Modal>
+            }
+
+            const group = item.name.replace(/[()]/g, "");
+            const isActive = group === activeGroup;
+
+            return (
+              <Pressable
+                key={item.name}
+                style={[
+                  styles.drawerItem,
+                  isActive && styles.drawerItemActive,
+                ]}
+                onPress={() => handleNavigate(item.name)}
+              >
+                <IconSymbol
+                  name={item.icon as any}
+                  size={20}
+                  color={isActive ? COLORS.tabActive : COLORS.textMuted}
+                />
+
+                <Text
+                  style={[
+                    styles.drawerItemText,
+                    isActive && styles.drawerItemTextActive,
+                  ]}
+                >
+                  {item.title}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      </View>
+    </View>
   );
-}
+};
+
+export default CustomDrawer;

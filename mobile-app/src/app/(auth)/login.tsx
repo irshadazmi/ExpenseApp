@@ -1,229 +1,227 @@
-// mobile-app/src/app/(auth)/login.tsx
-
+// src/app/(auth)/login.tsx
 import React from "react";
 import {
   View,
   Text,
   TextInput,
   Pressable,
-  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
   Image,
+  ActivityIndicator,
 } from "react-native";
-import { useRouter, Link, RelativePathString } from "expo-router";
+import { useRouter } from "expo-router";
 import { Formik } from "formik";
 import * as Yup from "yup";
 
-import { useAuth } from "@/contexts/auth-context";
 import { useStyles } from "@/styles/styles";
 import { useAppColors } from "@/hooks/use-app-colors";
-import { budgetService } from "@/services/budget-service";
+import { useAuth } from "@/contexts/auth-context";
 
 /* ======================================================
-    VALIDATION
+   VALIDATION
 ====================================================== */
 
 const LoginSchema = Yup.object().shape({
   email: Yup.string()
     .email("Please enter a valid email")
     .required("Email is required"),
-
-  password: Yup.string().required("Password is required"),
+  password: Yup.string()
+    .min(6, "Minimum 6 characters")
+    .required("Password is required"),
 });
 
 /* ======================================================
-    COMPONENT
+   COMPONENT
 ====================================================== */
 
-const Login = () => {
+export default function LoginScreen() {
   const styles = useStyles();
   const COLORS = useAppColors();
   const router = useRouter();
-  const { user } = useAuth();
+  const { loginWithCredentials } = useAuth();
 
-  const { login: authLogin, loading } = useAuth();
+  const [submitting, setSubmitting] = React.useState(false);
+  const [formError, setFormError] = React.useState<string | null>(null);
 
-  const initialValues = {
-    email: "",
-    password: "",
-  };
+  const handleSubmit = async (values: {
+    email: string;
+    password: string;
+  }) => {
+    if (submitting) return;
+    setSubmitting(true);
+    setFormError(null);
 
-  /* ======================================================
-      SUBMIT HANDLER
-  ====================================================== */
-
-  const handleSubmit = async (
-    values: typeof initialValues,
-    { setSubmitting, setStatus }: any
-  ) => {
     try {
-      const result = await authLogin(values);
-      // console.log("User logged in:", result.user);
-      const budgets = await budgetService.getByUser(result.user.id);
-      
-      if (budgets.length === 0) {
-        budgetService.createAllBudgets(result.user.id);
-      }
-      else if (budgets[0].version === 0) {
-        router.replace("/(budget)/edit-all" as RelativePathString);
-      }
-      else {
-        router.replace("/(dashboard)");
-      }
-    } catch (error) {
-      console.error(error);
-      setStatus("Invalid credentials or network error.");
+      await loginWithCredentials(
+        values.email.trim(),
+        values.password
+      );
+      router.replace("/(dashboard)");
+    } catch (err: any) {
+      setFormError(
+        err?.response?.data?.detail ??
+        "Invalid email or password"
+      );
     } finally {
       setSubmitting(false);
     }
   };
 
-  /* ======================================================
-      UI
-  ====================================================== */
-
   return (
-    <View style={styles.container}>
-
-      {/* ---------- LOGO ---------- */}
-
-      <Image
-        source={require("@/assets/images/expense-logo.png")}
-        resizeMode="contain"
-        style={{
-          width: 120,
-          height: 120,
-          alignSelf: "center",
-          marginTop: -300,
-          marginBottom: 16,
-        }}
-      />
-
-      {/* ---------- TITLE ---------- */}
-
-      <Text style={[styles.title, { marginBottom: 10 }]}>
-        Login
-      </Text>
-
-      {/* ---------- FORM ---------- */}
-
-      <Formik
-        initialValues={initialValues}
-        validationSchema={LoginSchema}
-        onSubmit={handleSubmit}
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: COLORS.background }}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
+      <View
+        style={styles.container}
       >
-        {({
-          values,
-          errors,
-          touched,
-          handleChange,
-          handleSubmit,
-          isSubmitting,
-          status,
-        }) => (
-          <View style={{ width: "100%" }}>
+        {/* ---------- BRAND ---------- */}
+        <View style={{ alignItems: "center" }}>
+          <Image
+            source={require("@/assets/images/expense-logo.png")}
+            style={{ width: '100%', height: 150 }}
+            resizeMode="contain"
+          />
 
-            {/* ---------- API / AUTH ERROR ---------- */}
+          <Text style={styles.title}>
+            Welcome to Dantify
+          </Text>
 
-            {status && (
-              <Text
-                style={[
-                  styles.errorText,
-                  { marginBottom: 8 },
-                ]}
-              >
-                {status}
-              </Text>
+          <Text style={styles.mutedText}>
+            AI-powered dental practice management
+          </Text>
+        </View>
+
+        {/* ---------- FORM CARD ---------- */}
+        <View
+          style={styles.card}
+        >
+          <Formik
+            initialValues={{ email: "", password: "" }}
+            validationSchema={LoginSchema}
+            onSubmit={handleSubmit}
+          >
+            {({
+              values,
+              errors,
+              touched,
+              handleChange,
+              handleSubmit,
+            }) => (
+              <>
+                {/* Email */}
+                <Text style={styles.label}>Email</Text>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="dentist@example.com"
+                  placeholderTextColor={COLORS.textMuted}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  value={values.email}
+                  onChangeText={handleChange("email")}
+                />
+                {touched.email && errors.email && (
+                  <Text style={styles.errorText}>
+                    {errors.email}
+                  </Text>
+                )}
+
+                {/* Password */}
+                <Text style={styles.label}>Password</Text>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Enter your password"
+                  placeholderTextColor={COLORS.textMuted}
+                  secureTextEntry
+                  value={values.password}
+                  onChangeText={handleChange("password")}
+                />
+                {touched.password && errors.password && (
+                  <Text style={styles.errorText}>
+                    {errors.password}
+                  </Text>
+                )}
+
+                {/* Error */}
+                {formError && (
+                  <Text
+                    style={[
+                      styles.errorText,
+                      { textAlign: "center", marginTop: 4 },
+                    ]}
+                  >
+                    {formError}
+                  </Text>
+                )}
+
+                {/* Forgot */}
+                <Pressable
+                  onPress={() =>
+                    router.push("/(auth)/forgot-password")
+                  }
+                  style={{ alignSelf: "flex-end", marginTop: 6 }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      color: COLORS.primary,
+                      fontWeight: "500",
+                    }}
+                  >
+                    Forgot password?
+                  </Text>
+                </Pressable>
+
+                {/* Submit */}
+                <Pressable
+                  onPress={() => handleSubmit()}
+                  disabled={submitting}
+                  style={[
+                    styles.button,
+                    { marginTop: 16, opacity: submitting ? 0.7 : 1 },
+                  ]}
+                >
+                  {submitting ? (
+                    <ActivityIndicator
+                      color={COLORS.badgeText}
+                    />
+                  ) : (
+                    <Text style={styles.buttonText}>
+                      Sign in
+                    </Text>
+                  )}
+                </Pressable>
+              </>
             )}
+          </Formik>
+        </View>
 
-            {/* ---------- EMAIL ---------- */}
+        {/* ---------- REGISTER ---------- */}
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <Text style={styles.mutedText}>
+            Not registered?{" "}
+          </Text>
 
-            <TextInput
-              style={styles.textInput}
-              placeholder="Email"
-              placeholderTextColor={COLORS.textMuted}
-              value={values.email}
-              onChangeText={handleChange("email")}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-
-            {touched.email && errors.email && (
-              <Text style={styles.errorText}>
-                {errors.email}
-              </Text>
-            )}
-
-            {/* ---------- PASSWORD ---------- */}
-
-            <TextInput
-              style={styles.textInput}
-              placeholder="Password"
-              placeholderTextColor={COLORS.textMuted}
-              value={values.password}
-              onChangeText={handleChange("password")}
-              secureTextEntry
-            />
-
-            {touched.password && errors.password && (
-              <Text style={styles.errorText}>
-                {errors.password}
-              </Text>
-            )}
-
-            {/* ---------- FORGOT PASSWORD ---------- */}
-
-            <Pressable
-              onPress={() =>
-                router.push("/(auth)/forgot-password")
-              }
+          <Pressable onPress={() => router.push("/(auth)/register")}>
+            <Text
               style={{
-                alignSelf: "flex-end",
-                marginTop: 4,
-                marginBottom: 12,
+                fontSize: 14,
+                fontWeight: "600",
+                color: COLORS.primary,
               }}
             >
-              <Text
-                style={{
-                  fontSize: 13,
-                  color: COLORS.primary,
-                  textDecorationLine: "underline",
-                }}
-              >
-                Forgot password?
-              </Text>
-            </Pressable>
-
-            {/* ---------- SUBMIT ---------- */}
-
-            {loading || isSubmitting ? (
-              <ActivityIndicator
-                size="small"
-                color={COLORS.primary}
-              />
-            ) : (
-              <Pressable
-                style={styles.button}
-                onPress={() => handleSubmit()}
-                disabled={loading || isSubmitting}
-              >
-                <Text style={styles.buttonText}>
-                  Login
-                </Text>
-              </Pressable>
-            )}
-
-            {/* ---------- REGISTER LINK ---------- */}
-
-            <Link href="./register" style={styles.link}>
-              <Text>
-                Not registered? Create an account
-              </Text>
-            </Link>
-          </View>
-        )}
-      </Formik>
-    </View>
+              Create an account
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+    </KeyboardAvoidingView>
   );
-};
-
-export default Login;
+}

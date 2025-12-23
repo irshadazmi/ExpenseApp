@@ -36,6 +36,7 @@ const MAPPING = {
   // ✅ Time / Scheduling
   'calendar': 'calendar-today',
   'clock.fill': 'access-time',
+  'calendar.badge.clock': 'schedule',
 
   // ✅ Finance / Transactions
   'wallet.pass.fill': 'account-balance-wallet',
@@ -129,6 +130,3 @@ export function IconSymbol({
 }) {
   return <MaterialIcons color={color} size={size} name={MAPPING[name]} style={style} />;
 }
-
-
-
