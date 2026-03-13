@@ -3,10 +3,11 @@ import { Platform, StatusBar, StyleSheet } from "react-native";
 const styles = StyleSheet.create({
 
   container: {
-    flex: 1,
-    justifyContent: "center",
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
-  },
+      flex: 1,
+      padding: 10,
+      marginTop: 20,
+      textAlign: "left"
+    },
 
   header: {
     height: 60,
