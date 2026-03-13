@@ -2,6 +2,7 @@ import { View, Text, TextInput, Pressable, KeyboardAvoidingView, Image } from "r
 import { useState } from "react";
 import { useRouter } from "expo-router";
 import styles from "../../styles/styles";
+import { authService } from "@/src/services/auth-service";
 
 export default function Login() {
 
@@ -11,14 +12,13 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const handleLogin = () => {
-
-    if (email === "abc@xyz.com" && password === "1234") {
-      router.push("/(dashboard)");
-    } else {
+  const handleLogin = async () => {
+    try {
+      await authService.login(email, password);
+      router.replace("/(dashboard)");
+    } catch (e) {
       setError("Invalid email or password");
     }
-
   };
 
   return (

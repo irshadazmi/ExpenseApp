@@ -1,17 +1,35 @@
-import { StyleSheet } from "react-native";
+import { Platform, StatusBar, StyleSheet } from "react-native";
 
 const styles = StyleSheet.create({
 
   container: {
     flex: 1,
     justifyContent: "center",
-    padding: 20
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
 
   header: {
-    fontSize: 30,
-    fontWeight: "bold",
-    color: "blue",
+    height: 60,
+    backgroundColor: '#6200ee',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+
+    elevation: 4, // Android shadow
+    shadowColor: '#000', // iOS shadow
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+  },
+
+  headerTitle: {
+    color: 'white',
+    fontSize: 20,
+    fontWeight: 'bold'
+  },
+
+  content: {
+    flex: 1,
   },
 
   title: {
@@ -35,7 +53,8 @@ const styles = StyleSheet.create({
   button: {
     backgroundColor: "#2F80ED",
     padding: 12,
-    alignItems: "center"
+    alignItems: "center",
+    marginBottom: 10
   },
 
   buttonText: {
@@ -46,8 +65,26 @@ const styles = StyleSheet.create({
     color: "red",
     textAlign: "center",
     marginTop: 10
-  }
+  },
 
+  card: {
+    backgroundColor: "#fff",
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 12,
+    elevation: 2
+  },
+
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 6
+  },
+
+  cardText: {
+    fontSize: 14,
+    marginBottom: 2
+  }
 });
 
 export default styles;
